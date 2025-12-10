@@ -219,7 +219,7 @@ class Bot extends Client {
     }
 
     constructor() {
-        super({ intents: [GatewayIntentBits.Guilds] });
+        super({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
         this.initCommands()
             .then(_ => this.initEvents())
