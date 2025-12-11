@@ -1,5 +1,6 @@
 import { AttachmentBuilder, MessageReaction, User, Message, TextChannel } from "discord.js";
-import bot, { settingInfo, starboardMessage } from "../index.js";
+import bot from "../index.js";
+import { settingInfo, starboardMessage } from "types/knex.js";
 
 export async function execute(messageReaction: MessageReaction) {
     try {

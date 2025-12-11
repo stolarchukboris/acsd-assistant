@@ -1,75 +1,25 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { RestOrArray, APIEmbedField, EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, ChatInputCommandInteraction, InteractionReplyOptions, Partials } from 'discord.js';
+import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, InteractionReplyOptions, Partials, InteractionEditReplyOptions, Interaction, AutocompleteInteraction } from 'discord.js';
 import { config } from 'dotenv';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
+import { botCommand, premadeEmbedOptions } from 'types/discord';
 const __dirname = import.meta.dirname;
-
-export type premadeEmbedOptions = Readonly<{
-    type: 'accessDenied' | 'error' | 'warning' | 'success' | 'notFound';
-    followUp?: boolean;
-    message?: string;
-    fields?: RestOrArray<APIEmbedField>;
-    image?: string;
-    ephemeral?: boolean;
-}>;
-
-export type botCommand = Readonly<{
-    data: SlashCommandBuilder | SlashCommandSubcommandBuilder;
-    dev?: boolean;
-    eo?: boolean;
-    admin?: boolean;
-    execute(interaction: ChatInputCommandInteraction, ...args: any[]): Promise<void>;
-}>;
-
-export type eventInfo = Readonly<{
-    eventId: string;
-    guildId: string;
-    eventHost: string;
-    annsMessageId: string;
-    eventGameUrl: string;
-    eventGameName: string;
-    gameThumbnailUrl: string;
-    eventStatus: number;
-    eventTime: number;
-    reminded: boolean;
-}>;
-
-export type settingInfo = Readonly<{
-    guildId: string;
-    settingValue: string | number | boolean;
-}>;
-
-export type starboardMessage = Readonly<{
-    originMessage: string;
-    starboardMessage: string;
-    amountOfReactions: number;
-}>;
-
-export type activeShift = Readonly<{
-    robloxId: string;
-    startedTimestamp: string;
-}>;
-
-export type loggedShift = Readonly<{
-    shiftId: string;
-    robloxId: string;
-    startedTimestamp: string;
-    endedTimestamp: string;
-    lenSeconds: string;
-}>;
 
 class Bot extends Client {
     name = 'ACSD Assistant';
-    commands: Collection<string, botCommand> = new Collection();
-    subcommands: Collection<string, { data: SlashCommandSubcommandBuilder, execute(interaction: ChatInputCommandInteraction): Promise<void> }> = new Collection();
+    commands: Collection<string, botCommand<SlashCommandBuilder>> = new Collection();
+    subcommands: Collection<string, botCommand<SlashCommandSubcommandBuilder>> = new Collection();
     apiCommands: SlashCommandBuilder[] = [];
 
     logos = {
         checkmark: 'https://septik-komffort.ru/wp-content/uploads/2020/11/galochka_zel.png',
         warning: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Noto_Emoji_Oreo_2757.svg/1200px-Noto_Emoji_Oreo_2757.svg.png',
-        heart: 'https://gas-kvas.com/grafic/uploads/posts/2024-01/gas-kvas-com-p-znak-serdtsa-na-prozrachnom-fone-44.png'
+        heart: 'https://gas-kvas.com/grafic/uploads/posts/2024-01/gas-kvas-com-p-znak-serdtsa-na-prozrachnom-fone-44.png',
+        questionmark: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Orange_question_mark.svg/2048px-Orange_question_mark.svg.png',
+        cross: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Not_allowed.svg/1200px-Not_allowed.svg.png',
+        placeholder: 'https://static.wikia.nocookie.net/7d5db291-d700-4b6a-944b-eb0c84bf5781/scale-to-width/755'
     } as const;
 
     env = config({ quiet: true }).parsed || {};
@@ -174,7 +124,7 @@ class Bot extends Client {
             process.exit(0);
         }
     }
-
+    
     /**
      * Sends an embed of a selected type as an interaction response.
      * 
@@ -183,7 +133,7 @@ class Bot extends Client {
      * 
      * @returns An embed interaction response.
      */
-    async sendEmbed(interaction: ChatInputCommandInteraction, options: premadeEmbedOptions) {
+    async sendEmbed(interaction: Exclude<Interaction, AutocompleteInteraction>, options: premadeEmbedOptions) {
         const embeds = {
             'accessDenied': this.embed
                 .setColor('Red')
@@ -205,6 +155,11 @@ class Bot extends Client {
                 .setTitle('Success.')
                 .setDescription(options.message ?? 'Successfully executed the command.')
                 .setThumbnail(this.logos.checkmark),
+            'cancel': this.embed
+                .setColor(0)
+                .setTitle('Cancelled.')
+                .setDescription(options.message ?? 'This operation has been cancelled.')
+                .setThumbnail(this.logos.cross),
             'notFound': this.embed
                 .setColor('Grey')
                 .setTitle('Not found.')
@@ -216,13 +171,14 @@ class Bot extends Client {
         if (options.fields) embed.setFields(...options.fields);
         if (options.image) embed.setImage(options.image);
 
-        const replyOptions: InteractionReplyOptions = { embeds: [embed] };
+        const replyOptions: InteractionReplyOptions | InteractionEditReplyOptions = { embeds: [embed] };
 
         if (options.ephemeral) replyOptions.flags = 'Ephemeral';
+        replyOptions.components = options.components;
 
-        if (!(interaction.deferred || interaction.replied)) return await interaction.reply(replyOptions);
+        if (!(interaction.deferred || interaction.replied)) return await interaction.reply(replyOptions as InteractionReplyOptions);
 
-        return options.followUp ? await interaction.followUp(replyOptions) : await interaction.editReply({ embeds: [embed] });
+        return options.followUp ? await interaction.followUp(replyOptions as InteractionReplyOptions) : await interaction.editReply(replyOptions as InteractionEditReplyOptions);
     }
 
     get embed(): EmbedBuilder {

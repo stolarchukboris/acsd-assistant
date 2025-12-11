@@ -1,5 +1,6 @@
 import { Message } from 'discord.js';
-import bot, { activeShift } from '../index.js';
+import bot from '../index.js';
+import { activeShift } from 'types/knex.js';
 
 export async function execute(message: Message) {
     try {
@@ -18,7 +19,7 @@ export async function execute(message: Message) {
         await message.react('🟦');
     } catch (error) {
         console.error(error);
-        
+
         await message.react('❌');
     }
 }

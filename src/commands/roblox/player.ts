@@ -35,7 +35,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const desc = responseUser.data.about || 'No description provided.';
 
-    let pfpURL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Not_allowed.svg/1200px-Not_allowed.svg.png';
+    let pfpURL = bot.logos.placeholder;
 
     await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}:generateThumbnail?shape=SQUARE`, { headers: { 'x-api-key': key } })
         .then(res => pfpURL = res.data.response.imageUri)

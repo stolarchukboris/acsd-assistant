@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, TextChannel } from 'discord.js';
-import bot, { eventInfo } from '../../index.js';
+import bot from '../../index.js';
+import { eventInfo } from 'types/knex.js';
 
 export const data = new SlashCommandSubcommandBuilder()
     .setName('conclude')

@@ -1,5 +1,6 @@
 import { Message } from 'discord.js';
-import bot, { activeShift, loggedShift } from '../index.js';
+import bot from '../index.js';
+import { activeShift, loggedShift } from 'types/knex.js';
 
 export async function execute(oldMessage: Message, newMessage: Message) {
     try {
