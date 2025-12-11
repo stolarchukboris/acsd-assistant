@@ -1,6 +1,6 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { RestOrArray, APIEmbedField, EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, ChatInputCommandInteraction, InteractionReplyOptions } from 'discord.js';
+import { RestOrArray, APIEmbedField, EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, ChatInputCommandInteraction, InteractionReplyOptions, Partials } from 'discord.js';
 import { config } from 'dotenv';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
@@ -45,6 +45,19 @@ export type starboardMessage = Readonly<{
     originMessage: string;
     starboardMessage: string;
     amountOfReactions: number;
+}>;
+
+export type activeShift = Readonly<{
+    robloxId: string;
+    startedTimestamp: string;
+}>;
+
+export type loggedShift = Readonly<{
+    shiftId: string;
+    robloxId: string;
+    startedTimestamp: string;
+    endedTimestamp: string;
+    lenSeconds: string;
 }>;
 
 class Bot extends Client {
@@ -215,11 +228,11 @@ class Bot extends Client {
     get embed(): EmbedBuilder {
         return new EmbedBuilder()
             .setTimestamp()
-            .setFooter({ text: `${this.name}${this.commit ? ` • ${this.commit}` : ''}` });
+            .setFooter({ text: `${this.name}${this.commit ? ` • ${this.commit.substring(0, 7)}` : ''}` });
     }
 
     constructor() {
-        super({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+        super({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent], partials: [Partials.Message] });
 
         this.initCommands()
             .then(_ => this.initEvents())

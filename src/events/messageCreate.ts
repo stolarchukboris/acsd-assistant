@@ -1,18 +1,24 @@
 import { Message } from 'discord.js';
-import bot from '../index.js';
+import bot, { activeShift } from '../index.js';
 
 export async function execute(message: Message) {
-    if (!(message.channelId === '1441367406512570389' && message.webhookId === '1441367761887559730')) return;
+    try {
+        if (!(message.channelId === '1441367406512570389' && message.webhookId === '1441367761887559730')) return;
 
-    const userId = message.embeds[0].description?.match(/\(([^)]+)\)/)?.[1];
+        const userId = message.embeds[0].description?.match(/\(([^)]+)\)/)?.[1];
 
-    if (!userId) return;
+        if (!userId) return;
 
-    await bot.knex('activeShifts')
-        .insert({
-            robloxId: userId,
-            startedTimestamp: message.embeds[0]
-        });
+        await bot.knex<activeShift>('activeShifts')
+            .insert({
+                robloxId: userId,
+                startedTimestamp: String(Math.floor(message.createdTimestamp / 1000))
+            });
 
-    await message.react('🟩');
+        await message.react('🟦');
+    } catch (error) {
+        console.error(error);
+        
+        await message.react('❌');
+    }
 }
