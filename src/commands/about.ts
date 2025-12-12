@@ -13,7 +13,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 .setColor('Blurple')
                 .setTitle('ACSD Assistant information.')
                 .setDescription(`Below is plenty of miscellaneous information about this bot instance.
-You can view the source code in the [repository](https://github.com/stolarchukboris/).\n
+You can view the source code in the [repository](https://github.com/stolarchukboris/acsd-assistant).\n
 \`\`\`ini
 [
     Instance username: ${interaction.client.user.username}#${interaction.client.user.discriminator}
