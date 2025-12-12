@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ComponentType, SlashCommandSubcommandBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ComponentType, SlashCommandSubcommandBuilder, GuildMember } from 'discord.js';
 import bot from '../../index.js';
 import axios, { AxiosResponse } from 'axios';
 import { personnelPartial } from 'types/knex.js';
@@ -16,14 +16,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const username = interaction.options.getString('roblox_username', true);
     const key = bot.env.OPEN_CLOUD_API_KEY;
 
-    const existingUser = await bot.knex<personnelPartial>('personnel')
+    const existingDiscord = await bot.knex<personnelPartial>('personnel')
         .select('*')
         .where('discordId', interaction.user.id)
         .first();
+    const existingRoblox = await bot.knex<personnelPartial>('personnel')
+        .select('*')
+        .where('robloxUsername', username)
+        .first();
 
-    if (existingUser) return await bot.sendEmbed(interaction, {
+    if (existingRoblox || existingDiscord) return await bot.sendEmbed(interaction, {
         type: 'error',
-        message: `You are already registered in the database as ${existingUser.robloxUsername} (${existingUser.robloxId}). To register with a different account, you have to \`/unlink\` it first.`
+        message: existingRoblox
+            ? `<@${existingRoblox.discordId}> is already registered as ${existingRoblox.robloxUsername} (${existingRoblox.robloxId}).`
+            : `You are already registered as ${existingDiscord?.robloxUsername} (${existingDiscord?.robloxId}).`
     });
 
     if (!key) return await bot.sendEmbed(interaction, {
@@ -38,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (responseId.data.data.length === 0 || !responseId) return await bot.sendEmbed(interaction, {
         type: 'notFound',
-        message: 'Such user is banned or does not exist.'
+        message: `A user named \`${username}\` is banned or does not exist.`
     });
 
     const userId = responseId.data.data[0].id;
@@ -104,12 +110,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     await confirmation?.deferUpdate();
 
     if (confirmation?.customId === 'confirm') {
+        const rankRole = (interaction.member as GuildMember)?.roles.cache
+            .find(role => role.name.match(/\|([^|]+)\|/)?.[1] ?? (role.name === 'Executive Director' || role.name === 'Deputy Director'));
+
+        if (!rankRole) return await bot.sendEmbed(interaction, {
+            type: 'error',
+            message: 'You have not been assigned a rank role yet. Please reach out to the ACSD administration about this.',
+            components: []
+        });
+
+        const match = rankRole.name.match(/\|([^|]+)\|/)?.[1];
+        const rank = match ? match.trim() : rankRole.name;
+
         await bot.knex<personnelPartial>('personnel')
             .insert({
                 discordId: interaction.user.id,
                 robloxId: userId,
                 robloxUsername: responseUser.data.name,
-                acsdRank: 'Recruit'
+                acsdRank: rank
             });
 
         await bot.sendEmbed(confirmation, {
@@ -117,7 +135,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             message: 'Successfully registered in the ACSD database.',
             fields: [
                 { name: 'Linked Roblox account:', value: `[${responseUser.data.name}](https://www.roblox.com/users/${userId}/profile)`, inline: true },
-                { name: 'Rank:', value: 'Recruit', inline: true }
+                { name: 'Rank:', value: rank, inline: true }
             ],
             components: []
         });

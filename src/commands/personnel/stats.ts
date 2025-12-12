@@ -17,9 +17,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
     const focusedValue = interaction.options.getFocused();
-    const choices = await bot.knex<personnelPartial>('personnel')
-        .select('*');
-
+    const choices = await bot.knex<personnelPartial>('personnel').select('*');
     const filtered = choices.map(guard => guard.robloxUsername).filter(choice => choice.toLowerCase().startsWith(focusedValue.toLowerCase()));
 
     await interaction.respond(filtered.map(choice => ({ name: choice, value: choice })).slice(0, 25));
