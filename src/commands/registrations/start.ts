@@ -140,20 +140,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 acsdRank: rank
             });
 
-        const userMsg = await bot.sendEmbed(confirmation, {
-            type: 'success',
-            message: 'Successfully forwarded a registration request to the ACSD administration. You will be notified of their decision.',
-            fields: [
-                { name: 'Linked Roblox account:', value: `[${responseUser.data.name}](https://www.roblox.com/users/${userId}/profile)`, inline: true },
-                { name: 'Rank:', value: rank, inline: true }
-            ],
-            components: []
-        }) as Message;
-
-        await bot.knex<personnelPartial & { userMessageId: string }>('pendingRegs')
-            .update('userMessageId', userMsg.id)
-            .where('discordId', interaction.user.id);
-
         const adminMsg = await (bot.channels.cache.get(bot.env.PENDING_REGS_CH_ID) as TextChannel).send({
             embeds: [
                 bot.embed
@@ -173,6 +159,16 @@ Their rank is **${rank}**.`),
         await bot.knex<personnelPartial & { adminMessageId: string }>('pendingRegs')
             .update('adminMessageId', adminMsg.id)
             .where('discordId', interaction.user.id);
+
+        await bot.sendEmbed(confirmation, {
+            type: 'success',
+            message: 'Successfully forwarded a registration request to the ACSD administration. You will be notified of their decision.',
+            fields: [
+                { name: 'Linked Roblox account:', value: `[${responseUser.data.name}](https://www.roblox.com/users/${userId}/profile)`, inline: true },
+                { name: 'Rank:', value: rank, inline: true }
+            ],
+            components: []
+        });
     } else if (confirmation?.customId === 'cancel') await bot.sendEmbed(confirmation, {
         type: 'cancel',
         message: 'Registration cancelled.',
