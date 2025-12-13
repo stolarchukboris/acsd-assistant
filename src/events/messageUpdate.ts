@@ -19,7 +19,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
                     robloxId: userId,
                     startedTimestamp: (newMessage.embeds[0].fields[0].value.match(/\:([^:]+)\>/) as RegExpMatchArray)[1],
                     endedTimestamp: (newMessage.embeds[0].fields[1].value.match(/\:([^:]+)\>/) as RegExpMatchArray)[1],
-                    lenSeconds: Number(newMessage.embeds[0].fields[2].value.split(' ')[0])
+                    lenMinutes: Number(newMessage.embeds[0].fields[2].value.split(' ')[0])
                 });
 
             await newMessage.react('🟩');

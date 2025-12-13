@@ -32,7 +32,7 @@ export type loggedShift = Readonly<{
     robloxId: string;
     startedTimestamp: string;
     endedTimestamp: string;
-    lenSeconds: number;
+    lenMinutes: number;
 }>;
 
 export type personnelFull = Readonly<{

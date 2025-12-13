@@ -47,7 +47,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const totalTime = await bot.knex<loggedShift>('loggedShifts')
         .select('*')
         .where('robloxId', generalStats.robloxId)
-        .then(stats => stats.map(stat => stat.lenSeconds).reduce((a, b) => a + b, 0));
+        .then(stats => stats.map(stat => stat.lenMinutes).reduce((a, b) => a + b, 0));
 
     let pfpURL = bot.logos.placeholder;
     
@@ -67,7 +67,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                     { name: 'Linked Discord:', value: `<@${generalStats.discordId}>`, inline: true },
                     { name: 'Linked Roblox:', value: `[${generalStats.robloxUsername}](https://www.roblox.com/users/${generalStats.robloxId}/profile)`, inline: true },
                     { name: 'Register date:', value: `<t:${Math.floor(Date.parse(generalStats.entryCreated) / 1000)}>`, inline: true },
-                    { name: 'Total time on-duty:', value: `${totalTime} seconds.`, inline: true },
+                    { name: 'Total time on-duty:', value: `${totalTime} minutes.`, inline: true },
                     { name: 'Total credits:', value: credits?.amount.toString() ?? '0', inline: true }
                 )
         ]
