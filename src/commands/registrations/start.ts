@@ -45,7 +45,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     const rankRole = (interaction.member as GuildMember)?.roles.cache
-        .find(role => role.name.match(/\|([^|]+)\|/)?.[1] ?? (role.name === 'Executive Director' || role.name === 'Deputy Director'));
+        .find(role => role.name.match(/Security - L\d \|([^|]+)\|/)?.[1] ?? (role.name === 'Executive Director' || role.name === 'Deputy Director'));
 
     if (!rankRole) return await interaction.editReply({
         embeds: [
@@ -106,7 +106,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             .setURL(`https://www.roblox.com/users/${userId}/profile`)
     );
 
-    const match = rankRole.name.match(/\|([^|]+)\|/)?.[1];
+    const match = rankRole.name.match(/Security - L\d \|([^|]+)\|/)?.[1];
     const rank = match ? match.trim() : rankRole.name;
     const response = await interaction.editReply({
         embeds: [
