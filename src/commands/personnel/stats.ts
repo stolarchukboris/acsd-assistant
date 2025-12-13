@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction, GuildMember } from 'discord.js';
 import bot from '../../index.js';
-import { personnelFull, personnelPartial } from 'types/knex.js';
+import axios from 'axios';
+import { loggedShift, personnelCredits, personnelFull, personnelPartial } from 'types/knex.js';
 
 export const data = new SlashCommandSubcommandBuilder()
     .setName('stats')
@@ -15,20 +16,62 @@ export const data = new SlashCommandSubcommandBuilder()
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-    const member = interaction.options.getMember('server_member');
-    const player = interaction.options.getString('roblox_username');
+    const member = interaction.options.getMember('server_member') as GuildMember | null;
+    const playerUsername = interaction.options.getString('roblox_username');
 
-    if (!(member || player)) {
-        const generalStats = await bot.knex<personnelFull>('personnel')
-            .select('*')
-            .where('discordId', interaction.user.id)
-            .first();
+    let generalStats;
 
-        if (!generalStats) return await bot.sendEmbed(interaction, {
-            type: 'notFound',
-            message: 'You are not registered in the ACSD database.'
-        })
-    }
+    if (!(member || playerUsername)) generalStats = await bot.knex<personnelFull>('personnel')
+        .select('*')
+        .where('discordId', interaction.user.id)
+        .first();
+    else if (member) generalStats = await bot.knex<personnelFull>('personnel')
+        .select('*')
+        .where('discordId', member.id)
+        .first();
+    else if (playerUsername) generalStats = await bot.knex<personnelFull>('personnel')
+        .select('*')
+        .where('robloxUsername', playerUsername)
+        .first();
+
+    if (!generalStats) return await interaction.editReply({
+        embeds: [
+            bot.embeds.notFound.setDescription(`${member ?? playerUsername ?? interaction.user} ${member || playerUsername ? 'is' : 'are'} not registered in the ACSD database.`)
+        ]
+    });
+
+    const credits = await bot.knex<personnelCredits>('credits')
+        .select('*')
+        .where('robloxId', generalStats.robloxId)
+        .first();
+    const totalTime = await bot.knex<loggedShift>('loggedShifts')
+        .select('*')
+        .where('robloxId', generalStats.robloxId)
+        .then(stats => stats.map(stat => stat.lenSeconds).reduce((a, b) => a + b, 0));
+
+    let pfpURL = bot.logos.placeholder;
+    
+    const key = bot.env.OPEN_CLOUD_API_KEY;
+
+    if (key) await axios.get(`https://apis.roblox.com/cloud/v2/users/${generalStats.robloxId}:generateThumbnail?shape=SQUARE`, { headers: { 'x-api-key': key } })
+        .then(res => pfpURL = res.data.response.imageUri)
+        .catch(_ => {});
+
+    await interaction.editReply({
+        embeds: [
+            bot.embed
+                .setColor('Blurple')
+                .setThumbnail(pfpURL)
+                .setTitle(`${generalStats.robloxUsername}'s statistics.`)
+                .setFields(
+                    { name: 'Linked Discord:', value: `<@${generalStats.discordId}>`, inline: true },
+                    { name: 'Linked Roblox:', value: `[${generalStats.robloxUsername}](https://www.roblox.com/users/${generalStats.robloxId}/profile)`, inline: true },
+                    { name: 'Register date:', value: `<t:${Math.floor(Date.parse(generalStats.entryCreated) / 1000)}>`, inline: true },
+                    { name: 'Total time on-duty:', value: `${totalTime} seconds.`, inline: true },
+                    { name: 'Total credits:', value: credits?.amount.toString() ?? '0', inline: true }
+                )
+        ]
+    });
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {

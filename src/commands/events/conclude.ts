@@ -40,8 +40,9 @@ export async function execute(interaction: ChatInputCommandInteraction, event: e
         ]
     });
 
-    await bot.sendEmbed(interaction, {
-        type: 'success',
-        message: 'Successfully concluded the scheduled event.'
+    await interaction.editReply({
+        embeds: [
+            bot.embeds.success.setDescription('Successfully concluded the scheduled event.')
+        ]
     });
 }

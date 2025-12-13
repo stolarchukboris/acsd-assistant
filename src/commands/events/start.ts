@@ -27,7 +27,7 @@ export async function execute(interaction: ChatInputCommandInteraction, event: e
     const gameName = event.eventGameName;
     const gameThumbnail = event.gameThumbnailUrl;
     const desc = `The scheduled event in ${gameName} is starting now.${join && `\n\n**Join the event:** ${join}`}`;
-    
+
     const annsMessage = channel.messages.cache.get(event.annsMessageId);
 
     if (annsMessage) await annsMessage.reply({
@@ -42,9 +42,11 @@ export async function execute(interaction: ChatInputCommandInteraction, event: e
         ]
     });
 
-    await bot.sendEmbed(interaction, {
-        type: 'success',
-        message: 'Successfully started the scheduled event.',
-        fields: [{ name: 'Event ID', value: eventId }]
+    await interaction.editReply({
+        embeds: [
+            bot.embeds.success
+                .setDescription('Successfully started the scheduled event.')
+                .setFields({ name: 'Event ID:', value: eventId })
+        ]
     });
 }

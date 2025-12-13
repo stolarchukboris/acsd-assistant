@@ -41,8 +41,9 @@ export async function execute(interaction: ChatInputCommandInteraction, event: e
         ]
     });
 
-    await bot.sendEmbed(interaction, {
-        type: 'success',
-        message: 'Successfully cancelled the scheduled event.'
+    await interaction.editReply({
+        embeds: [
+            bot.embeds.success.setDescription('Successfully cancelled the scheduled event.')
+        ]
     });
 }

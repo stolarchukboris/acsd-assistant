@@ -28,6 +28,33 @@ class Bot extends Client {
 
     knex!: Knex;
 
+    embeds = {
+        'accessDenied': this.embed
+            .setColor('Red')
+            .setTitle('Access denied.')
+            .setThumbnail(this.logos.cross),
+        'error': this.embed
+            .setColor('Red')
+            .setTitle('Error.')
+            .setThumbnail(this.logos.warning),
+        'warning': this.embed
+            .setColor('Yellow')
+            .setTitle('Warning.')
+            .setThumbnail(this.logos.warning),
+        'success': this.embed
+            .setColor('Green')
+            .setTitle('Success.')
+            .setThumbnail(this.logos.checkmark),
+        'cancel': this.embed
+            .setColor(0)
+            .setTitle('Cancelled.')
+            .setThumbnail(this.logos.cross),
+        'notFound': this.embed
+            .setColor('Grey')
+            .setTitle('Not found.')
+            .setThumbnail(this.logos.placeholder)
+    } as const;
+
     private async initCommands() {
         const foldersPath = join(__dirname, 'commands');
         const items = readdirSync(foldersPath);
@@ -123,62 +150,6 @@ class Bot extends Client {
             console.log('[CI] Workflow test passed. Shutting down.');
             process.exit(0);
         }
-    }
-    
-    /**
-     * Sends an embed of a selected type as an interaction response.
-     * 
-     * @param {ChatInputCommandInteraction} interaction An interaction to respond to.
-     * @param {premadeEmbedOptions} options Embed {@link premadeEmbedOptions | options}.
-     * 
-     * @returns An embed interaction response.
-     */
-    async sendEmbed(interaction: Exclude<Interaction, AutocompleteInteraction>, options: premadeEmbedOptions) {
-        const embeds = {
-            'accessDenied': this.embed
-                .setColor('Red')
-                .setTitle('Access denied.')
-                .setDescription(options.message ?? 'You are not authorized to run this command.')
-                .setThumbnail(this.logos.warning),
-            'error': this.embed
-                .setColor('Red')
-                .setTitle('Error.')
-                .setDescription(options.message ?? 'An error has occured while executing this command.')
-                .setThumbnail(this.logos.warning),
-            'warning': this.embed
-                .setColor('Yellow')
-                .setTitle('Warning.')
-                .setDescription(options.message ?? 'The supplied data is invalid.')
-                .setThumbnail(this.logos.warning),
-            'success': this.embed
-                .setColor('Green')
-                .setTitle('Success.')
-                .setDescription(options.message ?? 'Successfully executed the command.')
-                .setThumbnail(this.logos.checkmark),
-            'cancel': this.embed
-                .setColor(0)
-                .setTitle('Cancelled.')
-                .setDescription(options.message ?? 'This operation has been cancelled.')
-                .setThumbnail(this.logos.cross),
-            'notFound': this.embed
-                .setColor('Grey')
-                .setTitle('Not found.')
-                .setDescription(options.message ?? 'No elements have been found matching your request.')
-        } as const;
-
-        const embed = embeds[options.type];
-
-        if (options.fields) embed.setFields(...options.fields);
-        if (options.image) embed.setImage(options.image);
-
-        const replyOptions: InteractionReplyOptions | InteractionEditReplyOptions = { embeds: [embed] };
-
-        if (options.ephemeral) replyOptions.flags = 'Ephemeral';
-        replyOptions.components = options.components;
-
-        if (!(interaction.deferred || interaction.replied)) return await interaction.reply(replyOptions as InteractionReplyOptions);
-
-        return options.followUp ? await interaction.followUp(replyOptions as InteractionReplyOptions) : await interaction.editReply(replyOptions as InteractionEditReplyOptions);
     }
 
     get embed(): EmbedBuilder {

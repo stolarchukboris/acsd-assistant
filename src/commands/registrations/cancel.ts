@@ -12,9 +12,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .where('discordId', interaction.user.id)
         .first();
 
-    if (!req) return await bot.sendEmbed(interaction, {
-        type: 'error',
-        message: 'You don\'t have an active registration request.'
+    if (!req) return await interaction.editReply({
+        embeds: [
+            bot.embeds.error.setDescription('You don\'t have an active registration request.')
+        ]
     });
 
     await bot.knex<personnelPartial>('pendingRegs').del().where('discordId', interaction.user.id);
@@ -25,13 +26,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 .setColor(0)
                 .setThumbnail(bot.logos.cross)
                 .setTitle('Request deleted.')
-                .setDescription(`${interaction.user} has deleted their registration request.`)
+                .setDescription(`${interaction.user} has cancelled their registration request.`)
         ],
         components: []
     });
 
-    await bot.sendEmbed(interaction, {
-        type: 'success',
-        message: 'Successfully removed your registration request.'
+    await interaction.editReply({
+        embeds: [
+            bot.embeds.success.setDescription('Successfully cancelled your registration request.')
+        ]
     });
 }

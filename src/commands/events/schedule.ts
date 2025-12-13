@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, TextChannel } from 'discord.js';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import bot from '../../index.js';
 import { eventInfo } from 'types/knex.js';
 
@@ -38,24 +38,30 @@ export async function execute(interaction: ChatInputCommandInteraction, channel:
         .andWhere('guildId', interaction.guild?.id)
         .first();
 
-    if (existingEvent) return await bot.sendEmbed(interaction, {
-        type: 'warning',
-        message: 'There is already an event scheduled for this time.'
+    if (existingEvent) return await interaction.editReply({
+        embeds: [
+            bot.embeds.error.setDescription('There is already an event scheduled for this time.')
+        ]
     });
 
-    if (time <= Math.round(Date.now() / 1000)) return await bot.sendEmbed(interaction, {
-        type: 'warning',
-        message: 'The event cannot be scheduled in the past.'
+    if (time <= Math.round(Date.now() / 1000)) return await interaction.editReply({
+        embeds: [
+            bot.embeds.error.setDescription('Cannot schedule an event in the past.')
+        ]
     });
 
     const eventId = crypto.randomUUID();
     const placeid = gameUrl.split('/')[4];
     const gameResponse = await axios.get(`https://www.roblox.com/places/api-get-details?assetId=${placeid}`).catch(async _ => {
-        return await bot.sendEmbed(interaction, {
-            type: 'warning',
-            message: 'Could not find the provided game.'
+        await interaction.editReply({
+            embeds: [
+                bot.embeds.error.setDescription('Could not find the provided game.')
+            ]
         });
-    }) as AxiosResponse;
+        return;
+    });
+
+    if (!gameResponse) return;
 
     const gameName: string = gameResponse.data.Name;
     const eventDesc = `**Event duration**: ${duration}\n\n**This event is going to take place in** [${gameName}](${gameUrl}).${comment && `\n\n**Note from host:** ${comment}`}\n\n**React with :white_check_mark: if you're planning to attend this event.**`;
@@ -96,9 +102,11 @@ export async function execute(interaction: ChatInputCommandInteraction, channel:
         .update('annsMessageId', sentAnns.id)
         .where('eventId', eventId);
 
-    await bot.sendEmbed(interaction, {
-        type: 'success',
-        message: 'Successfully scheduled an event.',
-        fields: [{ name: 'Event ID', value: eventId }]
+    await interaction.editReply({
+        embeds: [
+            bot.embeds.success
+                .setDescription('Successfully scheduled the event.')
+                .setFields({ name: 'Event ID:', value: eventId })
+        ]
     });
 }

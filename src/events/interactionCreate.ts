@@ -13,6 +13,8 @@ export async function execute(interaction: Interaction) {
         if (!regReq) return;
 
         if (interaction.customId === 'confirm') {
+            await interaction.deferUpdate();
+            
             await bot.knex<personnelPartial>('personnel')
                 .insert({
                     discordId: regReq.discordId,
@@ -34,15 +36,16 @@ You can now easily access your ACSD **statistics** and **disciplinary records** 
 Additionally, you will receive notifications about your disciplinary records and events you are participating in (WIP).
 You can control which notifications should be delivered to you: check out the \`/settings alter\` command (WIP).`)
                 ]
-            }).catch(async _ => await bot.sendEmbed(interaction, {
-                type: 'warning',
-                message: `Could not DM <@${regReq.discordId}> about the registration. Please inform them manually.`,
-                followUp: true
+            }).catch(async _ => await interaction.followUp({
+                embeds: [
+                    bot.embeds.warning.setDescription(`Could not DM <@${regReq.discordId}> about the registration. Please inform them manually.`)
+                ]
             }));
 
-            await bot.sendEmbed(interaction, {
-                type: 'success',
-                message: `Successfully registered <@${regReq.discordId}> in the ACSD database.`,
+            await interaction.editReply({
+                embeds: [
+                    bot.embeds.success.setDescription(`Successfully registered <@${regReq.discordId}> in the ACSD database.`)
+                ],
                 components: []
             });
         } else {
@@ -60,7 +63,7 @@ You can control which notifications should be delivered to you: check out the \`
 
             await interaction.showModal(reasonModal);
 
-            const modalSubmit = await interaction.awaitModalSubmit({ time: 3_600_000, filter: i => i.user.id === interaction.user.id && i.customId === `reasonModal${interaction.id}` }).catch(_ => {});
+            const modalSubmit = await interaction.awaitModalSubmit({ time: 3_600_000, filter: i => i.user.id === interaction.user.id && i.customId === `reasonModal${interaction.id}` }).catch(_ => { });
 
             if (!modalSubmit) return;
 
@@ -79,16 +82,18 @@ You can control which notifications should be delivered to you: check out the \`
 Please review the denial reason below. If you have any questions, please contact the ACSD administration.`)
                         .setFields({ name: 'Reason:', value: reason })
                 ]
-            }).catch(async _ => await bot.sendEmbed(modalSubmit, {
-                type: 'warning',
-                message: `Could not DM <@${regReq.discordId}> about the registration. Please inform them manually.`,
-                followUp: true
+            }).catch(async _ => await modalSubmit.followUp({
+                embeds: [
+                    bot.embeds.warning.setDescription(`Could not DM <@${regReq.discordId}> about the registration. Please inform them manually.`)
+                ]
             }));
 
-            await bot.sendEmbed(modalSubmit, {
-                type: 'success',
-                message: `Successfully denied <@${regReq.discordId}>'s registration request.`,
-                fields: [{ name: 'Reason:', value: reason }],
+            await modalSubmit.editReply({
+                embeds: [
+                    bot.embeds.success
+                        .setDescription(`Successfully denied <@${regReq.discordId}>'s registration request.`)
+                        .setFields({ name: 'Reason:', value: reason })
+                ],
                 components: []
             });
         }
@@ -121,8 +126,12 @@ Please review the denial reason below. If you have any questions, please contact
 
         const perms = interaction.member?.permissions as Readonly<PermissionsBitField>;
 
-        if ((command.dev && !(interaction.user.id === bot.env.OWNER_ID)) ||
-            (command.admin && !perms.has('Administrator'))) return await bot.sendEmbed(interaction, { type: 'accessDenied' });
+        if ((command.dev && !(interaction.user.id === bot.env.OWNER_ID))
+            || (command.admin && !perms.has('Administrator'))) return await interaction.editReply({
+                embeds: [
+                    bot.embeds.accessDenied.setDescription('You are not authorized to run this command.')
+                ]
+            });
 
         const args = [];
 
@@ -134,7 +143,11 @@ Please review the denial reason below. If you have any questions, please contact
             const roles = interaction.member?.roles as GuildMemberRoleManager;
 
             if (!(allowedIds.includes(interaction.user.id) || roles.cache.hasAny(...allowedIds) || perms.has('Administrator')))
-                return await bot.sendEmbed(interaction, { type: 'accessDenied' });
+                return await interaction.editReply({
+                    embeds: [
+                        bot.embeds.accessDenied.setDescription('You are not authorized to run this command.')
+                    ]
+                });
 
             const channelSetting = await bot.knex<settingInfo>('eventAnnsChannelSetting')
                 .select('*')
@@ -145,15 +158,17 @@ Please review the denial reason below. If you have any questions, please contact
                 .where('guildId', interaction.guild?.id)
                 .first();
 
-            if (!channelSetting || !roleSetting) return await bot.sendEmbed(interaction, {
-                type: 'error',
-                message: !channelSetting ? 'Event announcements channel not configured.' : 'Events ping role not configured.'
+            if (!channelSetting || !roleSetting) return await interaction.editReply({
+                embeds: [
+                    bot.embeds.error.setDescription(!channelSetting ? 'Event announcements channel not configured.' : 'Events ping role not configured.')
+                ]
             });
 
             const channel = bot.channels.cache.get(channelSetting.settingValue as string) as TextChannel;
-            if (!channel.isTextBased()) return await bot.sendEmbed(interaction, {
-                type: 'error',
-                message: 'The provided event announcements channel is not a text channel.'
+            if (!channel.isTextBased()) return await interaction.editReply({
+                embeds: [
+                    bot.embeds.error.setDescription('The provided event announcements channel is not a text channel.')
+                ]
             });
 
             if (command.data.name !== 'schedule') {
@@ -164,9 +179,10 @@ Please review the denial reason below. If you have any questions, please contact
                     .andWhere('guildId', interaction.guild?.id)
                     .first();
 
-                if (!event) return await bot.sendEmbed(interaction, {
-                    type: 'warning',
-                    message: `Even with ID \`${eventId}\` has not been found in the database.`
+                if (!event) return await interaction.editReply({
+                    embeds: [
+                        bot.embeds.error.setDescription(`Even with ID \`${eventId}\` has not been found in the database.`)
+                    ]
                 });
 
                 const statuses = {
@@ -177,9 +193,10 @@ Please review the denial reason below. If you have any questions, please contact
 
                 const status = statuses[command.data.name as keyof typeof statuses];
 
-                if (event.eventStatus === status) return await bot.sendEmbed(interaction, {
-                    type: 'warning',
-                    message: status === 1 ? 'This event has not been started yet.' : 'This event has already been started.'
+                if (event.eventStatus === status) return await interaction.editReply({
+                    embeds: [
+                        bot.embeds.error.setDescription(status === 1 ? 'This event has not been started yet.' : 'This event has already been started.')
+                    ]
                 });
 
                 args.push(event);
@@ -193,18 +210,17 @@ Please review the denial reason below. If you have any questions, please contact
         } catch (error) {
             console.error(error);
 
-            if (interaction.replied || interaction.deferred) {
-                await bot.sendEmbed(interaction, {
-                    type: 'error',
-                    ephemeral: true,
-                    followUp: true
+            interaction.replied || interaction.deferred
+                ? await interaction.followUp({
+                    embeds: [
+                        bot.embeds.error.setDescription('An error has occured while executing this command.')
+                    ]
+                })
+                : await interaction.reply({
+                    embeds: [
+                        bot.embeds.error.setDescription('An error has occured while executing this command.')
+                    ]
                 });
-            } else {
-                await bot.sendEmbed(interaction, {
-                    type: 'error',
-                    ephemeral: true
-                });
-            }
         }
     } else if (interaction.isAutocomplete()) {
         try {

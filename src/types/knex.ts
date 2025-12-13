@@ -32,7 +32,7 @@ export type loggedShift = Readonly<{
     robloxId: string;
     startedTimestamp: string;
     endedTimestamp: string;
-    lenSeconds: string;
+    lenSeconds: number;
 }>;
 
 export type personnelFull = Readonly<{
@@ -40,9 +40,13 @@ export type personnelFull = Readonly<{
     robloxId: string;
     robloxUsername: string;
     acsdRank: string;
-    credits: string;
     entryCreated: string;
     entryUpdated: string;
 }>;
 
-export type personnelPartial = Omit<personnelFull, 'credits' | 'entryCreated' | 'entryUpdated'>;
+export type personnelPartial = Omit<personnelFull, 'entryCreated' | 'entryUpdated'>;
+
+export type personnelCredits = Readonly<{
+    robloxId: string;
+    amount: number;
+}>;

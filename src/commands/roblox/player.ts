@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, ColorResolvable, SlashCommandSubcommandBuilder } from 'discord.js';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import bot from '../../index.js';
 
 export const data = new SlashCommandSubcommandBuilder()
@@ -19,19 +19,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         "excludeBannedUsers": true
     });
 
-    if (responseId.data.data.length === 0 || !responseId) return await bot.sendEmbed(interaction, {
-        type: 'notFound',
-        message: 'No users have been found or the user is banned.'
+    if (responseId.data.data.length === 0 || !responseId) return await interaction.editReply({
+        embeds: [
+            bot.embeds.notFound.setDescription(`A user named \`${uname}\` is banned or does not exist.`)
+        ]
     });
 
     const userid = parseInt(responseId.data.data[0].id);
     const responsePresence = await axios.post('https://presence.roblox.com/v1/presence/users', { "userIds": [userid] });
-    const responseUser = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}`, { headers: { 'x-api-key': key } }).catch(async _ => {
-        return await bot.sendEmbed(interaction, {
-            type: 'notFound',
-            message: 'No users have been found or the user is banned.'
-        });
-    }) as AxiosResponse;
+    const responseUser = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}`, { headers: { 'x-api-key': key } });
+
+    if (!responseUser) return;
 
     const desc = responseUser.data.about || 'No description provided.';
 
@@ -39,7 +37,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}:generateThumbnail?shape=SQUARE`, { headers: { 'x-api-key': key } })
         .then(res => pfpURL = res.data.response.imageUri)
-        .catch(_ => _);
+        .catch(_ => {});
 
 
     const presences = {

@@ -27,13 +27,15 @@ export async function execute(interaction: ChatInputCommandInteraction, event: e
         .andWhere('guildId', interaction.guild?.id)
         .first();
 
-    if ((event.eventTime == time) || (time <= Math.floor(Date.now() / 1000))) return await bot.sendEmbed(interaction, {
-        type: 'warning',
-        message: event.eventTime === time ? 'The new event time cannot be the same as the old event time.' : 'The event cannot be rescheduled to the past.'
+    if ((event.eventTime == time) || (time <= Math.floor(Date.now() / 1000))) return await interaction.editReply({
+        embeds: [
+            bot.embeds.error.setDescription(event.eventTime === time ? 'The new event time cannot be the same as the old event time.' : 'The event cannot be rescheduled to the past.')
+        ]
     });
-    else if (eventAtThisTime) return await bot.sendEmbed(interaction, {
-        type: 'warning',
-        message: 'Schedule conflict. There is already an event scheduled for this time.'
+    else if (eventAtThisTime) return await interaction.editReply({
+        embeds: [
+            bot.embeds.error.setDescription('Schedule conflict. There is already an event scheduled for this time.')
+        ]
     });
 
     await bot.knex<eventInfo>('communityEvents')
@@ -78,9 +80,11 @@ export async function execute(interaction: ChatInputCommandInteraction, event: e
         });
     }
 
-    await bot.sendEmbed(interaction, {
-        type: 'success',
-        message: 'The event has been rescheduled successfully.',
-        fields: [{ name: 'Event ID', value: eventId }]
+    await interaction.editReply({
+        embeds: [
+            bot.embeds.success
+                .setDescription('Successfully updated the scheduled event.')
+                .setFields({ name: 'Event ID:', value: eventId })
+        ]
     });
 }

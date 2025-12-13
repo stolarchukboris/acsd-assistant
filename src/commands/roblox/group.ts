@@ -57,9 +57,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             ]
         });
     } catch (_) {
-        await bot.sendEmbed(interaction, {
-            type: 'notFound',
-            message: `No group matching the query \`${name}\` has been found.`
+        await interaction.editReply({
+            embeds: [
+                bot.embeds.notFound.setDescription(`No group matching the query \`${name}\` has been found.`)
+            ]
         });
     }
 }
