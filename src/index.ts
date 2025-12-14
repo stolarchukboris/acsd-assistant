@@ -4,7 +4,7 @@ import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommand
 import { config } from 'dotenv';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
-import { botCommand, premadeEmbedOptions } from 'types/discord';
+import { botCommand } from 'types/discord';
 const __dirname = import.meta.dirname;
 
 class Bot extends Client {

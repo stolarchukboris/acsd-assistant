@@ -1,14 +1,4 @@
-import { ActionRowBuilder, APIEmbedField, AutocompleteInteraction, ChatInputCommandInteraction, RestOrArray, SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
-
-export type premadeEmbedOptions = Readonly<{
-    type: 'accessDenied' | 'error' | 'warning' | 'success' | 'notFound' | 'cancel';
-    followUp?: boolean;
-    message?: string;
-    fields?: RestOrArray<APIEmbedField>;
-    image?: string;
-    ephemeral?: boolean;
-    components?: ActionRowBuilder<any>[];
-}>;
+import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 export type botCommand<T extends SlashCommandBuilder | SlashCommandSubcommandBuilder> = Readonly<{
     data: T;
