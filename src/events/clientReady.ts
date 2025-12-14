@@ -1,3 +1,4 @@
+import { managePendingLogs } from '../worker.js';
 import bot from '../index.js';
 import { ActivityType } from 'discord.js';
 
@@ -10,4 +11,14 @@ export async function execute() {
         status: 'dnd',
         activities: [{ name: 'fire in the hole', type: ActivityType.Custom }]
     });
+
+    while (true) {
+        try {
+            await managePendingLogs();
+
+            await new Promise(resolve => setTimeout(resolve, 2000));   
+        } catch (error) {
+            console.error(error);
+        }
+    }
 }

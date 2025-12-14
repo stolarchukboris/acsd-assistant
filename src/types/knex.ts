@@ -23,8 +23,16 @@ export type starboardMessage = Readonly<{
 }>;
 
 export type activeShift = Readonly<{
+    jobId: string;
+    whMessageId: string;
+    fwMessageId: string;
     robloxId: string;
     startedTimestamp: string;
+}>;
+
+export type pendingShift = Readonly<activeShift & {
+    endedTimestamp: string;
+    lenMinutes: number;
 }>;
 
 export type loggedShift = Readonly<{

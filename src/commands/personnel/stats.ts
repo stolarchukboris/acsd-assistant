@@ -13,6 +13,7 @@ export const data = new SlashCommandSubcommandBuilder()
     .addStringOption(o => o
         .setName('roblox_username')
         .setDescription('Search stats by user\'s Roblox username.')
+        .setAutocomplete(true)
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -36,7 +37,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (!generalStats) return await interaction.editReply({
         embeds: [
-            bot.embeds.notFound.setDescription(`${member ?? playerUsername ?? interaction.user} ${member || playerUsername ? 'is' : 'are'} not registered in the ACSD database.`)
+            bot.embeds.notFound.setDescription(`${(member ?? playerUsername) ?? 'You'} ${(member || playerUsername) ? 'is' : 'are'} not registered in the ACSD database.`)
         ]
     });
 

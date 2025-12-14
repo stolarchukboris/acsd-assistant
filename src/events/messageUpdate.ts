@@ -1,33 +1,43 @@
-import { Message } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import bot from '../index.js';
-import { activeShift, loggedShift } from 'types/knex.js';
+import { activeShift, pendingShift } from 'types/knex.js';
 
 export async function execute(oldMessage: Message, newMessage: Message) {
     try {
         if (oldMessage.partial) await oldMessage.fetch();
 
-        if (!(newMessage.channelId === '1441367406512570389' && newMessage.webhookId === '1441367761887559730')) return;
+        if (!(newMessage.channelId === bot.env.SHIFT_LOGS_CH_ID && newMessage.webhookId === '1441367761887559730')) return;
 
-        const userId = newMessage.embeds[0].description?.match(/\(([^)]+)\)/)?.[1];
-
-        if (!userId) return;
-
-        if (newMessage.embeds[0].title?.includes('concluded')) {
-            await bot.knex<loggedShift>('loggedShifts')
-                .insert({
-                    shiftId: crypto.randomUUID(),
-                    robloxId: userId,
-                    startedTimestamp: (newMessage.embeds[0].fields[0].value.match(/\:([^:]+)\>/) as RegExpMatchArray)[1],
-                    endedTimestamp: (newMessage.embeds[0].fields[1].value.match(/\:([^:]+)\>/) as RegExpMatchArray)[1],
-                    lenMinutes: Number(newMessage.embeds[0].fields[2].value.split(' ')[0])
-                });
-
-            await newMessage.react('🟩');
-        } else if (newMessage.embeds[0].title?.includes('cancelled')) await newMessage.react('🟥');
+        const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
+            .select('*')
+            .where('whMessageId', newMessage.id)
+            .first() as activeShift;
 
         await bot.knex<activeShift>('activeShifts')
             .del()
-            .where('robloxId', userId);
+            .where('robloxId', activeShiftEntry.robloxId);
+
+        const fwMessage = await (bot.channels.cache.get(bot.env.BACKUP_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(activeShiftEntry.fwMessageId);
+
+        await fwMessage.edit({ embeds: newMessage.embeds });
+
+        const timestampRegex = /\:([^:]+)\>/;
+        const fields = newMessage.embeds[0].fields;
+        const [started, ended] = [Number(fields[0].value.match(timestampRegex)![1]), Number(fields[1].value.match(timestampRegex)![1])];
+        const lengthMins = Math.round((ended - started) / 60);
+
+        await bot.knex<pendingShift>('pendingShiftLogs')
+            .insert({
+                jobId: activeShiftEntry.jobId,
+                robloxId: activeShiftEntry.robloxId,
+                whMessageId: activeShiftEntry.whMessageId,
+                fwMessageId: activeShiftEntry.fwMessageId,
+                startedTimestamp: String(started),
+                endedTimestamp: String(ended),
+                lenMinutes: lengthMins
+            });
+
+        await newMessage.react('🟨');
     } catch (error) {
         console.error(error);
 
