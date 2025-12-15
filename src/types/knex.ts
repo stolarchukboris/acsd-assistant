@@ -58,3 +58,13 @@ export type personnelCredits = Readonly<{
     robloxId: string;
     amount: number;
 }>;
+
+export type creditTransaction = Readonly<{
+    transactionId: string;
+    execRbxId: string;
+    targetRbxId: string;
+    delta: number;
+    balanceResult: number;
+    reason: string;
+    createdAt: string;
+}>;

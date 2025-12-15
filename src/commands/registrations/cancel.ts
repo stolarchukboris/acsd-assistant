@@ -7,6 +7,8 @@ export const data = new SlashCommandSubcommandBuilder()
     .setDescription('Cancel your registration request.');
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    await interaction.deferReply();
+
     const req = await bot.knex<personnelPartial & { adminMessageId: string }>('pendingRegs')
         .select('*')
         .where('discordId', interaction.user.id)

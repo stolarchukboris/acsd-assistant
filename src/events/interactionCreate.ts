@@ -122,12 +122,10 @@ Please review the denial reason below. If you have any questions, please contact
     }
 
     if (interaction.isChatInputCommand()) {
-        if (interaction.commandName !== 'ping') await interaction.deferReply();
-
         const perms = interaction.member?.permissions as Readonly<PermissionsBitField>;
 
         if ((command.dev && !(interaction.user.id === bot.env.OWNER_ID))
-            || (command.admin && !perms.has('Administrator'))) return await interaction.editReply({
+            || (command.admin && !perms.has('Administrator'))) return await interaction.reply({
                 embeds: [
                     bot.embeds.accessDenied.setDescription('You are not authorized to run this command.')
                 ]
@@ -143,7 +141,7 @@ Please review the denial reason below. If you have any questions, please contact
             const roles = interaction.member?.roles as GuildMemberRoleManager;
 
             if (!(allowedIds.includes(interaction.user.id) || roles.cache.hasAny(...allowedIds) || perms.has('Administrator')))
-                return await interaction.editReply({
+                return await interaction.reply({
                     embeds: [
                         bot.embeds.accessDenied.setDescription('You are not authorized to run this command.')
                     ]

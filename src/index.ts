@@ -28,32 +28,40 @@ class Bot extends Client {
 
     knex!: Knex;
 
-    embeds = {
-        'accessDenied': this.embed
-            .setColor('Red')
-            .setTitle('Access denied.')
-            .setThumbnail(this.logos.cross),
-        'error': this.embed
-            .setColor('Red')
-            .setTitle('Error.')
-            .setThumbnail(this.logos.warning),
-        'warning': this.embed
-            .setColor('Yellow')
-            .setTitle('Warning.')
-            .setThumbnail(this.logos.warning),
-        'success': this.embed
-            .setColor('Green')
-            .setTitle('Success.')
-            .setThumbnail(this.logos.checkmark),
-        'cancel': this.embed
-            .setColor(0)
-            .setTitle('Cancelled.')
-            .setThumbnail(this.logos.cross),
-        'notFound': this.embed
-            .setColor('Grey')
-            .setTitle('Not found.')
-            .setThumbnail(this.logos.placeholder)
-    } as const;
+    get embed() {
+        return new EmbedBuilder()
+            .setTimestamp()
+            .setFooter({ text: `${this.name}${this.commit ? ` • ${this.commit.substring(0, 7)}` : ''}` });
+    }
+
+    get embeds() {
+        return {
+            'accessDenied': this.embed
+                .setColor('Red')
+                .setTitle('Access denied.')
+                .setThumbnail(this.logos.cross),
+            'error': this.embed
+                .setColor('Red')
+                .setTitle('Error.')
+                .setThumbnail(this.logos.warning),
+            'warning': this.embed
+                .setColor('Yellow')
+                .setTitle('Warning.')
+                .setThumbnail(this.logos.warning),
+            'success': this.embed
+                .setColor('Green')
+                .setTitle('Success.')
+                .setThumbnail(this.logos.checkmark),
+            'cancel': this.embed
+                .setColor(0)
+                .setTitle('Cancelled.')
+                .setThumbnail(this.logos.cross),
+            'notFound': this.embed
+                .setColor('Grey')
+                .setTitle('Not found.')
+                .setThumbnail(this.logos.placeholder)
+        } as const;
+    }
 
     private async initCommands() {
         const foldersPath = join(__dirname, 'commands');
@@ -150,12 +158,6 @@ class Bot extends Client {
             console.log('[CI] Workflow test passed. Shutting down.');
             process.exit(0);
         }
-    }
-
-    get embed(): EmbedBuilder {
-        return new EmbedBuilder()
-            .setTimestamp()
-            .setFooter({ text: `${this.name}${this.commit ? ` • ${this.commit.substring(0, 7)}` : ''}` });
     }
 
     constructor() {

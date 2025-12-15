@@ -12,6 +12,8 @@ export const data = new SlashCommandSubcommandBuilder()
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    await interaction.deferReply();
+
     const key = bot.env.OPEN_CLOUD_API_KEY;
     const uname = interaction.options.getString('query', true);
     const responseId = await axios.post('https://users.roblox.com/v1/usernames/users', {
@@ -37,7 +39,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}:generateThumbnail?shape=SQUARE`, { headers: { 'x-api-key': key } })
         .then(res => pfpURL = res.data.response.imageUri)
-        .catch(_ => {});
+        .catch(_ => { });
 
 
     const presences = {

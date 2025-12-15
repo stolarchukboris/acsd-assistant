@@ -12,6 +12,8 @@ export const data = new SlashCommandSubcommandBuilder()
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    await interaction.deferReply();
+
     const key = bot.env.OPEN_CLOUD_API_KEY;
     const name = interaction.options.getString('query', true);
 

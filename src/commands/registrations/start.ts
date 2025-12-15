@@ -13,6 +13,8 @@ export const data = new SlashCommandSubcommandBuilder()
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    await interaction.deferReply();
+
     const username = interaction.options.getString('roblox_username', true);
     const key = bot.env.OPEN_CLOUD_API_KEY;
 

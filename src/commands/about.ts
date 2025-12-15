@@ -7,6 +7,8 @@ export const data = new SlashCommandBuilder()
     .setDescription('Know more about the bot.');
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    await interaction.deferReply();
+
     await interaction.editReply({
         embeds: [
             bot.embed

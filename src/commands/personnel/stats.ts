@@ -14,9 +14,16 @@ export const data = new SlashCommandSubcommandBuilder()
         .setName('roblox_username')
         .setDescription('Search stats by user\'s Roblox username.')
         .setAutocomplete(true)
+    ).addBooleanOption(o => o
+        .setName('hidden')
+        .setDescription('Whether to make the command output ephemeral (defaults to TRUE).')
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    const hidden = interaction.options.getBoolean('hidden') ?? true;
+
+    await interaction.deferReply(hidden ? { flags: 'Ephemeral' } : undefined);
+
     const member = interaction.options.getMember('server_member') as GuildMember | null;
     const playerUsername = interaction.options.getString('roblox_username');
 
@@ -26,13 +33,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .select('*')
         .where('discordId', interaction.user.id)
         .first();
-    else if (member) generalStats = await bot.knex<personnelFull>('personnel')
+    else generalStats = await bot.knex<personnelFull>('personnel')
         .select('*')
-        .where('discordId', member.id)
-        .first();
-    else if (playerUsername) generalStats = await bot.knex<personnelFull>('personnel')
-        .select('*')
-        .where('robloxUsername', playerUsername)
+        .where('discordId', member?.id)
+        .orWhere('robloxUsername', playerUsername)
         .first();
 
     if (!generalStats) return await interaction.editReply({
@@ -51,12 +55,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .then(stats => stats.map(stat => stat.lenMinutes).reduce((a, b) => a + b, 0));
 
     let pfpURL = bot.logos.placeholder;
-    
+
     const key = bot.env.OPEN_CLOUD_API_KEY;
 
     if (key) await axios.get(`https://apis.roblox.com/cloud/v2/users/${generalStats.robloxId}:generateThumbnail?shape=SQUARE`, { headers: { 'x-api-key': key } })
         .then(res => pfpURL = res.data.response.imageUri)
-        .catch(_ => {});
+        .catch(_ => { });
 
     await interaction.editReply({
         embeds: [
