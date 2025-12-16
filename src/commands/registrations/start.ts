@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ComponentType, SlashCommandSubcommandBuilder, GuildMember, TextChannel } from 'discord.js';
 import bot from '../../index.js';
 import axios from 'axios';
-import { personnelPartial } from 'types/knex.js';
+import { personnelInfo } from 'types/knex.js';
 
 export const data = new SlashCommandSubcommandBuilder()
     .setName('start')
@@ -18,7 +18,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const username = interaction.options.getString('roblox_username', true);
     const key = bot.env.OPEN_CLOUD_API_KEY;
 
-    const existingRequest = await bot.knex<personnelPartial>('pendingRegs')
+    const existingRequest = await bot.knex<personnelInfo>('pendingRegs')
         .select('*')
         .where('discordId', interaction.user.id)
         .first();
@@ -29,11 +29,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         ]
     });
 
-    const existingDiscord = await bot.knex<personnelPartial>('personnel')
+    const existingDiscord = await bot.knex<personnelInfo>('personnel')
         .select('*')
         .where('discordId', interaction.user.id)
         .first();
-    const existingRoblox = await bot.knex<personnelPartial>('personnel')
+    const existingRoblox = await bot.knex<personnelInfo>('personnel')
         .select('*')
         .where('robloxUsername', username)
         .first();
@@ -46,10 +46,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         ]
     });
 
-    const rankRole = (interaction.member as GuildMember)?.roles.cache
-        .find(role => role.name.match(/Security - L\d \|([^|]+)\|/)?.[1] ?? (role.name === 'Executive Director' || role.name === 'Deputy Director'));
+    const memberRoleNames = (interaction.member as GuildMember)?.roles.cache.map(role => role.name);
+    const roleSearchRegex = /Security - L\d \|([^|]+)\|/;
 
-    if (!rankRole) return await interaction.editReply({
+    let rankRoleName = memberRoleNames.find(role => role.match(roleSearchRegex))?.match(roleSearchRegex)?.[1].trim();
+
+    for (const highRank of bot.highRanks) if (memberRoleNames.some(role => role === highRank)) {
+        rankRoleName = highRank;
+
+        break;
+    }
+
+    if (!rankRoleName) return await interaction.editReply({
         embeds: [
             bot.embeds.error.setDescription('You have not been assigned a rank role yet. Please contact the ACSD administration about this.')
         ]
@@ -108,15 +116,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             .setURL(`https://www.roblox.com/users/${userId}/profile`)
     );
 
-    const match = rankRole.name.match(/Security - L\d \|([^|]+)\|/)?.[1];
-    const rank = match ? match.trim() : rankRole.name;
     const response = await interaction.editReply({
         embeds: [
             bot.embed
                 .setColor('Orange')
                 .setThumbnail(bot.logos.questionmark)
                 .setTitle('Confirmation.')
-                .setDescription(`Before proceeding, please verify the found Roblox account and your rank are correct.\n\nYour rank is **${rank}**.`),
+                .setDescription(`Before proceeding, please verify the found Roblox account and your rank are correct.\n\nYour rank is **${rankRoleName}**.`),
             profileEmbed
         ],
         components: [row]
@@ -140,12 +146,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     await confirmation?.deferUpdate();
 
     if (confirmation?.customId === 'confirm') {
-        await bot.knex<personnelPartial>('pendingRegs')
+        await bot.knex<personnelInfo>('pendingRegs')
             .insert({
                 discordId: interaction.user.id,
                 robloxId: userId,
                 robloxUsername: responseUser.data.name,
-                acsdRank: rank
+                acsdRank: rankRoleName
             });
 
         const adminMsg = await (bot.channels.cache.get(bot.env.PENDING_REGS_CH_ID) as TextChannel).send({
@@ -158,13 +164,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 Please verify that the Roblox account provided in the request (below) matches the one provided in their application, and that their rank is correct, then confirm or deny the request.
 
-Their rank is **${rank}**.`),
+Their rank is **${rankRoleName}**.`),
                 profileEmbed
             ],
             components: [row]
         });
 
-        await bot.knex<personnelPartial & { adminMessageId: string }>('pendingRegs')
+        await bot.knex<personnelInfo & { adminMessageId: string }>('pendingRegs')
             .update('adminMessageId', adminMsg.id)
             .where('discordId', interaction.user.id);
 
@@ -174,7 +180,7 @@ Their rank is **${rank}**.`),
                     .setDescription('Successfully forwarded a registration request to the ACSD administration. You will be notified of their decision.')
                     .setFields(
                         { name: 'Linked Roblox account:', value: `[${responseUser.data.name}](https://www.roblox.com/users/${userId}/profile)`, inline: true },
-                        { name: 'Rank:', value: rank, inline: true }
+                        { name: 'Rank:', value: rankRoleName, inline: true }
                     )
             ],
             components: []

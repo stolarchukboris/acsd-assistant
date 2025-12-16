@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, TextChannel } from 'discord.js';
 import bot from '../../index.js';
-import { personnelPartial } from 'types/knex.js';
+import { personnelInfo } from 'types/knex.js';
 
 export const data = new SlashCommandSubcommandBuilder()
     .setName('cancel')
@@ -9,7 +9,7 @@ export const data = new SlashCommandSubcommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
-    const req = await bot.knex<personnelPartial & { adminMessageId: string }>('pendingRegs')
+    const req = await bot.knex<personnelInfo & { adminMessageId: string }>('pendingRegs')
         .select('*')
         .where('discordId', interaction.user.id)
         .first();
@@ -20,7 +20,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         ]
     });
 
-    await bot.knex<personnelPartial>('pendingRegs').del().where('discordId', interaction.user.id);
+    await bot.knex<personnelInfo>('pendingRegs').del().where('discordId', interaction.user.id);
 
     await (bot.channels.cache.get(bot.env.PENDING_REGS_CH_ID) as TextChannel).messages.cache.get(req.adminMessageId)?.edit({
         embeds: [

@@ -1,11 +1,23 @@
-import { GuildMemberRoleManager, Interaction, ModalBuilder, PermissionsBitField, TextChannel, TextInputStyle } from 'discord.js';
+import { Interaction, ModalBuilder, TextInputStyle } from 'discord.js';
 import bot from '../index.js';
-import { eventInfo, personnelPartial, settingInfo } from 'types/knex.js';
+import { personnelInfo } from 'types/knex.js';
 import { botCommand } from 'types/discord.js';
 
 export async function execute(interaction: Interaction) {
     if (interaction.isButton() && !interaction.message.interactionMetadata && interaction.channelId === bot.env.PENDING_REGS_CH_ID) {
-        const regReq = await bot.knex<personnelPartial & { adminMessageId: string }>('pendingRegs')
+        const buttonUser = await bot.knex<personnelInfo>('personnel')
+            .select('*')
+            .where('discordId', interaction.user.id)
+            .first();
+
+        if (!(buttonUser && bot.highRanks.includes(buttonUser.acsdRank))) return await interaction.followUp({
+            embeds: [
+                bot.embeds.accessDenied.setDescription('You are not authorized to press this button.')
+            ],
+            flags: 'Ephemeral'
+        });
+
+        const regReq = await bot.knex<personnelInfo & { adminMessageId: string }>('pendingRegs')
             .select('*')
             .where('adminMessageId', interaction.message.id)
             .first();
@@ -14,8 +26,8 @@ export async function execute(interaction: Interaction) {
 
         if (interaction.customId === 'confirm') {
             await interaction.deferUpdate();
-            
-            await bot.knex<personnelPartial>('personnel')
+
+            await bot.knex<personnelInfo>('personnel')
                 .insert({
                     discordId: regReq.discordId,
                     robloxId: regReq.robloxId,
@@ -98,113 +110,43 @@ Please review the denial reason below. If you have any questions, please contact
             });
         }
 
-        await bot.knex<personnelPartial & { adminMessageId: string }>('pendingRegs')
+        await bot.knex<personnelInfo & { adminMessageId: string }>('pendingRegs')
             .del()
             .where('adminMessageId', interaction.message.id);
     }
 
     if (!(interaction.isChatInputCommand() || interaction.isAutocomplete())) return;
 
-    const command = bot.commands.get(interaction.commandName);
+    let command: botCommand<any> | undefined = bot.commands.get(interaction.commandName);
 
     if (!command) return console.error(`No command matching ${interaction.commandName} was found.`);
 
     const subcommandOption = interaction.options.getSubcommand(false);
 
-    let executor: botCommand<any> = command;
-
     if (subcommandOption) {
-        const subcommand = bot.subcommands.get(subcommandOption);
+        command = bot.subcommands.get(subcommandOption);
 
-        if (!subcommand) return console.error(`No subcommand matching ${interaction.commandName} was found.`);
-
-        executor = subcommand;
+        if (!command) return console.error(`No subcommand matching ${subcommandOption} was found.`);
     }
 
     if (interaction.isChatInputCommand()) {
-        const perms = interaction.member?.permissions as Readonly<PermissionsBitField>;
+        const args = [];
+        const commandUser = await bot.knex<personnelInfo>('personnel')
+            .select('*')
+            .where('discordId', interaction.user.id)
+            .first();
 
-        if ((command.dev && !(interaction.user.id === bot.env.OWNER_ID))
-            || (command.admin && !perms.has('Administrator'))) return await interaction.reply({
+        if ((command.dev && interaction.user.id !== bot.env.OWNER_ID)
+            || (command.highRank && !(commandUser && bot.highRanks.includes(commandUser.acsdRank)))) return await interaction.reply({
                 embeds: [
                     bot.embeds.accessDenied.setDescription('You are not authorized to run this command.')
                 ]
             });
 
-        const args = [];
-
-        if (command.eo) {
-            const permittedUsersSetting = await bot.knex<settingInfo>('eventUsersRolesSetting')
-                .select('*')
-                .where('guildId', interaction.guild?.id);
-            const allowedIds = permittedUsersSetting.map(setting => setting.settingValue) as string[];
-            const roles = interaction.member?.roles as GuildMemberRoleManager;
-
-            if (!(allowedIds.includes(interaction.user.id) || roles.cache.hasAny(...allowedIds) || perms.has('Administrator')))
-                return await interaction.reply({
-                    embeds: [
-                        bot.embeds.accessDenied.setDescription('You are not authorized to run this command.')
-                    ]
-                });
-
-            const channelSetting = await bot.knex<settingInfo>('eventAnnsChannelSetting')
-                .select('*')
-                .where('guildId', interaction.guild?.id)
-                .first();
-            const roleSetting = await bot.knex<settingInfo>('eventPingRoleSetting')
-                .select('*')
-                .where('guildId', interaction.guild?.id)
-                .first();
-
-            if (!channelSetting || !roleSetting) return await interaction.editReply({
-                embeds: [
-                    bot.embeds.error.setDescription(!channelSetting ? 'Event announcements channel not configured.' : 'Events ping role not configured.')
-                ]
-            });
-
-            const channel = bot.channels.cache.get(channelSetting.settingValue as string) as TextChannel;
-            if (!channel.isTextBased()) return await interaction.editReply({
-                embeds: [
-                    bot.embeds.error.setDescription('The provided event announcements channel is not a text channel.')
-                ]
-            });
-
-            if (command.data.name !== 'schedule') {
-                const eventId = interaction.options.getString('event_id', true);
-                const event = await bot.knex<eventInfo>('communityEvents')
-                    .select('*')
-                    .where('eventId', eventId)
-                    .andWhere('guildId', interaction.guild?.id)
-                    .first();
-
-                if (!event) return await interaction.editReply({
-                    embeds: [
-                        bot.embeds.error.setDescription(`Even with ID \`${eventId}\` has not been found in the database.`)
-                    ]
-                });
-
-                const statuses = {
-                    'conclude': 1,
-                    'update': 2,
-                    'start': 2
-                } as const;
-
-                const status = statuses[command.data.name as keyof typeof statuses];
-
-                if (event.eventStatus === status) return await interaction.editReply({
-                    embeds: [
-                        bot.embeds.error.setDescription(status === 1 ? 'This event has not been started yet.' : 'This event has already been started.')
-                    ]
-                });
-
-                args.push(event);
-            }
-
-            args.push(channel, roleSetting.settingValue);
-        }
+        args.push(commandUser);
 
         try {
-            await executor.execute(interaction, ...args);
+            await command.execute(interaction, ...args);
         } catch (error) {
             console.error(error);
 
@@ -222,7 +164,7 @@ Please review the denial reason below. If you have any questions, please contact
         }
     } else if (interaction.isAutocomplete()) {
         try {
-            await executor.autocomplete!(interaction);
+            await command.autocomplete!(interaction);
         } catch (error) {
             console.error(error);
         }

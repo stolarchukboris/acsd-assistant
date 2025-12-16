@@ -1,6 +1,6 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, Partials } from 'discord.js';
+import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, Partials, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js';
 import { config } from 'dotenv';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
@@ -11,7 +11,7 @@ class Bot extends Client {
     name = 'ACSD Assistant';
     commands: Collection<string, botCommand<SlashCommandBuilder>> = new Collection();
     subcommands: Collection<string, botCommand<SlashCommandSubcommandBuilder>> = new Collection();
-    apiCommands: SlashCommandBuilder[] = [];
+    apiCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 
     logos = {
         checkmark: 'https://septik-komffort.ru/wp-content/uploads/2020/11/galochka_zel.png',
@@ -19,8 +19,11 @@ class Bot extends Client {
         heart: 'https://gas-kvas.com/grafic/uploads/posts/2024-01/gas-kvas-com-p-znak-serdtsa-na-prozrachnom-fone-44.png',
         questionmark: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Orange_question_mark.svg/2048px-Orange_question_mark.svg.png',
         cross: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Not_allowed.svg/1200px-Not_allowed.svg.png',
-        placeholder: 'https://static.wikia.nocookie.net/7d5db291-d700-4b6a-944b-eb0c84bf5781/scale-to-width/755'
+        placeholder: 'https://static.wikia.nocookie.net/7d5db291-d700-4b6a-944b-eb0c84bf5781/scale-to-width/755',
+        trashbin: 'https://cdn-icons-png.freepik.com/512/8367/8367793.png'
     } as const;
+
+    highRanks = ['Administrator', 'Director of Defense', 'Deputy Director of Defense', 'Executive Director'];
 
     env = config({ quiet: true }).parsed || {};
 
@@ -53,9 +56,8 @@ class Bot extends Client {
                 .setTitle('Success.')
                 .setThumbnail(this.logos.checkmark),
             'cancel': this.embed
-                .setColor(0)
                 .setTitle('Cancelled.')
-                .setThumbnail(this.logos.cross),
+                .setThumbnail(this.logos.trashbin),
             'notFound': this.embed
                 .setColor('Grey')
                 .setTitle('Not found.')
@@ -70,7 +72,7 @@ class Bot extends Client {
         for (const item of items) { // for each item in commands folder
             if (item.endsWith('.js')) { // if a child is a js file
                 const filePath = join(foldersPath, item);
-                const command = (await import(`file://${filePath}`));
+                const command: botCommand<SlashCommandBuilder> = (await import(`file://${filePath}`));
 
                 if ('data' in command && 'execute' in command) {
                     this.commands.set(command.data.name, command);
@@ -80,25 +82,31 @@ class Bot extends Client {
                     this.apiCommands.push(command.data.toJSON());
                 } else console.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
             } else { // otherwise, if it's a folder
-                const command = new SlashCommandBuilder().setName(item).setDescription(item); // make a command with folder name
+                const command: botCommand<SlashCommandBuilder> = {
+                    data: new SlashCommandBuilder().setName(item).setDescription(item),
+                    execute: () => Promise.resolve(undefined)
+                } // make a command with folder name
+
                 const path = join(foldersPath, item);
                 const files = readdirSync(path); // grab all subcommands from that folder
 
                 for (const file of files) { // for each subcommand file
-                    const subcommand = (await import(`file://${join(path, file)}`));
+                    const subcommand: botCommand<SlashCommandSubcommandBuilder> = (await import(`file://${join(path, file)}`));
 
                     if ('data' in subcommand && 'execute' in subcommand) {
-                        command.addSubcommand(subcommand.data);
+                        command.data.addSubcommand(subcommand.data);
+                        command.highRank = subcommand.highRank;
+                        command.dev = subcommand.dev;
 
                         this.subcommands.set(subcommand.data.name, subcommand);
                     } else console.warn(`[WARNING] The subcommand at ${path} is missing a required "data" or "execute" property.`);
                 }
 
-                this.commands.set(command.name, { data: command, execute: () => Promise.resolve(undefined) });
+                this.commands.set(command.data.name, command);
 
                 if (!process.argv.includes('--deploy')) continue;
 
-                this.apiCommands.push(command);
+                this.apiCommands.push(command.data.toJSON());
             }
         }
 

@@ -16,12 +16,6 @@ export type settingInfo = Readonly<{
     settingValue: string | number | boolean;
 }>;
 
-export type starboardMessage = Readonly<{
-    originMessage: string;
-    starboardMessage: string;
-    amountOfReactions: number;
-}>;
-
 export type activeShift = Readonly<{
     jobId: string;
     whMessageId: string;
@@ -43,7 +37,7 @@ export type loggedShift = Readonly<{
     lenMinutes: number;
 }>;
 
-export type personnelFull = Readonly<{
+export type personnelInfo = Readonly<{
     discordId: string;
     robloxId: string;
     robloxUsername: string;
@@ -51,8 +45,6 @@ export type personnelFull = Readonly<{
     entryCreated: string;
     entryUpdated: string;
 }>;
-
-export type personnelPartial = Omit<personnelFull, 'entryCreated' | 'entryUpdated'>;
 
 export type personnelCredits = Readonly<{
     robloxId: string;
@@ -63,8 +55,8 @@ export type creditTransaction = Readonly<{
     transactionId: string;
     execRbxId: string;
     targetRbxId: string;
-    delta: number;
-    balanceResult: number;
+    balanceBefore: number;
+    balanceAfter: number;
     reason: string;
     createdAt: string;
 }>;

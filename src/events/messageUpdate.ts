@@ -6,7 +6,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
     try {
         if (oldMessage.partial) await oldMessage.fetch();
 
-        if (!(newMessage.channelId === bot.env.SHIFT_LOGS_CH_ID && newMessage.webhookId === '1441367761887559730')) return;
+        if (!(newMessage.channelId === bot.env.SHIFT_LOGS_CH_ID && newMessage.webhookId === bot.env.WEBHOOK_ID)) return;
 
         const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
             .select('*')
