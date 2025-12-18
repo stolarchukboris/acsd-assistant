@@ -46,6 +46,12 @@ export type personnelInfo = Readonly<{
     entryUpdated: string;
 }>;
 
+export type partialPersonnelInfo = Readonly<{
+    robloxId: string;
+    robloxUsername: string;
+    entryCreated: string;
+}>;
+
 export type personnelCredits = Readonly<{
     robloxId: string;
     amount: number;

@@ -1,11 +1,12 @@
 import { TextChannel } from 'discord.js';
 import bot from './index.js';
-import { activeShift, loggedShift, pendingShift } from 'types/knex';
+import axios from 'axios';
+import { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo } from 'types/knex';
 
 export async function managePendingLogs() {
     const pendingLogs = await bot.knex<pendingShift>('pendingShiftLogs').select('*');
 
-    if (!pendingLogs || pendingLogs.length === 0) return;
+    if (pendingLogs.length === 0) return;
 
     const logsGroupedById: Record<string, pendingShift[]> = {};
 
@@ -53,5 +54,39 @@ export async function managePendingLogs() {
         await bot.knex<pendingShift>('pendingShiftLogs')
             .del()
             .whereIn('whMessageId', userLogs.map(log => log.whMessageId));
+    }
+}
+
+export async function managePartialMembers() {
+    const pendingLogs = await bot.knex<pendingShift>('pendingShiftLogs').select('*');
+
+    if (pendingLogs.length === 0) return;
+
+    const robloxIds: string[] = [];
+
+    for (const log of pendingLogs) if (!robloxIds.includes(log.robloxId)) robloxIds.push(log.robloxId);
+
+    for (const id of robloxIds) {
+        const registeredAcc = await bot.knex<personnelInfo>('personnel')
+            .select('*')
+            .where('robloxId', id)
+            .first();
+
+        if (!registeredAcc) {
+            const existingPartial = await bot.knex<partialPersonnelInfo>('personnelPartial')
+                .select('*')
+                .where('robloxId', id);
+
+            if (existingPartial) break;
+
+            const username: string = await axios.get(`https://apis.roblox.com/cloud/v2/users/${id}`, { headers: { 'x-api-key': bot.env.OPEN_CLOUD_API_KEY } })
+                .then(res => res.data.name);
+
+            await bot.knex<partialPersonnelInfo>('personnelPartial')
+                .insert({
+                    robloxId: id,
+                    robloxUsername: username
+                });
+        }
     }
 }

@@ -1,4 +1,4 @@
-import { managePendingLogs } from '../worker.js';
+import { managePartialMembers, managePendingLogs } from '../worker.js';
 import bot from '../index.js';
 import { ActivityType } from 'discord.js';
 
@@ -15,6 +15,7 @@ export async function execute() {
     while (true) {
         try {
             await managePendingLogs();
+            await managePartialMembers();
 
             await new Promise(resolve => setTimeout(resolve, 2000));   
         } catch (error) {

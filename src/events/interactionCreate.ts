@@ -1,6 +1,6 @@
-import { Interaction, ModalBuilder, TextInputStyle } from 'discord.js';
+import { GuildMember, Interaction, ModalBuilder, TextInputStyle } from 'discord.js';
 import bot from '../index.js';
-import { personnelInfo } from 'types/knex.js';
+import { partialPersonnelInfo, personnelInfo } from 'types/knex.js';
 import { botCommand } from 'types/discord.js';
 
 export async function execute(interaction: Interaction) {
@@ -10,7 +10,7 @@ export async function execute(interaction: Interaction) {
             .where('discordId', interaction.user.id)
             .first();
 
-        if (!(buttonUser && bot.highRanks.includes(buttonUser.acsdRank))) return await interaction.followUp({
+        if (!(((interaction.member as GuildMember)?.permissions.has('Administrator')) || (buttonUser && bot.highRanks.includes(buttonUser.acsdRank)))) return await interaction.reply({
             embeds: [
                 bot.embeds.accessDenied.setDescription('You are not authorized to press this button.')
             ],
@@ -34,6 +34,10 @@ export async function execute(interaction: Interaction) {
                     robloxUsername: regReq.robloxUsername,
                     acsdRank: regReq.acsdRank
                 });
+
+            await bot.knex<partialPersonnelInfo>('personnelPartial')
+                .del()
+                .where('robloxId', regReq.robloxId);
 
             await bot.users.send(regReq.discordId, {
                 embeds: [
