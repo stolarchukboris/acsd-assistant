@@ -32,7 +32,8 @@ export async function execute(interaction: Interaction) {
                     discordId: regReq.discordId,
                     robloxId: regReq.robloxId,
                     robloxUsername: regReq.robloxUsername,
-                    acsdRank: regReq.acsdRank
+                    acsdRank: regReq.acsdRank,
+                    regApprovedBy: interaction.user.id
                 });
 
             await bot.knex<partialPersonnelInfo>('personnelPartial')
@@ -60,7 +61,12 @@ You can control which notifications should be delivered to you: check out the \`
 
             await interaction.editReply({
                 embeds: [
-                    bot.embeds.success.setDescription(`Successfully registered <@${regReq.discordId}> in the ACSD database.`)
+                    bot.embeds.success
+                        .setDescription(`Successfully registered <@${regReq.discordId}> in the ACSD database.`)
+                        .setFields(
+                            { name: 'Rank:', value: regReq.acsdRank, inline: true },
+                            { name: 'Accepted by:', value: `${interaction.user}`, inline: true }
+                        )
                 ],
                 components: []
             });

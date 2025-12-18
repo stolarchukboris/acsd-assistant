@@ -42,6 +42,7 @@ export type personnelInfo = Readonly<{
     robloxId: string;
     robloxUsername: string;
     acsdRank: string;
+    regApprovedBy: string;
     entryCreated: string;
     entryUpdated: string;
 }>;
