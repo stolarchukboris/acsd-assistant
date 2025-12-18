@@ -122,7 +122,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 .setColor('Orange')
                 .setThumbnail(bot.logos.questionmark)
                 .setTitle('Confirmation.')
-                .setDescription(`Before proceeding, please verify the found Roblox account and your rank are correct.\n\nYour rank is **${rankRoleName}**.`),
+                .setDescription(`Before proceeding, please verify the found Roblox account and your rank are correct.\n\nYour auto-detected rank is **${rankRoleName}**.`),
             profileEmbed
         ],
         components: [row]
@@ -164,7 +164,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 Please verify that the Roblox account provided in the request (below) matches the one provided in their application, and that their rank is correct, then confirm or deny the request.
 
-Their rank is **${rankRoleName}**.`),
+Their auto-detected rank is **${rankRoleName}**.`),
                 profileEmbed
             ],
             components: [row]
