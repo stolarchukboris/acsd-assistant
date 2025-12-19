@@ -1,6 +1,6 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, Partials, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js';
+import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, RESTPutAPIApplicationCommandsResult, Partials, RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType } from 'discord.js';
 import { config } from 'dotenv';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
@@ -75,6 +75,10 @@ class Bot extends Client {
                 const command: botCommand<SlashCommandBuilder> = (await import(`file://${filePath}`));
 
                 if ('data' in command && 'execute' in command) {
+                    command.data
+                        .setContexts([InteractionContextType.Guild])
+                        .setIntegrationTypes([ApplicationIntegrationType.GuildInstall]);
+
                     this.commands.set(command.data.name, command);
 
                     if (!process.argv.includes('--deploy')) continue;
@@ -83,7 +87,11 @@ class Bot extends Client {
                 } else console.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
             } else { // otherwise, if it's a folder
                 const command: botCommand<SlashCommandBuilder> = {
-                    data: new SlashCommandBuilder().setName(item).setDescription(item),
+                    data: new SlashCommandBuilder()
+                        .setName(item)
+                        .setDescription(item)
+                        .setContexts([InteractionContextType.Guild])
+                        .setIntegrationTypes([ApplicationIntegrationType.GuildInstall]),
                     execute: () => Promise.resolve(undefined)
                 } // make a command with folder name
 
