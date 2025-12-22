@@ -3,7 +3,7 @@ import bot from '../index.js';
 import { partialPersonnelInfo, personnelInfo } from 'types/knex.js';
 import { botCommand } from 'types/discord.js';
 
-export async function execute(interaction: Interaction) {
+export async function execute(interaction: Interaction<'cached'>) {
     if (interaction.isButton() && !interaction.message.interactionMetadata && interaction.channelId === bot.env.PENDING_REGS_CH_ID) {
         const buttonUser = await bot.knex<personnelInfo>('personnel')
             .select('*')

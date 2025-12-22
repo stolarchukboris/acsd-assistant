@@ -5,7 +5,7 @@ export const data = new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Check the websocket heartbeat.');
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
     const embed = bot.embed.setDescription("Pinging...").setColor('Yellow');
     const response = await interaction.reply({ embeds: [embed], withResponse: true });
     const timestamp = interaction.createdTimestamp;

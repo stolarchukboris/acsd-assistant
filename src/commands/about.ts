@@ -6,7 +6,7 @@ export const data = new SlashCommandBuilder()
     .setName('about')
     .setDescription('Know more about the bot.');
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
     await interaction.deferReply();
 
     await interaction.editReply({

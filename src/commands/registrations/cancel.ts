@@ -6,7 +6,7 @@ export const data = new SlashCommandSubcommandBuilder()
     .setName('cancel')
     .setDescription('Cancel your registration request.');
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
     await interaction.deferReply();
 
     const req = await bot.knex<personnelInfo & { adminMessageId: string }>('pendingRegs')

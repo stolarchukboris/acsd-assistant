@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ComponentType, SlashCommandSubcommandBuilder, GuildMember, TextChannel } from 'discord.js';
+import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ComponentType, SlashCommandSubcommandBuilder, TextChannel } from 'discord.js';
 import bot from '../../index.js';
 import axios from 'axios';
 import { personnelInfo } from 'types/knex.js';
@@ -12,7 +12,7 @@ export const data = new SlashCommandSubcommandBuilder()
         .setRequired(true)
     );
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
     await interaction.deferReply();
 
     const username = interaction.options.getString('roblox_username', true);
@@ -46,7 +46,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         ]
     });
 
-    const memberRoleNames = (interaction.member as GuildMember)?.roles.cache.map(role => role.name);
+    const memberRoleNames = interaction.member.roles.cache.map(role => role.name);
     const roleSearchRegex = /Security - L\d \|([^|]+)\|/;
 
     let rankRoleName = memberRoleNames.find(role => role.match(roleSearchRegex))?.match(roleSearchRegex)?.[1].trim();
@@ -128,7 +128,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         components: [row]
     });
 
-    const collectorFilter = (i: ButtonInteraction) => i.user.id === interaction.user.id;
+    const collectorFilter = (i: ButtonInteraction<'cached'>) => i.user.id === interaction.user.id;
 
     const confirmation = await response.awaitMessageComponent<ComponentType.Button>({ filter: collectorFilter, time: 30_000 })
         .catch(async _ => {

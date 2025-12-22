@@ -38,14 +38,14 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const highRank = true;
 
-export async function execute(interaction: ChatInputCommandInteraction, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
     await interaction.deferReply();
 
     const action = interaction.options.getString('action', true);
     let amount = interaction.options.getInteger('amount', true);
     if (action === 'sub') amount = -amount;
 
-    const member = interaction.options.getMember('server_member') as GuildMember | null;
+    const member = interaction.options.getMember('server_member');
     const playerUsername = interaction.options.getString('roblox_username');
     const reason = interaction.options.getString('reason', true);
 
@@ -146,7 +146,7 @@ export async function execute(interaction: ChatInputCommandInteraction, cmdUser:
     });
 }
 
-export async function autocomplete(interaction: AutocompleteInteraction) {
+export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
     const focusedValue = interaction.options.getFocused();
     const choices = await bot.knex<personnelInfo>('personnel').select('*');
     const filtered = choices.map(guard => guard.robloxUsername).filter(choice => choice.toLowerCase().startsWith(focusedValue.toLowerCase()));

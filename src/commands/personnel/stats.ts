@@ -19,12 +19,12 @@ export const data = new SlashCommandSubcommandBuilder()
         .setDescription('Whether to make the command output ephemeral (defaults to TRUE).')
     );
 
-export async function execute(interaction: ChatInputCommandInteraction, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
     const hidden = interaction.options.getBoolean('hidden') ?? true;
 
     await interaction.deferReply(hidden ? { flags: 'Ephemeral' } : undefined);
 
-    const member = interaction.options.getMember('server_member') as GuildMember | null;
+    const member = interaction.options.getMember('server_member');
     const playerUsername = interaction.options.getString('roblox_username');
 
     const stats = (member || playerUsername) ? await bot.knex<personnelInfo>('personnel')
@@ -107,7 +107,7 @@ export async function execute(interaction: ChatInputCommandInteraction, cmdUser:
     }
 }
 
-export async function autocomplete(interaction: AutocompleteInteraction) {
+export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
     const focusedValue = interaction.options.getFocused();
     const choices = await bot.knex<personnelInfo>('personnel')
         .select('robloxUsername')
