@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction, GuildMember } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.js';
 import axios from 'axios';
 import { loggedShift, partialPersonnelInfo, personnelCredits, personnelInfo } from 'types/knex.js';

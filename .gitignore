@@ -3,3 +3,4 @@ build
 node_modules
 archived
 start.cmd
+database/Fulldump*.sql

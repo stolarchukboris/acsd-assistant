@@ -1,6 +1,6 @@
 import { Message, TextChannel } from 'discord.js';
 import bot from '../index.js';
-import { activeShift } from 'types/knex.js';
+import { activeMShift, activeShift } from 'types/knex.js';
 import axios from 'axios';
 
 export async function execute(message: Message) {
@@ -13,6 +13,13 @@ export async function execute(message: Message) {
         const startTime = message.embeds[0].description?.match(/\:([^:]+)\:/)?.[1];
 
         if (!userId) throw new Error('⚠️ Could not retrieve Roblox user ID from the embed.');
+
+        const existingMShift = await bot.knex<activeMShift>('activeMShifts')
+            .select('*')
+            .where('robloxId', userId)
+            .first();
+
+        if (existingMShift) return await message.react('🟥');
 
         const key = bot.env.OPEN_CLOUD_API_KEY;
 

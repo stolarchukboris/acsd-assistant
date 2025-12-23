@@ -153,6 +153,12 @@ Please review the denial reason below. If you have any questions, please contact
                 ]
             });
 
+        if (command.auth && !commandUser) return await interaction.reply({
+            embeds: [
+                bot.embeds.accessDenied.setDescription('You are not registered in the ACSD database.')
+            ]
+        });
+
         args.push(commandUser);
 
         try {

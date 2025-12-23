@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction, GuildMember } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.js';
 import { creditTransaction, personnelCredits, personnelInfo } from 'types/knex.js';
 
@@ -122,7 +122,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
             bot.embed
                 .setColor(delta > 0 ? 'Green' : 'Red')
                 .setTitle(`Credits ${delta > 0 ? 'added' : 'subtracted'}.`)
-                .setDescription(`Your credit balance has been ${delta > 0 ? 'increased' : 'decreased'} by ${amount} credit(s). If you have any questions about this, please contact the ACSD administration.`)
+                .setDescription(`Your credit balance has been ${delta > 0 ? 'increased' : 'decreased'} by ${amount} credit(s). For any questions about this, please contact the ACSD administration.`)
                 .setFields(
                     { name: 'Before:', value: `${credits?.amount ?? 0}`, inline: true },
                     { name: 'After:', value: `${newCredits}`, inline: true },

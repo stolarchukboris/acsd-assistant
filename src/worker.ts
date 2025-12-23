@@ -48,7 +48,8 @@ export async function managePendingLogs() {
                 robloxId: robloxId,
                 startedTimestamp: userLogs[0].startedTimestamp,
                 endedTimestamp: latestLog.endedTimestamp,
-                lenMinutes: totalMinutes
+                lenMinutes: totalMinutes,
+                proof: `Job ID: ${latestLog.jobId}`
             });
 
         await bot.knex<pendingShift>('pendingShiftLogs')

@@ -24,6 +24,12 @@ export type activeShift = Readonly<{
     startedTimestamp: string;
 }>;
 
+export type activeMShift = Readonly<{
+    shiftId: string;
+    robloxId: string;
+    startedTimestamp: string;
+}>;
+
 export type pendingShift = Readonly<activeShift & {
     endedTimestamp: string;
     lenMinutes: number;
@@ -35,6 +41,7 @@ export type loggedShift = Readonly<{
     startedTimestamp: string;
     endedTimestamp: string;
     lenMinutes: number;
+    proof: string;
 }>;
 
 export type personnelInfo = Readonly<{
@@ -64,6 +71,15 @@ export type creditTransaction = Readonly<{
     targetRbxId: string;
     balanceBefore: number;
     balanceAfter: number;
+    reason: string;
+    createdAt: string;
+}>;
+
+export type punishmentInfo = Readonly<{
+    punishmentId: string;
+    execRbxId: string;
+    targetRbxId: string;
+    punishmentType: 'warn' | 'strike';
     reason: string;
     createdAt: string;
 }>;

@@ -11,7 +11,9 @@ export async function execute(oldMessage: Message, newMessage: Message) {
         const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
             .select('*')
             .where('whMessageId', newMessage.id)
-            .first() as activeShift;
+            .first();
+
+        if (!activeShiftEntry) return;
 
         await bot.knex<activeShift>('activeShifts')
             .del()
