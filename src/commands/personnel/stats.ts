@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.js';
 import axios from 'axios';
-import { loggedShift, partialPersonnelInfo, personnelCredits, personnelInfo } from 'types/knex.js';
+import { loggedShift, partialPersonnelInfo, personnelCredits, personnelInfo, punishmentInfo } from 'types/knex.js';
 
 export const data = new SlashCommandSubcommandBuilder()
     .setName('stats')
@@ -51,14 +51,32 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
     }
 
     if (stats) {
-        const totalTime = await bot.knex<loggedShift>('loggedShifts')
+        const shifts = await bot.knex<loggedShift>('loggedShifts')
             .select('*')
             .where('robloxId', stats.robloxId)
-            .then(stats => stats.map(stat => stat.lenMinutes).reduce((a, b) => a + b, 0));
+            .orderBy('endedTimestamp', 'desc');
+        const totalTime = shifts.map(shift => shift.lenMinutes).reduce((a, b) => a + b, 0);
         const credits = await bot.knex<personnelCredits>('credits')
             .select('*')
             .where('robloxId', stats.robloxId)
             .first();
+
+        let punishments, desc = ``;
+
+        if (bot.highRanks.includes(cmdUser.acsdRank) || stats === cmdUser) {
+            punishments = await bot.knex<punishmentInfo>('punishments')
+                .select('*')
+                .where('targetRbxId', stats.robloxId)
+                .orderBy('createdAt', 'desc');
+
+            if (punishments.length > 0) for (const punishment of punishments) desc = desc.concat(
+`**__${punishment.punishmentType === 'warn' ? 'Warning' : 'Strike'}__ ${punishment.punishmentId}:**
+- **Issued**: <t:${Math.floor(Date.parse(punishment.createdAt) / 1000)}>
+- **Reason**: ${punishment.reason}
+
+`
+            )
+        }
 
         const pfpURL = await getRobloxPfp(stats.robloxId);
 
@@ -75,7 +93,21 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
                         { name: 'Total time on-duty:', value: `${totalTime} minutes.`, inline: true },
                         { name: 'Total credits:', value: credits?.amount.toString() ?? '0', inline: true },
                         { name: 'Rank:', value: stats.acsdRank, inline: true }
-                    )
+                    ),
+                ...(shifts[0] ? [bot.embed
+                    .setColor('Blurple')
+                    .setTitle(`${stats.robloxUsername}'s latest shift.`)
+                    .setFields(
+                        { name: 'Shift ID:', value: shifts[0].shiftId },
+                        { name: 'Started:', value: `<t:${shifts[0].startedTimestamp}>`, inline: true },
+                        { name: 'Ended:', value: `<t:${shifts[0].endedTimestamp}>`, inline: true },
+                        { name: 'Length:', value: `${shifts[0].lenMinutes} minutes.`, inline: true }
+                    )] : []),
+                ...(desc !== `` ? [bot.embed
+                    .setColor('Grey')
+                    .setTitle(`${stats.robloxUsername}'s active punishments.`)
+                    .setDescription(desc)
+                ] : [])
             ]
         });
     } else {

@@ -69,7 +69,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
     let extra = '';
 
-    /*if (interaction.user.id !== target.discordId)*/ await bot.users.send(target.discordId, {
+    if (interaction.user.id !== target.discordId) await bot.users.send(target.discordId, {
         embeds: [
             bot.embed
                 .setColor(type === 'warn' ? 'Orange' : 'Red')
