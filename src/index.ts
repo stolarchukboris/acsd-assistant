@@ -105,8 +105,10 @@ class Bot extends Client {
                         command.data.addSubcommand(subcommand.data);
                         command.highRank = subcommand.highRank;
                         command.dev = subcommand.dev;
+                        command.training = subcommand.training;
+                        command.auth = subcommand.auth;
 
-                        this.subcommands.set(subcommand.data.name, subcommand);
+                        this.subcommands.set(`${command.data.name}:${subcommand.data.name}`, subcommand);
                     } else console.warn(`[WARNING] The subcommand at ${path} is missing a required "data" or "execute" property.`);
                 }
 

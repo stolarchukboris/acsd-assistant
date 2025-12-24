@@ -1,6 +1,6 @@
-import { GuildMember, Interaction, ModalBuilder, TextInputStyle } from 'discord.js';
+import { GuildMember, Interaction, ModalBuilder, TextChannel, TextInputStyle } from 'discord.js';
 import bot from '../index.js';
-import { partialPersonnelInfo, personnelInfo } from 'types/knex.js';
+import { partialPersonnelInfo, personnelInfo, trainingInfo } from 'types/knex.js';
 import { botCommand } from 'types/discord.js';
 
 export async function execute(interaction: Interaction<'cached'>) {
@@ -134,7 +134,7 @@ Please review the denial reason below. If you have any questions, please contact
     const subcommandOption = interaction.options.getSubcommand(false);
 
     if (subcommandOption) {
-        command = bot.subcommands.get(subcommandOption);
+        command = bot.subcommands.get(`${interaction.commandName}:${subcommandOption}`);
 
         if (!command) return console.error(`No subcommand matching ${subcommandOption} was found.`);
     }
@@ -160,6 +160,28 @@ Please review the denial reason below. If you have any questions, please contact
         });
 
         args.push(commandUser);
+
+        if (command.training) {
+            const channel = bot.channels.cache.get('1289687088249180274') as TextChannel;
+
+            if (command.data.name !== 'schedule') {
+                const id = interaction.options.getString('training_id', true);
+                const training = await bot.knex<trainingInfo>('trainings')
+                    .select('*')
+                    .where('trainingId', id)
+                    .first();
+
+                if (!training) return await interaction.reply({
+                    embeds: [
+                        bot.embeds.notFound.setDescription(`No scheduled training with ID \`${id}\` has been found in the databsae.`)
+                    ]
+                });
+
+                args.push(training, channel.messages.cache.get(training.messageId));
+            }
+
+            args.push(channel, '1289909425368338505');
+        }
 
         try {
             await command.execute(interaction, ...args);

@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.js';
-import { activeMShift, activeShift, loggedShift, personnelInfo } from 'types/knex.js';
+import { activeMShift, activeShift, personnelInfo } from 'types/knex.js';
 
 export const data = new SlashCommandSubcommandBuilder()
     .setName('cancel')

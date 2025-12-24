@@ -1,14 +1,10 @@
-export type eventInfo = Readonly<{
-    eventId: string;
-    guildId: string;
-    eventHost: string;
-    annsMessageId: string;
-    eventGameUrl: string;
-    eventGameName: string;
-    gameThumbnailUrl: string;
-    eventStatus: number;
-    eventTime: number;
-    reminded: boolean;
+export type trainingInfo = Readonly<{
+    trainingId: string;
+    hostDiscordId: string;
+    messageId: string;
+    trainingTimestamp: string;
+    isReminded: boolean;
+    isStarted: boolean;
 }>;
 
 export type settingInfo = Readonly<{
