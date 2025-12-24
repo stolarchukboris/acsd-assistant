@@ -28,11 +28,13 @@ export const data = new SlashCommandSubcommandBuilder()
     )
     .addUserOption(o => o
         .setName('server_member')
-        .setDescription('Server member to give credits to.')
+        .setDescription('The server member to give credits to.')
     )
     .addStringOption(o => o
         .setName('roblox_username')
-        .setDescription('Roblox user to give credits to.')
+        .setDescription('The Roblox user to give credits to.')
+        .setMinLength(3)
+        .setMaxLength(20)
         .setAutocomplete(true)
     );
 

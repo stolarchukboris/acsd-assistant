@@ -9,6 +9,7 @@ export const data = new SlashCommandSubcommandBuilder()
     .addStringOption(o => o
         .setName('roblox_username')
         .setDescription('Your Roblox username.')
+        .setMaxLength(20)
         .setRequired(true)
     );
 
@@ -65,7 +66,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
     if (!key) return await interaction.editReply({
         embeds: [
-            bot.embeds.error.setDescription('No Open Cloud API key detected. Please contact the administrator of this bot instance about this issue.')
+            bot.embeds.error.setDescription(`No Open Cloud API key detected. Please contact <@${bot.env.OWNER_ID}> about this issue.`)
         ]
     });
 

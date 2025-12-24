@@ -13,6 +13,8 @@ export const data = new SlashCommandSubcommandBuilder()
     .addStringOption(o => o
         .setName('roblox_username')
         .setDescription('Search stats by user\'s Roblox username.')
+        .setMinLength(3)
+        .setMaxLength(20)
         .setAutocomplete(true)
     ).addBooleanOption(o => o
         .setName('hidden')

@@ -1,4 +1,4 @@
-import { GuildMember, Interaction, ModalBuilder, TextChannel, TextInputStyle } from 'discord.js';
+import { Interaction, ModalBuilder, TextChannel, TextInputStyle } from 'discord.js';
 import bot from '../index.js';
 import { partialPersonnelInfo, personnelInfo, trainingInfo } from 'types/knex.js';
 import { botCommand } from 'types/discord.js';
@@ -10,7 +10,7 @@ export async function execute(interaction: Interaction<'cached'>) {
             .where('discordId', interaction.user.id)
             .first();
 
-        if (!(((interaction.member as GuildMember)?.permissions.has('Administrator')) || (buttonUser && bot.highRanks.includes(buttonUser.acsdRank)))) return await interaction.reply({
+        if (!((interaction.member.permissions.has('Administrator')) || (buttonUser && bot.highRanks.includes(buttonUser.acsdRank)))) return await interaction.reply({
             embeds: [
                 bot.embeds.accessDenied.setDescription('You are not authorized to press this button.')
             ],
@@ -162,7 +162,9 @@ Please review the denial reason below. If you have any questions, please contact
         args.push(commandUser);
 
         if (command.training) {
-            const channel = bot.channels.cache.get('1289687088249180274') as TextChannel;
+            await interaction.deferReply();
+
+            const channel = bot.channels.cache.get(bot.env.TRAINING_CHANNEL_ID) as TextChannel;
 
             if (command.data.name !== 'schedule') {
                 const id = interaction.options.getString('training_id', true);
@@ -171,16 +173,18 @@ Please review the denial reason below. If you have any questions, please contact
                     .where('trainingId', id)
                     .first();
 
-                if (!training) return await interaction.reply({
+                if (!training) return await interaction.editReply({
                     embeds: [
                         bot.embeds.notFound.setDescription(`No scheduled training with ID \`${id}\` has been found in the databsae.`)
                     ]
                 });
 
-                args.push(training, channel.messages.cache.get(training.messageId));
-            }
+                const message = await channel.messages.fetch(training.messageId);
 
-            args.push(channel, '1289909425368338505');
+                args.push(training, message);
+            } else args.push(channel);
+
+            args.push(bot.env.TRAINING_PING_ROLE_ID);
         }
 
         try {

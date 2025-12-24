@@ -1,4 +1,4 @@
-import { managePartialMembers, managePendingLogs } from '../worker.js';
+import { managePartialMembers, managePendingLogs, trainingReminder } from '../worker.js';
 import bot from '../index.js';
 import { ActivityType } from 'discord.js';
 
@@ -16,6 +16,7 @@ export async function execute() {
         try {
             await managePendingLogs();
             await managePartialMembers();
+            await trainingReminder();
 
             await new Promise(resolve => setTimeout(resolve, 2000));   
         } catch (error) {

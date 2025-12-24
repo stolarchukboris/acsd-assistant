@@ -1,7 +1,7 @@
 import { TextChannel } from 'discord.js';
 import bot from './index.js';
 import axios from 'axios';
-import { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo } from 'types/knex';
+import { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from 'types/knex';
 
 export async function managePendingLogs() {
     const pendingLogs = await bot.knex<pendingShift>('pendingShiftLogs').select('*');
@@ -90,4 +90,32 @@ export async function managePartialMembers() {
                 });
         }
     }
+}
+
+export async function trainingReminder() {
+    const now = Math.floor(Date.now() / 1000);
+    const trainingSoon = await bot.knex<trainingInfo>('trainings')
+        .select('*')
+        .where('trainingTimestamp', '<=', now + 600)
+        .andWhere('isReminded', false)
+        .andWhere('isStarted', false)
+        .first();
+
+    if (!trainingSoon) return;
+
+    await (bot.channels.cache.get(bot.env.TRAINING_REMINDER_CHANNEL_ID) as TextChannel).send({
+        content: `<@${trainingSoon.hostDiscordId}>`,
+        embeds: [
+            bot.embed
+                .setColor('Orange')
+                .setTitle('Training reminder.')
+                .setDescription(`Your training is going to start <t:${trainingSoon.trainingTimestamp}:R>. Make sure you are ready to host it.
+
+If you are not ready to host the training or if there are insufficient reactions, you can cancel the training with the \`/trainings cancel\` command.`)
+        ]
+    });
+
+    await bot.knex<trainingInfo>('trainings')
+        .update('isReminded', true)
+        .where('trainingId', trainingSoon.trainingId);
 }

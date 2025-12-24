@@ -22,11 +22,13 @@ export const data = new SlashCommandSubcommandBuilder()
     )
     .addUserOption(o => o
         .setName('server_member')
-        .setDescription('Server member to be punished.')
+        .setDescription('The server member to be punished.')
     )
     .addStringOption(o => o
         .setName('roblox_username')
-        .setDescription('Roblox user to be punished.')
+        .setDescription('The Roblox user to be punished.')
+        .setMinLength(3)
+        .setMaxLength(20)
         .setAutocomplete(true)
     );
 

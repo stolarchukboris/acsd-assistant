@@ -1,6 +1,7 @@
 export type trainingInfo = Readonly<{
     trainingId: string;
     hostDiscordId: string;
+    hostRobloxUsername: string;
     messageId: string;
     trainingTimestamp: string;
     isReminded: boolean;
