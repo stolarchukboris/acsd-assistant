@@ -9,7 +9,7 @@ export async function execute() {
 
     bot.user?.setPresence({
         status: 'dnd',
-        activities: [{ name: 'fire in the hole', type: ActivityType.Custom }]
+        activities: [{ name: '<-- stupid clanker', type: ActivityType.Custom }]
     });
 
     while (true) {

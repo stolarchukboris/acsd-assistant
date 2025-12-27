@@ -6,8 +6,9 @@ export async function execute(oldMessage: Message, newMessage: Message) {
     try {
         if (oldMessage.partial) await oldMessage.fetch();
 
-        if (!((newMessage.channelId === bot.env.SHIFT_LOGS_CH_ID && newMessage.webhookId === bot.env.WEBHOOK_ID)
-            || (newMessage.channelId === bot.env.DEV_SHIFT_LOGS_CH_ID && newMessage.webhookId === bot.env.DEV_WEBHOOK_ID))) return;
+        if (!(((newMessage.channelId === bot.env.SHIFT_LOGS_CH_ID) && (newMessage.webhookId === bot.env.WEBHOOK_ID))
+            || ((newMessage.channelId === bot.env.DEV_SHIFT_LOGS_CH_ID) && (newMessage.webhookId === bot.env.DEV_WEBHOOK_ID)))
+            || oldMessage.embeds === newMessage.embeds) return;
 
         const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
             .select('*')
@@ -15,10 +16,6 @@ export async function execute(oldMessage: Message, newMessage: Message) {
             .first();
 
         if (!activeShiftEntry) return;
-
-        await bot.knex<activeShift>('activeShifts')
-            .del()
-            .where('robloxId', activeShiftEntry.robloxId);
 
         const fwMessage = await (bot.channels.cache.get(bot.env.BACKUP_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(activeShiftEntry.fwMessageId);
 
@@ -28,6 +25,10 @@ export async function execute(oldMessage: Message, newMessage: Message) {
         const fields = newMessage.embeds[0].fields;
         const [started, ended] = [Number(fields[0].value.match(timestampRegex)![1]), Number(fields[1].value.match(timestampRegex)![1])];
         const lengthMins = Math.round((ended - started) / 60);
+
+        await bot.knex<activeShift>('activeShifts')
+            .del()
+            .where('robloxId', activeShiftEntry.robloxId);
 
         await bot.knex<pendingShift>('pendingShiftLogs')
             .insert({

@@ -181,6 +181,8 @@ class Bot extends Client {
     constructor() {
         super({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent], partials: [Partials.Message] });
 
+        this.removeAllListeners();
+
         this.initCommands()
             .then(_ => this.initEvents())
             .then(_ => this.initDb());

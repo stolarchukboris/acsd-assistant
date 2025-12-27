@@ -78,7 +78,7 @@ export async function managePartialMembers() {
                 .select('*')
                 .where('robloxId', id);
 
-            if (existingPartial) break;
+            if (existingPartial) continue;
 
             const username: string = await axios.get(`https://apis.roblox.com/cloud/v2/users/${id}`, { headers: { 'x-api-key': bot.env.OPEN_CLOUD_API_KEY } })
                 .then(res => res.data.name);

@@ -46,7 +46,6 @@ CREATE TABLE `activeshifts` (
   `fwMessageId` varchar(20) NOT NULL,
   `robloxId` varchar(20) NOT NULL,
   `startedTimestamp` varchar(10) NOT NULL,
-  PRIMARY KEY (`jobId`),
   UNIQUE KEY `whMessageId` (`whMessageId`),
   UNIQUE KEY `fwMessageId` (`fwMessageId`),
   UNIQUE KEY `robloxId` (`robloxId`)
@@ -231,4 +230,4 @@ CREATE TABLE `trainings` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-24 23:42:23
+-- Dump completed on 2025-12-26 16:07:01

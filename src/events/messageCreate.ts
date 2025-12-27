@@ -5,8 +5,8 @@ import axios from 'axios';
 
 export async function execute(message: Message) {
     try {
-        if (!((message.channelId === bot.env.SHIFT_LOGS_CH_ID && message.webhookId === bot.env.WEBHOOK_ID)
-            || (message.channelId === bot.env.DEV_SHIFT_LOGS_CH_ID && message.webhookId === bot.env.DEV_WEBHOOK_ID))) return;
+        if (!(((message.channelId === bot.env.SHIFT_LOGS_CH_ID) && (message.webhookId === bot.env.WEBHOOK_ID))
+            || ((message.channelId === bot.env.DEV_SHIFT_LOGS_CH_ID) && (message.webhookId === bot.env.DEV_WEBHOOK_ID)))) return;
 
         const backupChannel = bot.channels.cache.get(bot.env.BACKUP_SHIFT_LOGS_CH_ID) as TextChannel;
         const forwarded = await backupChannel.send({ embeds: message.embeds });
