@@ -10,9 +10,6 @@ export async function execute(oldMessage: Message, newMessage: Message) {
             || ((newMessage.channelId === bot.env.DEV_SHIFT_LOGS_CH_ID) && (newMessage.webhookId === bot.env.DEV_WEBHOOK_ID)))
             || newMessage.embeds[0].title?.includes('started')) return;
 
-        console.log(oldMessage);
-        console.log(newMessage);
-
         const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
             .select('*')
             .where('whMessageId', newMessage.id)
