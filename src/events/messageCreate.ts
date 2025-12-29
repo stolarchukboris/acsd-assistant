@@ -22,6 +22,25 @@ export async function execute(message: Message) {
 
         if (existingMShift) return await message.react('🟥');
 
+        const existingShift = await bot.knex<activeShift>('activeShifts')
+            .select('*')
+            .where('robloxId', userId)
+            .first();
+
+        const jobId = message.embeds[0].fields[0].value;
+
+        if (existingShift) {
+            await bot.knex<activeShift>('activeShifts')
+                .update({
+                    jobId: jobId,
+                    whMessageId: message.id,
+                    fwMessageId: forwarded.id
+                })
+                .where('robloxId', userId);
+
+            return await message.react('🟦');
+        }
+
         const key = bot.env.OPEN_CLOUD_API_KEY;
 
         if (key) {
@@ -31,8 +50,6 @@ export async function execute(message: Message) {
 
             if (player?.data.id !== userId) await forwarded.reply(`<@${bot.env.OWNER_ID}>\n⚠️ Player validation failed. ${player?.data.id} !== ${userId}`);
         } else await forwarded.reply(`<@${bot.env.OWNER_ID}>\n⚠️ Open Cloud API key not configured. Player validation skipped.`);
-
-        const jobId = message.embeds[0].fields[0].value;
 
         async function validateJobId(cursor = null) {
             try {

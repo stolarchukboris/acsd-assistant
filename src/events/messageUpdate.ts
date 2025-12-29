@@ -31,7 +31,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
             for (const shift of unfinishedShifts) {
                 const message = await (bot.channels.cache.get(bot.env.SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(shift.whMessageId);
                 const fields = message.embeds[0].fields;
-                const [started, ended] = [Number(fields[0].value.match(timestampRegex)![1]), Number(fields[1].value.match(timestampRegex)![1])];
+                const [started, ended] = [Math.floor(message.createdTimestamp / 1000), Math.floor(Date.now() / 1000)];
                 const lengthMins = Math.round((ended - started) / 60);
 
                 await bot.knex<activeShift>('activeShifts')
