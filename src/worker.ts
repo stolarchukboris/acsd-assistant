@@ -126,21 +126,32 @@ export async function manageVcs() {
 
     if (serverResponse.data.data.length === 0) return existingVcs.forEach(async vc => await vc.delete());
 
+    const partialIds: string[] = [];
+
     for (const server of serverResponse.data.data) {
         const splitId: string = server.id.split('-');
         const partialId = `${splitId[1]}-${splitId[2]}`;
+
+        partialIds.push(partialId);
+
         const statusText = `${server.playing}/${server.maxPlayers} players.`;
 
         let channel = existingVcs.find(vc => vc.name === partialId);
 
-        if (!channel) channel = await bot.guilds.cache.get(bot.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
-            name: partialId,
-            parent: bot.env.ON_DUTY_VC_CHANNEL_CAT_ID,
-            type: ChannelType.GuildVoice
-        }) as VoiceChannel;
+        if (!channel) {
+            channel = await bot.guilds.cache.get(bot.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
+                name: partialId,
+                parent: bot.env.ON_DUTY_VC_CHANNEL_CAT_ID,
+                type: ChannelType.GuildVoice
+            }) as VoiceChannel;
+
+            existingVcs.set(channel.id, channel);
+        }
 
         await bot.rest.put(`/channels/${channel.id}/voice-status`, {
             body: { status: statusText }
         });
     }
+
+    existingVcs.filter(vc => !partialIds.includes(vc.name)).forEach(async vc => await vc.delete());
 }
