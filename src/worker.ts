@@ -1,4 +1,4 @@
-import { TextChannel } from 'discord.js';
+import { ChannelType, Collection, TextChannel, VoiceChannel } from 'discord.js';
 import bot from './index.js';
 import axios from 'axios';
 import { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from 'types/knex';
@@ -118,4 +118,29 @@ If you are not ready to host the training or if there are insufficient reactions
     await bot.knex<trainingInfo>('trainings')
         .update('isReminded', true)
         .where('trainingId', trainingSoon.trainingId);
+}
+
+export async function manageVcs() {
+    const serverResponse = await axios.get(`https://games.roblox.com/v1/games/${bot.env.PLACE_ID}/servers/0?limit=100`);
+    const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === bot.env.ON_DUTY_VC_CHANNEL_CAT_ID && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
+
+    if (serverResponse.data.data.length === 0) return existingVcs.forEach(async vc => await vc.delete());
+
+    for (const server of serverResponse.data.data) {
+        const splitId: string = server.id.split('-');
+        const partialId = `${splitId[1]}-${splitId[2]}`;
+        const statusText = `${server.playing}/${server.maxPlayers} players.`;
+
+        let channel = existingVcs.find(vc => vc.name === partialId);
+
+        if (!channel) channel = await bot.guilds.cache.get(bot.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
+            name: partialId,
+            parent: bot.env.ON_DUTY_VC_CHANNEL_CAT_ID,
+            type: ChannelType.GuildVoice
+        }) as VoiceChannel;
+
+        await bot.rest.put(`/channels/${channel.id}/voice-status`, {
+            body: { status: statusText }
+        });
+    }
 }

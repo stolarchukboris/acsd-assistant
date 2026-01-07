@@ -1,4 +1,4 @@
-import { managePartialMembers, managePendingLogs, trainingReminder } from '../worker.js';
+import { managePartialMembers, managePendingLogs, manageVcs, trainingReminder } from '../worker.js';
 import bot from '../index.js';
 import { ActivityType } from 'discord.js';
 
@@ -12,15 +12,30 @@ export async function execute() {
         activities: [{ name: '<-- stupid clanker', type: ActivityType.Custom }]
     });
 
-    while (true) {
-        try {
-            await managePendingLogs();
-            await managePartialMembers();
-            await trainingReminder();
-
-            await new Promise(resolve => setTimeout(resolve, 2000));   
-        } catch (error) {
-            console.error(error);
+    async function mainLoop() {
+        while (true) {
+            try {
+                await Promise.all([managePartialMembers(), managePendingLogs(), trainingReminder()]);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                await new Promise(res => setTimeout(res, 2_000));
+            }
         }
     }
+
+    async function vcLoop() {
+        while (true) {
+            try {
+                await manageVcs();
+            } catch (error) {
+                console.error(error);
+            } finally {
+                await new Promise(res => setTimeout(res, 30_000));
+            }
+        }
+    }
+
+    mainLoop();
+    vcLoop();
 }
