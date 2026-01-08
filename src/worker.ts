@@ -1,4 +1,4 @@
-import { ChannelType, Collection, TextChannel, VoiceChannel } from 'discord.js';
+import { ChannelType, Collection, ForumChannel, Message, TextChannel, VoiceChannel } from 'discord.js';
 import bot from './index.js';
 import axios from 'axios';
 import { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from 'types/knex';
@@ -120,11 +120,17 @@ If you are not ready to host the training or if there are insufficient reactions
         .where('trainingId', trainingSoon.trainingId);
 }
 
-export async function manageVcs() {
+export async function manageOnDutyChats() {
     const serverResponse = await axios.get(`https://games.roblox.com/v1/games/${bot.env.PLACE_ID}/servers/0?limit=100`);
     const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === bot.env.ON_DUTY_VC_CHANNEL_CAT_ID && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
+    const chatForum = bot.channels.cache.get(bot.env.GAME_CHATS_CHANNEL_ID) as ForumChannel;
+    const existingThreads = chatForum.threads.cache;
 
-    if (serverResponse.data.data.length === 0) return existingVcs.forEach(async vc => await vc.delete());
+    if (serverResponse.data.data.length === 0) {
+        existingVcs.forEach(async vc => await vc.delete());
+
+        return existingThreads.forEach(async thread => await thread.delete());
+    }
 
     const partialIds: string[] = [];
 
@@ -136,22 +142,49 @@ export async function manageVcs() {
 
         const statusText = `${server.playing}/${server.maxPlayers} players.`;
 
-        let channel = existingVcs.find(vc => vc.name === partialId);
+        let vc = existingVcs.find(vc => vc.name === partialId);
+        let thread = existingThreads.find(thread => thread.name === partialId);
 
-        if (!channel) {
-            channel = await bot.guilds.cache.get(bot.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
+        if (!vc) {
+            vc = await bot.guilds.cache.get(bot.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
                 name: partialId,
                 parent: bot.env.ON_DUTY_VC_CHANNEL_CAT_ID,
                 type: ChannelType.GuildVoice
             }) as VoiceChannel;
 
-            existingVcs.set(channel.id, channel);
+            existingVcs.set(vc.id, vc);
         }
 
-        await bot.rest.put(`/channels/${channel.id}/voice-status`, {
+        if (!thread) {
+            thread = await chatForum.threads.create({
+                name: partialId,
+                message: {
+                    embeds: [
+                        bot.embed
+                            .setColor('Blurple')
+                            .setTitle(`Chat for server ${partialId}.`)
+                            .setDescription('Use this thread to chat with other ACSD members playing in this server.')
+                            .setFields({ name: 'Player count:', value: statusText })
+                    ]
+                }
+            });
+
+            existingThreads.set(thread.id, thread);
+        } else await thread.fetchStarterMessage().then(async message => await message?.edit({
+            embeds: [
+                bot.embed
+                    .setColor(message.embeds[0].color)
+                    .setTitle(message.embeds[0].title)
+                    .setDescription(message.embeds[0].description)
+                    .setFields({ name: 'Player count:', value: statusText })
+            ]
+        }));
+
+        await bot.rest.put(`/channels/${vc.id}/voice-status`, {
             body: { status: statusText }
         });
     }
 
     existingVcs.filter(vc => !partialIds.includes(vc.name)).forEach(async vc => await vc.delete());
+    existingThreads.filter(thread => !partialIds.includes(thread.name)).forEach(async thread => await thread.delete());
 }

@@ -1,4 +1,4 @@
-import { managePartialMembers, managePendingLogs, manageVcs, trainingReminder } from '../worker.js';
+import { managePartialMembers, managePendingLogs, manageOnDutyChats, trainingReminder } from '../worker.js';
 import bot from '../index.js';
 import { ActivityType } from 'discord.js';
 
@@ -27,7 +27,7 @@ export async function execute() {
     async function vcLoop() {
         while (true) {
             try {
-                await manageVcs();
+                await manageOnDutyChats();
             } catch (error) {
                 console.error(error);
             } finally {

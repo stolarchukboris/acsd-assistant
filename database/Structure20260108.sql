@@ -139,7 +139,6 @@ CREATE TABLE `pendingshiftlogs` (
   `startedTimestamp` varchar(10) NOT NULL,
   `endedTimestamp` varchar(10) NOT NULL,
   `lenMinutes` smallint unsigned NOT NULL,
-  PRIMARY KEY (`jobId`),
   UNIQUE KEY `whMessageId` (`whMessageId`),
   UNIQUE KEY `fwMessageId` (`fwMessageId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -230,4 +229,4 @@ CREATE TABLE `trainings` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-26 16:07:01
+-- Dump completed on 2026-01-08 13:38:53
