@@ -65,6 +65,7 @@ You can control which notifications should be delivered to you: check out the \`
                         .setDescription(`Successfully registered <@${regReq.discordId}> in the ACSD database.`)
                         .setFields(
                             { name: 'Rank:', value: regReq.acsdRank, inline: true },
+                            { name: 'Linked Roblox:', value: `[${regReq.robloxUsername}](https://www.roblox.com/users/${regReq.robloxId}/profile)`, inline: true },
                             { name: 'Accepted by:', value: `${interaction.user}`, inline: true }
                         )
                 ],

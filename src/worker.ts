@@ -186,5 +186,9 @@ export async function manageOnDutyChats() {
     }
 
     existingVcs.filter(vc => !partialIds.includes(vc.name)).forEach(async vc => await vc.delete());
-    existingThreads.filter(thread => !partialIds.includes(thread.name)).forEach(async thread => (thread.messageCount && thread.messageCount === 0) ? await thread.delete() : await thread.setArchived());
+    existingThreads.filter(thread => !partialIds.includes(thread.name)).forEach(async thread => {
+        await thread.messages.fetch();
+
+        thread.messages.cache.size > 1 ? await thread.setArchived() : await thread.delete();
+    });
 }
