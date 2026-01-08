@@ -1,13 +1,12 @@
 import { managePartialMembers, managePendingLogs, manageOnDutyChats, trainingReminder } from '../worker.js';
-import bot from '../index.js';
-import { ActivityType } from 'discord.js';
+import { ActivityType, Client } from 'discord.js';
 
 export const once = true;
 
-export async function execute() {
+export async function execute(client: Client<true>) {
     console.log('ACSD Assistant Ready!');
 
-    bot.user?.setPresence({
+    client.user?.setPresence({
         status: 'dnd',
         activities: [{ name: '<-- stupid clanker', type: ActivityType.Custom }]
     });

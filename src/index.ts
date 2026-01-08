@@ -4,7 +4,7 @@ import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommand
 import { config } from 'dotenv';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
-import { botCommand } from 'types/discord';
+import { botCommand, botEvent } from 'types/discord';
 const __dirname = import.meta.dirname;
 
 class Bot extends Client {
@@ -148,11 +148,11 @@ class Bot extends Client {
 
         for (const file of eventFiles) {
             const filePath = join(eventsPath, file);
-            const event = (await import(`file://${filePath}`));
+            const event: botEvent = (await import(`file://${filePath}`));
 
-            event.once ?
-                this.once(file.split('.')[0], (...args) => event.execute(...args)) :
-                this.on(file.split('.')[0], (...args) => event.execute(...args));
+            event.once
+                ? this.once(file.split('.')[0], (...args) => event.execute(...args))
+                : this.on(file.split('.')[0], (...args) => event.execute(...args));
         }
 
         console.log('Events loaded successfully.');

@@ -10,3 +10,9 @@ export type botCommand<T extends SlashCommandBuilder | SlashCommandSubcommandBui
     execute(interaction: ChatInputCommandInteraction<'cached'>, ...args: any[]): Promise<void>;
     autocomplete?(interaction: AutocompleteInteraction<'cached'>): Promise<void>;
 }
+
+export type botEvent = {
+    once?: boolean;
+
+    execute(...args: any[]): Promise<void>;
+}
