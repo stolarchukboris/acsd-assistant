@@ -34,7 +34,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
     await bot.knex<activeMShift>('activeMShifts')
         .insert({
             shiftId: id,
-            robloxId: cmdUser.robloxId
+            discordId: cmdUser.discordId,
+            robloxId: cmdUser.robloxId,
+            robloxUsername: cmdUser.robloxUsername
         });
 
     await interaction.editReply({

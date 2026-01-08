@@ -14,9 +14,23 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
     if (manualShifts.length === 0 && autoShifts.length === 0) return await interaction.editReply({
         embeds: [
-            bot.embeds.notFound.setDescription('Nobody currently has an active shift.')
+            bot.embeds.notFound.setDescription('There are no active shifts right now.')
         ]
     });
 
-    await interaction.editReply('ts is unfinished :wilted_rose:');
+    await interaction.editReply({
+        embeds: [
+            bot.embed
+                .setColor('Blurple')
+                .setTitle('Active shifts.')
+                .setDescription(`${manualShifts.length > 0
+                    ? `**Active manual shifts**:
+${manualShifts.map(shift => `- ${shift.shiftId}\n  - Started by ${shift.robloxUsername} (<@${shift.discordId}>) @ <t:${Math.floor(Date.parse(shift.startedTimestamp) / 1000)}>`).join('\n')}\n`
+                    : ''}
+${autoShifts.length > 0
+                        ? `**Active automatic shifts**:
+${autoShifts.map(shift => `- ${shift.jobId}\n  - Log message: https://discord.com/channels/${bot.env.GUILD_ID}/${bot.env.SHIFT_LOGS_CH_ID}/${shift.whMessageId}`).join('\n')}`
+                        : ''}`)
+        ]
+    });
 }

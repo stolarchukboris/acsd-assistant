@@ -1,4 +1,4 @@
-import { ChannelType, Collection, ForumChannel, Message, TextChannel, VoiceChannel } from 'discord.js';
+import { ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
 import bot from './index.js';
 import axios from 'axios';
 import { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from 'types/knex';

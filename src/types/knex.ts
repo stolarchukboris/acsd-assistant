@@ -23,7 +23,9 @@ export type activeShift = Readonly<{
 
 export type activeMShift = Readonly<{
     shiftId: string;
+    discordId: string;
     robloxId: string;
+    robloxUsername: string;
     startedTimestamp: string;
 }>;
 
