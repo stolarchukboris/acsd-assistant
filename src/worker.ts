@@ -122,6 +122,9 @@ If you are not ready to host the training or if there are insufficient reactions
 
 export async function manageOnDutyChats() {
     const serverResponse = await axios.get(`https://games.roblox.com/v1/games/${bot.env.PLACE_ID}/servers/0?limit=100`);
+
+    if (!serverResponse.data.data) return;
+    
     const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === bot.env.ON_DUTY_VC_CHANNEL_CAT_ID && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
     const chatForum = bot.channels.cache.get(bot.env.GAME_CHATS_CHANNEL_ID) as ForumChannel;
     const existingThreads = chatForum.threads.cache;

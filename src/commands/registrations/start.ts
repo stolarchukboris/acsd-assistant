@@ -60,7 +60,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
     if (!rankRoleName) return await interaction.editReply({
         embeds: [
-            bot.embeds.error.setDescription('You have not been assigned a rank role yet. Please contact the ACSD administration about this.')
+            bot.embeds.error.setDescription('You have not been assigned a rank role yet. Please contact the ACSD administration about this or get a Recruit role in <#1435039843985002660>.')
         ]
     });
 

@@ -8,9 +8,12 @@ export type trainingInfo = Readonly<{
     isStarted: boolean;
 }>;
 
-export type settingInfo = Readonly<{
-    guildId: string;
-    settingValue: string | number | boolean;
+export type botSettingInfo = Readonly<{
+    settingName: string;
+    settingDesc: string;
+    settingValue: string;
+    lastUpdatedAt: string;
+    lastUpdatedBy: string;
 }>;
 
 export type activeShift = Readonly<{

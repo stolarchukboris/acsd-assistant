@@ -5,6 +5,7 @@ import { config } from 'dotenv';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
 import { botCommand, botEvent } from 'types/discord';
+import { botSettingInfo } from 'types/knex';
 const __dirname = import.meta.dirname;
 
 class Bot extends Client {
@@ -12,6 +13,8 @@ class Bot extends Client {
     commands: Collection<string, botCommand<SlashCommandBuilder>> = new Collection();
     subcommands: Collection<string, botCommand<SlashCommandSubcommandBuilder>> = new Collection();
     apiCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
+
+    // botSettings: botSettingInfo;
 
     logos = {
         checkmark: 'https://septik-komffort.ru/wp-content/uploads/2020/11/galochka_zel.png',

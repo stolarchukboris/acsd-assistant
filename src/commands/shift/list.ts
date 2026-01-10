@@ -25,11 +25,11 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
                 .setTitle('Active shifts.')
                 .setDescription(`${manualShifts.length > 0
                     ? `**Active manual shifts**:
-${manualShifts.map(shift => `- ${shift.shiftId}\n  - Started by ${shift.robloxUsername} (<@${shift.discordId}>) @ <t:${Math.floor(Date.parse(shift.startedTimestamp) / 1000)}>`).join('\n')}\n`
+${manualShifts.map(shift => `- ${shift.shiftId}\n  - Started by ${shift.robloxUsername} (<@${shift.discordId}>) <t:${Math.floor(Date.parse(shift.startedTimestamp) / 1000)}:R>`).join('\n')}\n`
                     : ''}
 ${autoShifts.length > 0
                         ? `**Active automatic shifts**:
-${autoShifts.map(shift => `- ${shift.jobId}\n  - Log message: https://discord.com/channels/${bot.env.GUILD_ID}/${bot.env.SHIFT_LOGS_CH_ID}/${shift.whMessageId}`).join('\n')}`
+${autoShifts.map(shift => `- ${shift.jobId}\n  - Started <t:${shift.startedTimestamp}:R> ([log message](https://discord.com/channels/${bot.env.GUILD_ID}/${bot.env.SHIFT_LOGS_CH_ID}/${shift.whMessageId}))`).join('\n')}`
                         : ''}`)
         ]
     });
