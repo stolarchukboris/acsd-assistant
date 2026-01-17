@@ -1,31 +1,34 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import bot from '../index.ts';
+import { ApplicationCommandRegistry, Command } from '@sapphire/framework';
 
-export const data = new SlashCommandBuilder()
-	.setName('help')
-	.setDescription('Learn more about this bot\'s commands and features.')
-	.addStringOption(o => o
-		.setName('topic')
-		.setDescription('The topic you want to learn more about.')
-		.setChoices(
-			{ name: 'Registration commands.', value: 'reg' },
-			{ name: 'Personnel commands.', value: 'pers' },
-			{ name: 'Shift commands.', value: 'shift' }
-		)
-		.setRequired(true)
-	);
+export class HelpCommand extends Command {
+	public override registerApplicationCommands(registry: ApplicationCommandRegistry) {
+		registry.registerChatInputCommand(builder => builder
+			.setName(this.name)
+			.setDescription('Learn more about this bot\'s commands and features.')
+			.addStringOption(o => o
+				.setName('topic')
+				.setDescription('The topic you want to learn more about.')
+				.setChoices(
+					{ name: 'Registration commands.', value: 'reg' },
+					{ name: 'Personnel commands.', value: 'pers' },
+					{ name: 'Shift commands.', value: 'shift' }
+				)
+				.setRequired(true)
+			)
+		);
+	}
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
-	await interaction.deferReply({ flags: 'Ephemeral' });
+	public override async chatInputRun(interaction: Command.ChatInputCommandInteraction<'cached'>) {
+		await interaction.deferReply({ flags: 'Ephemeral' });
 
-	const selectedTopic = interaction.options.getString('topic', true);
-	const cmds = await bot.application?.commands.fetch();
-	const cmdIds: Record<string, string> = {};
+		const selectedTopic = interaction.options.getString('topic', true);
+		const cmds = await this.container.client.application?.commands.fetch();
+		const cmdIds: Record<string, string> = {};
 
-	cmds!.forEach(cmd => cmdIds[cmd.name] = cmd.id);
+		cmds?.forEach(cmd => cmdIds[cmd.name] = cmd.id);
 
-	const topics = {
-		'reg': `**Registration-related commands**:
+		const topics = {
+			'reg': `**Registration-related commands**:
 - </registrations start:${cmdIds['registrations']}>
   - **Options**:
     - \`roblox_username\` (required, string).
@@ -37,7 +40,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 - </registrations cancel:${cmdIds['registrations']}>
   - **Usage**: Use this command to cancel the registration request you have submitted.`,
 
-		'pers': `**Personnel-related commands**:
+			'pers': `**Personnel-related commands**:
 - </personnel stats:${cmdIds['personnel']}>
   - **Options**:
     - \`server_member\` (optional, ACSD server member);
@@ -48,7 +51,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
     - If \`server_member\` and \`roblox_username\` options are omitted, this will display **all** of your stats: account info, credits, shift time, latest shift and punishments.
     - Otherwise, this will **not** display the punishment stats (unless you are a high-ranking ACSD member or you selected yourself).`,
 
-		'shift': `**Shift-related commands**:
+			'shift': `**Shift-related commands**:
 - </shift start:${cmdIds['shift']}>
   - **Usage**: Use this command to manually start logging your shift.
 - </shift end:${cmdIds['shift']}>
@@ -61,14 +64,15 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 - </shift cancel:${cmdIds['shift']}>
   - **Usage**: Use this command to manually cancel and delete your shift log.
     - **Warning: This encompasses both automatic and manual shift logs.**`
-	} as const;
+		} as const;
 
-	await interaction.editReply({
-		embeds: [
-			bot.embed
-				.setColor('Blurple')
-				.setTitle('ACSD Assistant help.')
-				.setDescription(topics[selectedTopic as keyof typeof topics])
-		]
-	});
+		await interaction.editReply({
+			embeds: [
+				this.container.embed
+					.setColor('Blurple')
+					.setTitle('ACSD Assistant help.')
+					.setDescription(topics[selectedTopic as keyof typeof topics])
+			]
+		});
+	}
 }

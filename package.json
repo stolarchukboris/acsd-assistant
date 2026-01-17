@@ -1,6 +1,6 @@
 {
 	"name": "acsd-assistant",
-	"version": "2.1.0",
+	"version": "3.0.0",
 	"description": "A bot for enhancing your ACSD experience.",
 	"main": "src/index.ts",
 	"module": "src/index.ts",
@@ -18,6 +18,9 @@
 	"author": "stolarchukboris",
 	"license": "MIT",
 	"dependencies": {
+		"@sapphire/discord.js-utilities": "^7.3.3",
+		"@sapphire/framework": "^5.5.0",
+		"@sapphire/plugin-subcommands": "^7.0.1",
 		"axios": "^1.13.2",
 		"discord.js": "^14.25.1",
 		"knex": "^3.1.0",

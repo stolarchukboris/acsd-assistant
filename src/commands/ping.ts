@@ -1,23 +1,33 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
-import bot from '../index.ts';
+import { isMessageInstance } from '@sapphire/discord.js-utilities';
+import { ApplicationCommandRegistry, Command } from '@sapphire/framework';
 
-export const data = new SlashCommandBuilder()
-	.setName('ping')
-	.setDescription('Check the websocket heartbeat.');
-
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
-	const embed = bot.embed.setDescription("Pinging...").setColor('Yellow');
-	const response = await interaction.reply({ embeds: [embed], withResponse: true });
-	const timestamp = interaction.createdTimestamp;
-	const msg = response.resource?.message;
-
-	embed.setColor('Green')
-		.setTitle(`Pong!`)
-		.setDescription(null)
-		.addFields(
-			{ name: "Latency", value: `${Math.floor(msg?.createdTimestamp as number - timestamp)} ms`, inline: true },
-			{ name: "API latency", value: `${Math.round(interaction.client.ws.ping)} ms`, inline: true },
+export class PingCommand extends Command {
+	public override registerApplicationCommands(registry: ApplicationCommandRegistry) {
+		registry.registerChatInputCommand(builder => builder
+			.setName(this.name)
+			.setDescription('Check the websocket heartbeat.')
 		);
+	}
 
-	await msg?.edit({ embeds: [embed] });
+	public override async chatInputRun(interaction: Command.ChatInputCommandInteraction<'cached'>) {
+		const embed = this.container.embed.setDescription("Pinging...").setColor('Yellow');
+		const response = await interaction.reply({ embeds: [embed], withResponse: true });
+		const msg = response.resource?.message;
+
+		if (!(msg && isMessageInstance(msg))) return await interaction.editReply({
+			embeds: [
+				this.container.embeds.error.setDescription('Failed to calculate the ping.')
+			]
+		});
+
+		embed.setColor('Green')
+			.setTitle(`Pong!`)
+			.setDescription(null)
+			.setFields(
+				{ name: "Latency", value: `${Math.floor(msg.createdTimestamp - interaction.createdTimestamp)} ms`, inline: true },
+				{ name: "API latency", value: `${Math.round(this.container.client.ws.ping)} ms`, inline: true },
+			);
+
+		await msg?.edit({ embeds: [embed] });
+	}
 }

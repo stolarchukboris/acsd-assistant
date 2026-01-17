@@ -1,16 +1,20 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import bot from '../index.ts';
+import { ApplicationCommandRegistry, Command } from '@sapphire/framework';
 
-export const data = new SlashCommandBuilder()
-	.setName('uuid')
-	.setDescription('Generate a random UUIDv4.');
+export class UuidCommand extends Command {
+	public override registerApplicationCommands(registry: ApplicationCommandRegistry) {
+		registry.registerChatInputCommand(builder => builder
+			.setName(this.name)
+			.setDescription('Generate a random UUIDv4.')
+		);
+	}
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
-	await interaction.deferReply();
+	public override async chatInputRun(interaction: Command.ChatInputCommandInteraction<'cached'>) {
+		await interaction.deferReply();
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success.setDescription(`Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`)
-		]
-	})
+		await interaction.editReply({
+			embeds: [
+				this.container.embeds.success.setDescription(`Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`)
+			]
+		});
+	}
 }
