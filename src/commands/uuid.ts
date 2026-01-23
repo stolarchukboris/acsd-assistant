@@ -12,5 +12,5 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		embeds: [
 			bot.embeds.success.setDescription(`Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`)
 		]
-	})
+	});
 }
