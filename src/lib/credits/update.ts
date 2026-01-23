@@ -1,13 +1,14 @@
 import type { Subcommand } from "@sapphire/plugin-subcommands";
 import { container } from "@sapphire/framework";
-import type { personnelCredits, personnelInfo } from "../../../types/knex.ts";
+import type { creditTransaction, personnelCredits, personnelInfo } from "../../types/knex.ts";
 
-export async function creditsUpdate(interaction: Subcommand.ChatInputCommandInteraction<'cached'>) {
+export default async function creditsUpdate(interaction: Subcommand.ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
 	await interaction.deferReply();
 
 	const action = interaction.options.getString('action', true);
 	let amount = interaction.options.getInteger('amount', true);
 	if (action === 'sub') amount = -amount;
+	container.logger.info('a');
 
 	const member = interaction.options.getMember('server_member');
 	const playerUsername = interaction.options.getString('roblox_username');
@@ -28,6 +29,7 @@ export async function creditsUpdate(interaction: Subcommand.ChatInputCommandInte
 			container.embeds.notFound.setDescription(`${member ?? playerUsername} is not registered in the ACSD database.`)
 		]
 	});
+	container.logger.info('a');
 
 	const credits = await container.knex<personnelCredits>('credits')
 		.select('*')
@@ -45,12 +47,14 @@ export async function creditsUpdate(interaction: Subcommand.ChatInputCommandInte
 				.setFields({ name: 'Credits:', value: `${credits?.amount ?? 0}` })
 		]
 	});
+	container.logger.info('a');
 
 	if (newCredits < -32769 || newCredits > 32768) return await interaction.editReply({
 		embeds: [
 			container.embeds.error.setDescription('The new credits amount is out of [-32768; 32767] range.')
 		]
 	});
+	container.logger.info('a');
 
 	const transactionId = crypto.randomUUID();
 
@@ -63,6 +67,7 @@ export async function creditsUpdate(interaction: Subcommand.ChatInputCommandInte
 			balanceAfter: newCredits,
 			reason: reason
 		});
+		container.logger.info('a');
 
 	await container.knex.transaction(async trans => {
 		await trans<personnelCredits>('credits')
@@ -78,6 +83,7 @@ export async function creditsUpdate(interaction: Subcommand.ChatInputCommandInte
 			.where('robloxId', target.robloxId)
 			.andWhere('amount', 0);
 	});
+	container.logger.info('a');
 
 	let extra = '';
 
@@ -95,6 +101,7 @@ export async function creditsUpdate(interaction: Subcommand.ChatInputCommandInte
 				)
 		]
 	}).catch(_ => extra = ' (⚠️ could not notify the user)');
+	container.logger.info('a');
 
 	await interaction.editReply({
 		embeds: [

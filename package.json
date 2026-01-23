@@ -8,8 +8,8 @@
 	"scripts": {
 		"processStart": "pm2 start . --interpreter bun --name \"ACSD Assistant\"",
 		"processRestart": "bun stop && bun processStart",
-		"start": "bun processStart && pm2 logs",
-		"deploy-start": "bun processStart -- -- --deploy && pm2 logs",
+		"start": "bun --env-file=.env.development processStart && pm2 logs",
+		"deploy-start": "bun --env-file=.env.development processStart -- -- --deploy && pm2 logs",
 		"restart": "bun processRestart && pm2 logs",
 		"deploy-restart": "bun processRestart -- -- -- --deploy && pm2 logs",
 		"stop": "pm2 delete .",

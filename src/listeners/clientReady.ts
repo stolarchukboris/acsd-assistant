@@ -1,4 +1,5 @@
-import { Listener, SapphireClient } from "@sapphire/framework";
+import { Listener } from "@sapphire/framework";
+import type { Client } from "discord.js";
 
 export class ReadyListener extends Listener {
 	public constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -8,8 +9,8 @@ export class ReadyListener extends Listener {
 		});
 	}
 
-	public run(client: SapphireClient) {
-		const { username, id } = client.user!;
+	public run(client: Client<true>) {
+		const { username, id } = client.user;
 
 		this.container.logger.info(`Successfully logged in as ${username} (${id}).`);
 	}
