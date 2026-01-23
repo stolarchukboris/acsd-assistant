@@ -1,4 +1,5 @@
 .env*
+!.env.example
 node_modules
 start.cmd
 database/Fulldump*.sql
