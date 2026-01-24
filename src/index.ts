@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType } from 'discord.js';
+import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions } from 'discord.js';
 import { execSync } from 'node:child_process';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
@@ -179,7 +179,12 @@ class Bot extends Client {
 	}
 
 	constructor() {
-		super({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent], partials: [Partials.Message] });
+		Object.defineProperty(DefaultWebSocketManagerOptions.identifyProperties, 'browser', { value: 'Discord iOS' });
+
+		super({
+			intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+			partials: [Partials.Message]
+		});
 
 		this.removeAllListeners();
 

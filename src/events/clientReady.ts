@@ -6,10 +6,7 @@ export const once = true;
 export async function execute(client: Client<true>) {
 	console.log('ACSD Assistant ready!');
 
-	client.user?.setPresence({
-		status: 'dnd',
-		activities: [{ name: '<-- stupid clanker', type: ActivityType.Custom }]
-	});
+	client.user.setPresence({ activities: [{ name: '<-- stupid clanker', type: ActivityType.Custom }] });
 
 	async function mainLoop() {
 		while (true) {
