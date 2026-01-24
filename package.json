@@ -6,7 +6,7 @@
 	"module": "src/index.ts",
 	"type": "module",
 	"scripts": {
-		"processStart": "pm2 start . --interpreter bun --name \"ACSD Assistant\"",
+		"processStart": "pm2 start . --interpreter bun --name \"ACSD Assistant-2\"",
 		"processRestart": "bun stop && bun processStart",
 		"start": "bun --env-file=.env.development processStart && pm2 logs",
 		"deploy-start": "bun --env-file=.env.development processStart -- -- --deploy && pm2 logs",
