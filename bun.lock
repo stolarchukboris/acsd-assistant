@@ -8,6 +8,7 @@
         "@sapphire/discord.js-utilities": "^7.3.3",
         "@sapphire/framework": "^5.5.0",
         "@sapphire/plugin-subcommands": "^7.0.1",
+        "@sapphire/utilities": "^3.18.2",
         "axios": "^1.13.2",
         "discord.js": "^14.25.1",
         "knex": "^3.1.0",
