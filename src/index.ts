@@ -165,17 +165,34 @@ class Bot extends Client {
 			}
 		});
 
-		console.log(`Connected to database successfully${!Bun.env.DB_USER ? ' (dummy connection)' : ''}.`);
+		await this.knex.raw('select 1');
 
-		if (Bun.argv.includes('--nologin')) {
-			console.log('[CI] Workflow test passed. Shutting down.');
-			process.exit(0);
-		}
+		console.log(`Connected to database successfully.`);
 
 		const settings = await this.knex<botSettingInfo>('botSettings')
 			.select('*');
 
 		settings.forEach(setting => this.botSettings.push(setting));
+	}
+
+	private async start() {
+		try {
+			await this.initEvents();
+			await this.initCommands();
+
+			if (Bun.argv.includes('--nologin')) {
+				console.log('[CI] Workflow test passed. Shutting down.');
+
+				process.exit(0);
+			}
+
+			await this.initDb();
+			await this.login(Bun.env.TOKEN);
+		} catch (error) {
+			console.error(`Bot startup failure: ${error}`);
+
+			process.exit(1);
+		}
 	}
 
 	constructor() {
@@ -186,23 +203,15 @@ class Bot extends Client {
 			partials: [Partials.Message]
 		});
 
-		this.removeAllListeners();
-
-		this.initCommands()
-			.then(() => this.initEvents())
-			.then(() => this.initDb());
+		this.start();
 
 		try {
-			this.commit = execSync('git rev-parse HEAD', { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] })
+			this.commit = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] }).stdout
 				.toString()
 				.trim();
 		} catch (_) {
 			this.commit = null;
 		}
-
-		if (Bun.argv.includes('--nologin')) return;
-
-		this.login(Bun.env.TOKEN);
 	}
 }
 
