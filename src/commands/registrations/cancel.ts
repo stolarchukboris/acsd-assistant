@@ -22,7 +22,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	await bot.knex<personnelInfo>('pendingRegs').del().where('discordId', interaction.user.id);
 
-	await (bot.channels.cache.get(Bun.env.PENDING_REGS_CH_ID) as TextChannel).messages.cache.get(req.adminMessageId)?.edit({
+	await (bot.channels.cache.get(bot.getSetting('pendingRegsChannelId')!) as TextChannel).messages.cache.get(req.adminMessageId)?.edit({
 		embeds: [
 			bot.embed
 				.setColor(0)

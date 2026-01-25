@@ -1,6 +1,6 @@
 {
 	"name": "acsd-assistant",
-	"version": "2.1.3",
+	"version": "2.2.0",
 	"description": "A bot for enhancing your ACSD experience.",
 	"main": "src/index.ts",
 	"module": "src/index.ts",
@@ -8,10 +8,10 @@
 	"scripts": {
 		"processStart": "pm2 start . --interpreter bun --name \"ACSD Assistant\"",
 		"processRestart": "bun stop && bun processStart",
-		"start": "bun --env-file=.env.production run processStart && pm2 logs",
-		"deploy-start": "bun --env-file=.env.production run processStart -- -- --deploy && pm2 logs",
-		"restart": "bun --env-file=.env.production run processRestart && pm2 logs",
-		"deploy-restart": "bun --env-file=.env.production run processRestart -- -- -- --deploy && pm2 logs",
+		"start": "bun processStart && pm2 logs",
+		"deploy-start": "bun processStart -- -- --deploy && pm2 logs",
+		"restart": "bun processRestart && pm2 logs",
+		"deploy-restart": "bun processRestart -- -- -- --deploy && pm2 logs",
 		"stop": "pm2 delete .",
 		"ci:test": "bun run . --nologin"
 	},

@@ -6,7 +6,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 	try {
 		if (oldMessage.partial) await oldMessage.fetch();
 
-		if (!(((newMessage.channelId === Bun.env.SHIFT_LOGS_CH_ID) && (newMessage.webhookId === Bun.env.WEBHOOK_ID))
+		if (!(((newMessage.channelId === bot.getSetting('shiftLogsChannelId')) && (newMessage.webhookId === bot.getSetting('shiftLogWebhookId')))
 			|| ((newMessage.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (newMessage.webhookId === Bun.env.DEV_WEBHOOK_ID)))
 			|| newMessage.embeds[0]?.title?.includes('started')) return;
 
@@ -29,7 +29,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 				.where('jobId', activeShiftEntry.jobId);
 
 			for (const shift of unfinishedShifts) {
-				const message = await (bot.channels.cache.get(Bun.env.SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(shift.whMessageId);
+				const message = await (bot.channels.cache.get(bot.getSetting('shiftLogsChannelId')!) as TextChannel).messages.fetch(shift.whMessageId);
 				const [started, ended] = [Math.floor(message.createdTimestamp / 1000), Math.floor(Date.now() / 1000)];
 				const lengthMins = Math.round((ended - started) / 60);
 

@@ -29,7 +29,7 @@ ${manualShifts.map(shift => `- ${shift.shiftId}\n  - Started by ${shift.robloxUs
 					: ''}
 ${autoShifts.length > 0
 						? `**Active automatic shifts**:
-${autoShifts.map(shift => `- ${shift.jobId}\n  - Started <t:${shift.startedTimestamp}:R> ([log message](https://discord.com/channels/${Bun.env.GUILD_ID}/${Bun.env.SHIFT_LOGS_CH_ID}/${shift.whMessageId}))`).join('\n')}`
+${autoShifts.map(shift => `- ${shift.jobId}\n  - Started <t:${shift.startedTimestamp}:R> ([log message](https://discord.com/channels/${Bun.env.GUILD_ID}/${bot.getSetting('shiftLogsChannelId')}/${shift.whMessageId}))`).join('\n')}`
 						: ''}`)
 		]
 	});

@@ -36,7 +36,7 @@ export async function managePendingLogs() {
 
 		for (const log of userLogs) {
 			try {
-				const message = await (bot.channels.cache.get(Bun.env.SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(log.whMessageId);
+				const message = await (bot.channels.cache.get(bot.getSetting('shiftLogsChannelId')!) as TextChannel).messages.fetch(log.whMessageId);
 
 				await message.react(emoji);
 			} catch (error) {
@@ -105,7 +105,7 @@ export async function trainingReminder() {
 
 	if (!trainingSoon) return;
 
-	await (bot.channels.cache.get(Bun.env.TRAINING_REMINDER_CHANNEL_ID) as TextChannel).send({
+	await (bot.channels.cache.get(bot.getSetting('trainingRemindChannelId')!) as TextChannel).send({
 		content: `<@${trainingSoon.hostDiscordId}>`,
 		embeds: [
 			bot.embed
@@ -123,12 +123,12 @@ If you are not ready to host the training or if there are insufficient reactions
 }
 
 export async function manageOnDutyChats() {
-	const serverResponse = await axios.get(`https://games.roblox.com/v1/games/${Bun.env.PLACE_ID}/servers/0?limit=100`);
+	const serverResponse = await axios.get(`https://games.roblox.com/v1/games/${bot.getSetting('gamePlaceId')}/servers/0?limit=100`);
 
 	if (!serverResponse.data.data) return;
 
-	const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === Bun.env.ON_DUTY_VC_CHANNEL_CAT_ID && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
-	const chatForum = bot.channels.cache.get(Bun.env.GAME_CHATS_CHANNEL_ID) as ForumChannel;
+	const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === bot.getSetting('commsChannelCatId') && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
+	const chatForum = bot.channels.cache.get(bot.getSetting('gameChatsChannelId')!) as ForumChannel;
 	const existingThreads = chatForum.threads.cache;
 
 	if (serverResponse.data.data.length === 0) {
@@ -153,7 +153,7 @@ export async function manageOnDutyChats() {
 		if (!vc) {
 			vc = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
 				name: partialId,
-				parent: Bun.env.ON_DUTY_VC_CHANNEL_CAT_ID,
+				parent: bot.getSetting('commsChannelCatId'),
 				type: ChannelType.GuildVoice
 			}) as VoiceChannel;
 

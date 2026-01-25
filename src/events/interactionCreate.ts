@@ -4,7 +4,7 @@ import type { partialPersonnelInfo, personnelInfo, trainingInfo } from '../types
 import type { botCommand } from '../types/discord.ts';
 
 export async function execute(interaction: Interaction<'cached'>) {
-	if (interaction.isButton() && !interaction.message.interactionMetadata && interaction.channelId === Bun.env.PENDING_REGS_CH_ID) {
+	if (interaction.isButton() && !interaction.message.interactionMetadata && interaction.channelId === bot.getSetting('pendingRegsChannelId')) {
 		const buttonUser = await bot.knex<personnelInfo>('personnel')
 			.select('*')
 			.where('discordId', interaction.user.id)
@@ -165,7 +165,7 @@ Please review the denial reason below. If you have any questions, please contact
 		if (command.training) {
 			await interaction.deferReply();
 
-			const channel = bot.channels.cache.get(Bun.env.TRAINING_CHANNEL_ID) as TextChannel;
+			const channel = bot.channels.cache.get(bot.getSetting('trainingAnnsChannelId')!) as TextChannel;
 
 			if (command.data.name !== 'schedule') {
 				const id = interaction.options.getString('training_id', true);
@@ -185,7 +185,7 @@ Please review the denial reason below. If you have any questions, please contact
 				args.push(training, message);
 			} else args.push(channel);
 
-			args.push(Bun.env.TRAINING_PING_ROLE_ID);
+			args.push(bot.getSetting('trainingPingRoleId'));
 		}
 
 		try {

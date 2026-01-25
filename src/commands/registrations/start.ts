@@ -155,7 +155,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 				acsdRank: rankRoleName
 			});
 
-		const adminMsg = await (bot.channels.cache.get(Bun.env.PENDING_REGS_CH_ID) as TextChannel).send({
+		const adminMsg = await (bot.channels.cache.get(bot.getSetting('pendingRegsChannelId')!) as TextChannel).send({
 			embeds: [
 				bot.embed
 					.setColor('Orange')

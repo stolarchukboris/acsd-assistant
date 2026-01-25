@@ -9,11 +9,11 @@ const __dirname = import.meta.dirname;
 
 class Bot extends Client {
 	name = 'ACSD Assistant';
+
+	botSettings = new Collection<string, botSettingInfo>();
 	commands = new Collection<string, botCommand<SlashCommandBuilder>>();
 	subcommands = new Collection<string, botCommand<SlashCommandSubcommandBuilder>>();
 	apiCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
-
-	botSettings: botSettingInfo[] = [];
 
 	logos = {
 		checkmark: 'https://septik-komffort.ru/wp-content/uploads/2020/11/galochka_zel.png',
@@ -172,7 +172,7 @@ class Bot extends Client {
 		const settings = await this.knex<botSettingInfo>('botSettings')
 			.select('*');
 
-		settings.forEach(setting => this.botSettings.push(setting));
+		settings.forEach(setting => this.botSettings.set(setting.settingName, setting));
 	}
 
 	private async start() {
@@ -193,6 +193,10 @@ class Bot extends Client {
 
 			process.exit(1);
 		}
+	}
+
+	getSetting(name: string) {
+		return this.botSettings.get(name)?.settingValue;
 	}
 
 	constructor() {

@@ -5,7 +5,7 @@ import axios from 'axios';
 
 export async function execute(message: Message) {
 	try {
-		if (!(((message.channelId === Bun.env.SHIFT_LOGS_CH_ID) && (message.webhookId === Bun.env.WEBHOOK_ID))
+		if (!(((message.channelId === bot.getSetting('shiftLogsChannelId')) && (message.webhookId === bot.getSetting('shiftLogWebhookId')))
 			|| ((message.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (message.webhookId === Bun.env.DEV_WEBHOOK_ID)))) return;
 
 		const backupChannel = bot.channels.cache.get(Bun.env.BACKUP_SHIFT_LOGS_CH_ID) as TextChannel;
@@ -53,7 +53,7 @@ export async function execute(message: Message) {
 
 		async function validateJobId(cursor = null) {
 			try {
-				let url = `https://games.roblox.com/v1/games/${Bun.env.PLACE_ID}/servers/0?limit=100`;
+				let url = `https://games.roblox.com/v1/games/${bot.getSetting('gamePlaceId')}/servers/0?limit=100`;
 
 				if (cursor) url += `&cursor=${cursor}`;
 
