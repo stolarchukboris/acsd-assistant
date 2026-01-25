@@ -1,6 +1,6 @@
 {
 	"name": "acsd-assistant",
-	"version": "2.2.0",
+	"version": "2.2.1",
 	"description": "A bot for enhancing your ACSD experience.",
 	"main": "src/index.ts",
 	"module": "src/index.ts",

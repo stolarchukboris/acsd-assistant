@@ -28,7 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const settingNameForUpdate = interaction.options.getString('setting', true);
 	const newValue = interaction.options.getString('new_value', true);
-	const existingSetting = bot.botSettings.find(predicate);
+	const existingSetting = bot.botSettings.get(settingNameForUpdate);
 
 	if (!existingSetting) return await interaction.editReply({
 		embeds: [
@@ -51,7 +51,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		})
 		.where('settingName', settingNameForUpdate);
 
-	Object.assign(existingSetting, {
+	bot.botSettings.set(settingNameForUpdate, {
+		...existingSetting,
 		settingValue: newValue,
 		lastUpdatedBy: cmdUser.discordId,
 		lastUpdatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')

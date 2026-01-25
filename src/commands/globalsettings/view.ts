@@ -26,7 +26,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		]
 	});
 
-	const setting = bot.botSettings.find(setting => setting.settingName === settingToView);
+	const setting = bot.botSettings.get(settingToView);
 
 	if (!setting) return await interaction.editReply({
 		embeds: [
@@ -39,10 +39,10 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			bot.embed
 				.setColor('DarkOrange')
 				.setTitle('Setting information.')
-				.setDescription(`**Name**: \`${setting?.settingName}\` (${setting?.settingDesc})
-**Value:** \`${setting?.settingValue}\`
+				.setDescription(`**Name**: \`${setting.settingName}\` (${setting.settingDesc})
+**Value:** \`${setting.settingValue}\`
 
-**Last updated** by <@${setting?.lastUpdatedBy}> <t:${Math.floor(Date.parse(setting?.lastUpdatedAt as string) / 1000) + 10800}:R>.`)
+**Last updated** by <@${setting.lastUpdatedBy}> <t:${Math.floor(Date.parse(setting.lastUpdatedAt as string) / 1000) + 10800}:R>.`)
 		]
 	})
 }
