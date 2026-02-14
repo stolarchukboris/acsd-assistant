@@ -13,7 +13,7 @@ export class UuidCommand extends Command {
 
 		await interaction.editReply({
 			embeds: [
-				this.container.embeds.success.setDescription(`Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`)
+				this.container.embeds().success.setDescription(`Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`)
 			]
 		});
 	}

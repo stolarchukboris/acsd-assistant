@@ -1,20 +1,20 @@
-import { Precondition, type ChatInputCommand, type PreconditionContext } from "@sapphire/framework";
+import { Precondition } from "@sapphire/framework";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { personnelInfo } from "../types/knex.ts";
 
 export class HighRankPrecondition extends Precondition {
-	public override async chatInputRun(interaction: ChatInputCommandInteraction<'cached'>, _command: ChatInputCommand, context: PreconditionContext) {
-		return await this.checkHighRank(interaction.user.id, context);
+	public override async chatInputRun(interaction: ChatInputCommandInteraction<'cached'>) {
+		return await this.checkHighRank(interaction);
 	}
 
-	private async checkHighRank(userId: string, context: PreconditionContext) {
+	private async checkHighRank(interaction: ChatInputCommandInteraction<'cached'>) {
 		const commandUser = await this.container.knex<personnelInfo>('personnel')
 			.select('*')
-			.where('discordId', userId)
+			.where('discordId', interaction.user.id)
 			.first();
 
 		if (commandUser && this.container.highRanks.includes(commandUser.acsdRank)) {
-			context.cmdUser = commandUser;
+			interaction.cmdUser = commandUser;
 
 			return this.ok();
 		} else return this.error({ message: 'bruh' });

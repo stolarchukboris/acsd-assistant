@@ -1,6 +1,5 @@
 import { Subcommand } from "@sapphire/plugin-subcommands";
 import creditsUpdate from "../lib/credits/update.ts";
-import type { ChatInputCommandContext } from "@sapphire/framework";
 
 export class CreditsCommand extends Subcommand {
 	public constructor(context: Subcommand.LoaderContext, options: Subcommand.Options) {
@@ -53,7 +52,7 @@ export class CreditsCommand extends Subcommand {
 		);
 	}
 
-	public async chatInputUpdate(interaction: Subcommand.ChatInputCommandInteraction<'cached'>, context: ChatInputCommandContext) {
-		await creditsUpdate(interaction, context.cmdUser);
+	public async chatInputUpdate(interaction: Subcommand.ChatInputCommandInteraction<'cached'>) {
+		await creditsUpdate(interaction, interaction.cmdUser!);
 	}
 }

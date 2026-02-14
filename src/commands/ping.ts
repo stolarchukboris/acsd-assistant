@@ -10,13 +10,13 @@ export class PingCommand extends Command {
 	}
 
 	public override async chatInputRun(interaction: Command.ChatInputCommandInteraction<'cached'>) {
-		const embed = this.container.embed.setDescription("Pinging...").setColor('Yellow');
+		const embed = this.container.embed().setDescription("Pinging...").setColor('Yellow');
 		const response = await interaction.reply({ embeds: [embed], withResponse: true });
 		const msg = response.resource?.message;
 
 		if (!(msg && isMessageInstance(msg))) return await interaction.editReply({
 			embeds: [
-				this.container.embeds.error.setDescription('Failed to calculate the ping.')
+				this.container.embeds().error.setDescription('Failed to calculate the ping.')
 			]
 		});
 

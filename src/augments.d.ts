@@ -1,15 +1,33 @@
-import Bot from './index.ts';
-import type { personnelInfo } from './types/knex.ts';
+import type { Knex } from 'knex';
+import type { botSettingInfo, personnelInfo } from './types/knex.ts';
+import type { Collection, EmbedBuilder } from 'discord.js';
 
 declare module '@sapphire/pieces' {
 	interface Container {
-		readonly commit?: InstanceType<typeof Bot>['commit'];
-		readonly name: InstanceType<typeof Bot>['name'];
-		readonly highRanks: InstanceType<typeof Bot>['highRanks'];
-		readonly logos: InstanceType<typeof Bot>['logos'];
-		readonly knex: InstanceType<typeof Bot>['knex'];
-		readonly embed: InstanceType<typeof Bot>['embed'];
-		readonly embeds: InstanceType<typeof Bot>['embeds'];
+		name: string;
+		globalSettings: Collection<string, botSettingInfo>;
+		highRanks: string[];
+		logos: {
+			checkmark: string;
+			warning: string;
+			heart: string;
+			questionmark: string;
+			cross: string;
+			placeholder: string;
+			trashbin: string;
+		};
+		commit?: string;
+		knex: Knex;
+		embed: () => EmbedBuilder;
+		embeds: () => {
+			'accessDenied': EmbedBuilder;
+			'error': EmbedBuilder;
+			'warning': EmbedBuilder;
+			'success': EmbedBuilder;
+			'cancel': EmbedBuilder;
+			'notFound': EmbedBuilder;
+		};
+		getGlobalSetting: (name: string) => string | undefined;
 	}
 }
 
@@ -17,9 +35,11 @@ declare module '@sapphire/framework' {
 	interface Preconditions {
 		highRank: never;
 	}
+}
 
-	interface ChatInputCommandContext {
-		cmdUser: personnelInfo;
+declare module 'discord.js' {
+	interface ChatInputCommandInteraction {
+		cmdUser?: personnelInfo;
 	}
 }
 
@@ -30,18 +50,6 @@ declare module 'bun' {
 		CLIENT_ID: string;
 		GUILD_ID: string;
 		OWNER_ID: string;
-		WEBHOOK_ID: string;
-
-		ON_DUTY_VC_CHANNEL_CAT_ID: string;
-		GAME_CHATS_CHANNEL_ID: string;
-
-		TRAINING_CHANNEL_ID: string;
-		TRAINING_REMINDER_CHANNEL_ID: string;
-		TRAINING_PING_ROLE_ID: string;
-
-		PENDING_REGS_CH_ID: string;
-
-		SHIFT_LOGS_CH_ID: string;
 
 		BACKUP_SHIFT_LOGS_CH_ID: string;
 		DEV_SHIFT_LOGS_CH_ID: string;
@@ -50,7 +58,6 @@ declare module 'bun' {
 
 		OPEN_CLOUD_API_KEY: string;
 		ROBLOX_COOKIE: string;
-		PLACE_ID: string;
 
 		DB_PASS: string;
 		DB_USER: string;

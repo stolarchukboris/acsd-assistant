@@ -8,7 +8,6 @@ export default async function creditsUpdate(interaction: Subcommand.ChatInputCom
 	const action = interaction.options.getString('action', true);
 	let amount = interaction.options.getInteger('amount', true);
 	if (action === 'sub') amount = -amount;
-	container.logger.info('a');
 
 	const member = interaction.options.getMember('server_member');
 	const playerUsername = interaction.options.getString('roblox_username');
@@ -26,10 +25,9 @@ export default async function creditsUpdate(interaction: Subcommand.ChatInputCom
 
 	if (!target) return await interaction.editReply({
 		embeds: [
-			container.embeds.notFound.setDescription(`${member ?? playerUsername} is not registered in the ACSD database.`)
+			container.embeds().notFound.setDescription(`${member ?? playerUsername} is not registered in the ACSD database.`)
 		]
 	});
-	container.logger.info('a');
 
 	const credits = await container.knex<personnelCredits>('credits')
 		.select('*')
@@ -42,19 +40,17 @@ export default async function creditsUpdate(interaction: Subcommand.ChatInputCom
 
 	if (delta === 0) return await interaction.editReply({
 		embeds: [
-			container.embeds.warning
+			container.embeds().warning
 				.setDescription('User\'s balance has not been changed.')
 				.setFields({ name: 'Credits:', value: `${credits?.amount ?? 0}` })
 		]
 	});
-	container.logger.info('a');
 
 	if (newCredits < -32769 || newCredits > 32768) return await interaction.editReply({
 		embeds: [
-			container.embeds.error.setDescription('The new credits amount is out of [-32768; 32767] range.')
+			container.embeds().error.setDescription('The new credits amount is out of [-32768; 32767] range.')
 		]
 	});
-	container.logger.info('a');
 
 	const transactionId = crypto.randomUUID();
 
@@ -67,7 +63,6 @@ export default async function creditsUpdate(interaction: Subcommand.ChatInputCom
 			balanceAfter: newCredits,
 			reason: reason
 		});
-		container.logger.info('a');
 
 	await container.knex.transaction(async trans => {
 		await trans<personnelCredits>('credits')
@@ -83,13 +78,12 @@ export default async function creditsUpdate(interaction: Subcommand.ChatInputCom
 			.where('robloxId', target.robloxId)
 			.andWhere('amount', 0);
 	});
-	container.logger.info('a');
 
 	let extra = '';
 
 	if (interaction.user.id !== target.discordId) await container.client.users.send(target.discordId, {
 		embeds: [
-			container.embed
+			container.embed()
 				.setColor(delta > 0 ? 'Green' : 'Red')
 				.setTitle(`Credits ${delta > 0 ? 'added' : 'subtracted'}.`)
 				.setDescription(`Your credit balance has been ${delta > 0 ? 'increased' : 'decreased'} by ${amount} credit(s). For any questions about this, please contact the ACSD administration.`)
@@ -101,11 +95,10 @@ export default async function creditsUpdate(interaction: Subcommand.ChatInputCom
 				)
 		]
 	}).catch(_ => extra = ' (⚠️ could not notify the user)');
-	container.logger.info('a');
 
 	await interaction.editReply({
 		embeds: [
-			container.embeds.success
+			container.embeds().success
 				.setDescription(`Successfully updated ${target.robloxUsername}'s balance${extra}.`)
 				.setFields(
 					{ name: 'Before:', value: `${credits?.amount ?? 0}`, inline: true },

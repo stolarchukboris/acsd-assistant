@@ -6,7 +6,7 @@ export class AboutCommand extends Command {
 		registry.registerChatInputCommand(builder => builder
 			.setName(this.name)
 			.setDescription('Know more about the bot.')
-		);
+		)
 	}
 
 	public override async chatInputRun(interaction: Command.ChatInputCommandInteraction<'cached'>) {
@@ -14,7 +14,7 @@ export class AboutCommand extends Command {
 
 		await interaction.editReply({
 			embeds: [
-				this.container.embed
+				this.container.embed()
 					.setColor('Blurple')
 					.setTitle('ACSD Assistant information.')
 					.setDescription(`Below is plenty of miscellaneous information about this bot instance.

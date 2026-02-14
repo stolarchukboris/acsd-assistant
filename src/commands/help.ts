@@ -68,7 +68,7 @@ export class HelpCommand extends Command {
 
 		await interaction.editReply({
 			embeds: [
-				this.container.embed
+				this.container.embed()
 					.setColor('Blurple')
 					.setTitle('ACSD Assistant help.')
 					.setDescription(topics[selectedTopic as keyof typeof topics])
