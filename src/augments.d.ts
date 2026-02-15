@@ -1,9 +1,11 @@
 import type { Knex } from 'knex';
 import type { botSettingInfo, personnelInfo } from './types/knex.ts';
 import type { Collection, EmbedBuilder } from 'discord.js';
+import type axios from 'axios';
 
 declare module '@sapphire/pieces' {
 	interface Container {
+		axios: typeof axios;
 		name: string;
 		globalSettings: Collection<string, botSettingInfo>;
 		highRanks: string[];
@@ -33,6 +35,7 @@ declare module '@sapphire/pieces' {
 
 declare module '@sapphire/framework' {
 	interface Preconditions {
+		getCmdUser: never;
 		highRank: never;
 	}
 }

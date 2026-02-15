@@ -3,7 +3,7 @@ import type { ChatInputSubcommandErrorPayload, SubcommandPluginEvents } from '@s
 
 export class ChatInputSubcommandError extends Listener<typeof SubcommandPluginEvents.ChatInputSubcommandError> {
 	public async run(error: unknown, { interaction }: ChatInputSubcommandErrorPayload) {
-		console.error(error);
+		this.container.logger.error(error);
 
 		return interaction.deferred || interaction.replied
 			? await interaction.editReply({ content: 'oops' })

@@ -2,6 +2,7 @@ import { ApplicationCommandRegistries, container, LogLevel, RegisterBehavior, Sa
 import { Collection, DefaultWebSocketManagerOptions, EmbedBuilder, Partials } from "discord.js";
 import knex from "knex";
 import type { botSettingInfo } from "./types/knex.ts";
+import axios from "axios";
 
 new class extends SapphireClient {
 	public constructor() {
@@ -17,6 +18,7 @@ new class extends SapphireClient {
 
 		ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(RegisterBehavior.BulkOverwrite);
 
+		container.axios = axios;
 		container.name = this.name;
 		container.globalSettings = this.globalSettings;
 		container.logos = this.logos;

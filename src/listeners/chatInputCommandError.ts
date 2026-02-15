@@ -2,7 +2,7 @@ import { Events, Listener, type ChatInputCommandErrorPayload } from '@sapphire/f
 
 export class ChatInputCommandError extends Listener<typeof Events.ChatInputCommandError> {
 	public async run(error: unknown, { interaction }: ChatInputCommandErrorPayload) {
-		console.log(error);
+		this.container.logger.error(error);
 
 		return interaction.deferred || interaction.replied
 			? await interaction.editReply({ content: 'oops' })

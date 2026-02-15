@@ -7,8 +7,8 @@ export class GlobalSettingsCommand extends Subcommand {
 		super(context, {
 			...options,
 			subcommands: [
-				{ name: 'update', chatInputRun: 'chatInputUpdate', preconditions: ['highRank'] },
-				{ name: 'view', chatInputRun: 'chatInputView', preconditions: ['highRank'] }
+				{ name: 'update', chatInputRun: 'chatInputUpdate', preconditions: ['getCmdUser', 'highRank'] },
+				{ name: 'view', chatInputRun: 'chatInputView', preconditions: ['getCmdUser', 'highRank'] }
 			]
 		});
 	}

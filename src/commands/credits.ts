@@ -5,7 +5,7 @@ export class CreditsCommand extends Subcommand {
 	public constructor(context: Subcommand.LoaderContext, options: Subcommand.Options) {
 		super(context, {
 			...options,
-			subcommands: [{ name: 'update', chatInputRun: 'chatInputUpdate', preconditions: ['highRank'] }]
+			subcommands: [{ name: 'update', chatInputRun: 'chatInputUpdate', preconditions: ['getCmdUser', 'highRank'] }]
 		});
 	}
 
