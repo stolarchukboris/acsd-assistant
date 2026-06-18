@@ -2,3 +2,5 @@
 node_modules
 start.cmd
 database/Fulldump*.sql
+src/regManifest.ts
+dist

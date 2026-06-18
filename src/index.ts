@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions } from 'discord.js';
-import { execSync } from 'node:child_process';
+import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
 import type { botSettingInfo } from './types/knex.ts';
@@ -65,58 +65,46 @@ class Bot extends Client {
 		} as const;
 	}
 
-	private readonly glob = new Glob('*');
-
 	private async initCommands() {
-		const cmdsFolderPath = join(__dirname, 'commands');
+		for (const item of bundledCommands) {
+			const module = item.module as Partial<botCommand<SlashCommandBuilder | SlashCommandSubcommandBuilder>>;
 
-		for (const item of this.glob.scanSync({ cwd: cmdsFolderPath, onlyFiles: false })) { // for each item in commands folder
-			if (item.endsWith('.ts')) { // if a child is a ts file
-				const filePath = join(cmdsFolderPath, item);
-				const command: botCommand<SlashCommandBuilder> = (await import(`file://${filePath}`));
+			if (!(module.data && module.execute)) {
+				console.warn(`Command at ${item.path} is missing a required \`data\` or \`execute\` property.`);
 
-				if ('data' in command && 'execute' in command) {
-					command.data
-						.setContexts(InteractionContextType.Guild)
-						.setIntegrationTypes(ApplicationIntegrationType.GuildInstall);
+				continue;
+			}
 
-					this.commands.set(command.data.name, command);
+			const fileOrFolderName = item.path.split('/')[2] as string;
 
-					if (!Bun.argv.includes('--deploy')) continue;
+			let existingCommand = this.commands.get(fileOrFolderName);
 
-					this.apiCommands.push(command.data.toJSON());
-				} else console.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-			} else { // otherwise, if it's a folder
-				const command: botCommand<SlashCommandBuilder> = {
+			if (module.data instanceof SlashCommandSubcommandBuilder) {
+				this.subcommands.set(`${fileOrFolderName}:${module.data.name}`, module as botCommand<SlashCommandSubcommandBuilder>);
+
+				if (!existingCommand) existingCommand = {
 					data: new SlashCommandBuilder()
-						.setName(item)
-						.setDescription(item)
+						.setName(fileOrFolderName)
+						.setDescription(fileOrFolderName)
 						.setContexts(InteractionContextType.Guild)
 						.setIntegrationTypes(ApplicationIntegrationType.GuildInstall),
 					execute: () => Promise.resolve(undefined)
-				} // make a command with folder name
+				};
 
-				const path = join(cmdsFolderPath, item);
+				existingCommand.data.addSubcommand(module.data);
+			} else if (module.data instanceof SlashCommandBuilder) existingCommand = {
+				data: module.data
+					.setContexts(InteractionContextType.Guild)
+					.setIntegrationTypes(ApplicationIntegrationType.GuildInstall),
+				execute: module.execute
+			};
 
-				for (const file of this.glob.scanSync({ cwd: path })) { // for each subcommand file
-					const subcommand: botCommand<SlashCommandSubcommandBuilder> = (await import(`file://${join(path, file)}`));
-
-					if ('data' in subcommand && 'execute' in subcommand) {
-						command.data.addSubcommand(subcommand.data);
-
-						this.subcommands.set(`${command.data.name}:${subcommand.data.name}`, subcommand);
-					} else console.warn(`[WARNING] The subcommand at ${path} is missing a required "data" or "execute" property.`);
-				}
-
-				this.commands.set(command.data.name, command);
-
-				if (!Bun.argv.includes('--deploy')) continue;
-
-				this.apiCommands.push(command.data.toJSON());
-			}
+			this.commands.set(existingCommand!.data.name, existingCommand!);
 		}
 
 		if (Bun.argv.includes('--deploy')) {
+			this.commands.forEach(command => this.apiCommands.push(command.data.toJSON()));
+
 			const rest = new REST().setToken(Bun.env.TOKEN);
 
 			try {
@@ -139,15 +127,18 @@ class Bot extends Client {
 	}
 
 	private async initEvents() {
-		const eventsPath = join(__dirname, 'events');
+		for (const item of bundledEvents) {
+			const event = item.module as Partial<botEvent>;
 
-		for (const file of this.glob.scanSync({ cwd: eventsPath })) {
-			const filePath = join(eventsPath, file);
-			const event: botEvent = (await import(`file://${filePath}`));
+			if (!event.execute) {
+				console.warn(`Event at ${item.path} is missing a required \`execute\` property.`);
+
+				continue;
+			}
 
 			event.once
-				? this.once(file.split('.')[0]!, (...args) => event.execute(...args))
-				: this.on(file.split('.')[0]!, (...args) => event.execute(...args));
+				? this.once(item.path.split('/').pop()!, (...args) => event.execute!(...args))
+				: this.on(item.path.split('/').pop()!, (...args) => event.execute!(...args))
 		}
 
 		console.log('Events loaded successfully.');
