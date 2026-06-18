@@ -1,11 +1,8 @@
-import { join } from 'node:path';
 import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions } from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
 import type { botSettingInfo } from './types/knex.ts';
-import { Glob } from 'bun';
-const __dirname = import.meta.dirname;
 
 class Bot extends Client {
 	name = 'ACSD Assistant';
