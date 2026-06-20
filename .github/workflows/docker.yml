@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
 jobs:
   docker-build-push:
     runs-on: ubuntu-latest
