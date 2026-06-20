@@ -145,11 +145,11 @@ class Bot extends Client {
 		this.knex = knex({
 			client: 'mysql2',
 			connection: {
-				host: '127.0.0.1',
+				host: Bun.env.DB_HOST,
 				port: Bun.env.DB_PORT,
 				user: Bun.env.DB_USER ?? 'nologin',
 				password: Bun.env.DB_PASS ?? 'nologin',
-				database: 'acsd'
+				database: Bun.env.DB_NAME
 			}
 		});
 

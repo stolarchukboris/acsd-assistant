@@ -14,9 +14,10 @@ declare module "bun" {
 		OPEN_CLOUD_API_KEY: string;
 		ROBLOX_COOKIE: string;
 
+		DB_HOST: string;
 		DB_PASS: string;
 		DB_USER: string;
 		DB_PORT: number;
-
+		DB_NAME: string;
 	}
 }
