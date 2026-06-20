@@ -1,6 +1,6 @@
 {
 	"name": "acsd-assistant",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"description": "A bot for enhancing your ACSD experience.",
 	"main": "src/index.ts",
 	"module": "src/index.ts",
@@ -15,12 +15,12 @@
 		"deploy-restart": "bun processRestart -- -- -- --deploy && pm2 logs",
 		"stop": "pm2 delete \"ACSD Assistant\"",
 		"ci:test": "bun manifest && bun run . --nologin",
-		"build:bundle": "bun run manifest && bun build ./src/index.ts --outfile=./dist/bundle.js --target=bun --external=pg --external=better-sqlite3 --external=pg-query-stream --external=tedious --external=oracledb --external=sqlite3 --external=pgnative --external=redshift --external=mysql --external=zlib-sync",
+		"build:bundle": "bun manifest && bun build ./src/index.ts --outfile=./dist/bundle.js --target=bun --external=pg --external=better-sqlite3 --external=pg-query-stream --external=tedious --external=oracledb --external=sqlite3 --external=pgnative --external=redshift --external=mysql --external=zlib-sync",
 		"build:obfuscate": "bunx javascript-obfuscator ./dist/bundle.js --output ./dist/obfuscated.js --compact true --self-defending true",
-		"build:compile-win-x64": "bun build ./dist/obfuscated.js --compile --target=bun-windows-x64 --outfile=./dist/acsd-assistant-win.exe",
-		"build:compile-linux-x64": "bun build ./dist/obfuscated.js --compile --target=bun-linux-x64 --outfile=./dist/acsd-assistant-linux",
-		"release:win-x64": "bun run build:bundle && bun run build:obfuscate && bun run build:compile-win-x64",
-		"release:linux-x64": "bun run build:bundle && bun run build:obfuscate && bun run build:compile-linux-x64"
+		"build:compile-win-x64": "bun build ./dist/obfuscated.js --compile --target=bun-windows-x64 --outfile=./dist/acsd-assistant-win.exe --external=zlib-sync",
+		"build:compile-linux-x64": "bun build ./dist/obfuscated.js --compile --target=bun-linux-x64 --outfile=./dist/acsd-assistant-linux --external=zlib-sync",
+		"release:win-x64": "bun build:bundle && bun build:obfuscate && bun build:compile-win-x64",
+		"release:linux-x64": "bun build:bundle && bun build:obfuscate && bun build:compile-linux-x64"
 	},
 	"author": "stolarchukboris",
 	"license": "MIT",
