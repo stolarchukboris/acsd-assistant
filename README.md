@@ -23,8 +23,14 @@ Features shift, credit, punishment and training management commands.
    bun start
    ```
 
+*In order to deploy commands, please append the `--deploy` flag to your start/restart command.*  
+*Example: `bun start --deploy`*
+
 ### From releases
 **Requirements**: MySQL Server v8.0.31^ & MySQL Workbench v8.0.31^
 1. Download the latest [release](https://github.com/stolarchukboris/acsd-assistant/releases) for your OS into the desired location.
 2. In the same location create and fill out the .env file.
 3. Run the executable.
+
+*In order to deploy commands, please open the terminal and run the executable with the `--deploy` flag.*  
+*Example: `acsd-assistant-win.exe --deploy`*

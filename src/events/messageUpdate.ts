@@ -6,9 +6,11 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 	try {
 		if (oldMessage.partial) await oldMessage.fetch();
 
-		if (!(((newMessage.channelId === bot.getSetting('shiftLogsChannelId')) && (newMessage.webhookId === bot.getSetting('shiftLogWebhookId')))
-			|| ((newMessage.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (newMessage.webhookId === Bun.env.DEV_WEBHOOK_ID)))
-			|| newMessage.embeds[0]?.title?.includes('started')) return;
+		const messageFromProd = (newMessage.channelId === bot.getSetting('shiftLogsChannelId')) && (newMessage.webhookId === bot.getSetting('shiftLogWebhookId'));
+		const messageFromDev = (newMessage.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (newMessage.webhookId === Bun.env.DEV_WEBHOOK_ID);
+		const wordsIncluded = oldMessage.embeds[0]?.title?.includes('started') && newMessage.embeds[0]?.title?.includes('ended');
+
+		if (!((messageFromProd || messageFromDev) && wordsIncluded)) return;
 
 		const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
 			.select('*')
@@ -43,8 +45,8 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 						robloxId: shift.robloxId,
 						whMessageId: shift.whMessageId,
 						fwMessageId: shift.fwMessageId,
-						startedTimestamp: String(started),
-						endedTimestamp: String(ended),
+						startedTimestamp: started,
+						endedTimestamp: ended,
 						lenMinutes: lengthMins
 					});
 			}
@@ -63,8 +65,8 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 					robloxId: activeShiftEntry.robloxId,
 					whMessageId: activeShiftEntry.whMessageId,
 					fwMessageId: activeShiftEntry.fwMessageId,
-					startedTimestamp: String(started),
-					endedTimestamp: String(ended),
+					startedTimestamp: started,
+					endedTimestamp: ended,
 					lenMinutes: lengthMins
 				});
 		}

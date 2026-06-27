@@ -1,9 +1,11 @@
+type uuidv4 = `${string}-${string}-${string}-${string}-${string}`;
+
 export type trainingInfo = Readonly<{
-	trainingId: string;
+	trainingId: uuidv4;
 	hostDiscordId: string;
 	hostRobloxUsername: string;
 	messageId: string;
-	trainingTimestamp: string;
+	startingTimestamp: number;
 	isReminded: boolean;
 	isStarted: boolean;
 }>;
@@ -12,20 +14,20 @@ export type botSettingInfo = {
 	readonly settingName: string;
 	readonly settingDesc: string;
 	settingValue: string;
-	lastUpdatedAt: string;
+	lastUpdatedAt: string | Date;
 	lastUpdatedBy: string;
 };
 
 export type activeShift = Readonly<{
-	jobId: string;
+	jobId: uuidv4;
 	whMessageId: string;
 	fwMessageId: string;
 	robloxId: string;
-	startedTimestamp: string;
+	startedTimestamp: number;
 }>;
 
 export type activeMShift = Readonly<{
-	shiftId: string;
+	shiftId: uuidv4;
 	discordId: string;
 	robloxId: string;
 	robloxUsername: string;
@@ -33,15 +35,15 @@ export type activeMShift = Readonly<{
 }>;
 
 export type pendingShift = Readonly<activeShift & {
-	endedTimestamp: string;
+	endedTimestamp: number;
 	lenMinutes: number;
 }>;
 
 export type loggedShift = Readonly<{
-	shiftId: string;
+	shiftId: uuidv4;
 	robloxId: string;
-	startedTimestamp: string;
-	endedTimestamp: string;
+	startedTimestamp: number;
+	endedTimestamp: number;
 	lenMinutes: number;
 	proof: string;
 }>;
@@ -68,7 +70,7 @@ export type personnelCredits = Readonly<{
 }>;
 
 export type creditTransaction = Readonly<{
-	transactionId: string;
+	transactionId: uuidv4;
 	execRbxId: string;
 	targetRbxId: string;
 	balanceBefore: number;
@@ -78,7 +80,7 @@ export type creditTransaction = Readonly<{
 }>;
 
 export type punishmentInfo = Readonly<{
-	punishmentId: string;
+	punishmentId: uuidv4;
 	execRbxId: string;
 	targetRbxId: string;
 	punishmentType: 'warn' | 'strike';

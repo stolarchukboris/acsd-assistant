@@ -63,8 +63,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.insert({
 			shiftId: 'shiftId' in existingShift ? existingShift.shiftId : crypto.randomUUID(),
 			robloxId: cmdUser.robloxId,
-			startedTimestamp: String(startedTimestamp),
-			endedTimestamp: String(now),
+			startedTimestamp: startedTimestamp,
+			endedTimestamp: now,
 			lenMinutes: length,
 			proof: (attach?.url ?? url)!
 		});

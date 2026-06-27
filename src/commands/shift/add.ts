@@ -64,8 +64,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.insert({
 			shiftId: id,
 			robloxId: target.robloxId,
-			startedTimestamp: String(startTime),
-			endedTimestamp: String(startTime + minutes * 60),
+			startedTimestamp: startTime,
+			endedTimestamp: startTime + minutes * 60,
 			lenMinutes: minutes,
 			proof: reason
 		});

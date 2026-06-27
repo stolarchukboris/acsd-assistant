@@ -1,7 +1,8 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, TextChannel } from 'discord.js';
-import axios from 'axios';
 import bot from '../../index.ts';
 import type { personnelInfo, trainingInfo } from '../../types/knex.ts';
+import { fetchApi } from 'rozod';
+import { getGamesMultigetPlaceDetails } from 'rozod/endpoints/gamesv1';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('schedule')
@@ -44,8 +45,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const time = interaction.options.getInteger('time', true);
 	const trainingAroundThisTime = await bot.knex<trainingInfo>('trainings')
 		.select('*')
-		.where('trainingTimestamp', '>=', time - 3600)
-		.andWhere('trainingTimestamp', '<=', time + 3600)
+		.where('startingTimestamp', '>=', time - 3600)
+		.andWhere('startingTimestamp', '<=', time + 3600)
 		.first();
 
 	if (trainingAroundThisTime) return await interaction.editReply({
@@ -54,32 +55,34 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 				.setDescription('There is another training scheduled in less than an hour from this one.')
 				.setFields(
 					{ name: 'Training ID:', value: trainingAroundThisTime.trainingId, inline: true },
-					{ name: 'Starting:', value: `<t:${trainingAroundThisTime.trainingTimestamp}>`, inline: true }
+					{ name: 'Starting:', value: `<t:${trainingAroundThisTime.startingTimestamp}>`, inline: true }
 				)
 		]
 	});
 
 	const gameUrl = interaction.options.getString('game_url', true);
-	const placeId = gameUrl.split('/')[4];
-	const gameResponse = await axios.get(`https://games.roblox.com/v1/games/multiget-place-details?placeIds=${placeId}`,
-		{ headers: { Cookie: `.ROBLOSECURITY=${Bun.env.ROBLOX_COOKIE}` } }
-	).catch(async _ => {
-		await interaction.editReply({
-			embeds: [
-				bot.embeds.error.setDescription('Could not find the provided game.')
-			]
-		});
-		return;
+	const placeId = Number(gameUrl.split('/')[4]);
+
+	if (isNaN(placeId)) return await interaction.editReply({
+		embeds: [
+			bot.embeds.error.setDescription('Could not retrieve Place ID from the provided link.')
+		]
 	});
 
-	if (!gameResponse) return;
+	const gameResponse = await fetchApi(getGamesMultigetPlaceDetails, { placeIds: [placeId] }, { throwOnError: true });
+
+	if (gameResponse.length === 0) return await interaction.editReply({
+		embeds: [
+			bot.embeds.error.setDescription('Could not find the provided game.')
+		]
+	});
 
 	const minAttend = interaction.options.getInteger('min_attendance', true);
 	const maxAttend = interaction.options.getInteger('max_attendance');
 	const duration = interaction.options.getString('duration');
 	const comment = interaction.options.getString('comment');
 
-	const gameName: string = gameResponse.data[0].name;
+	const gameName: string = gameResponse[0]!.name;
 	const trainingId = crypto.randomUUID();
 
 	await bot.knex<trainingInfo>('trainings')
@@ -87,7 +90,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			trainingId: trainingId,
 			hostDiscordId: cmdUser.discordId,
 			hostRobloxUsername: cmdUser.robloxUsername,
-			trainingTimestamp: String(time)
+			startingTimestamp: time
 		});
 
 	const sentAnns = await channel.send({

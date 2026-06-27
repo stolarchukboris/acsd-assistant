@@ -3,6 +3,10 @@ import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
 import type { botSettingInfo } from './types/knex.ts';
+import { configureServer, fetchApi } from 'rozod';
+import { getUsersAuthenticated } from 'rozod/endpoints/usersv1';
+import { join } from 'path';
+import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
 
 class Bot extends Client {
 	name = 'ACSD Assistant';
@@ -60,6 +64,74 @@ class Bot extends Client {
 				.setTitle('Not found.')
 				.setThumbnail(this.logos.placeholder)
 		} as const;
+	}
+
+	getSetting(name: string) {
+		return this.botSettings.get(name)?.settingValue;
+	}
+
+	async getRobloxPfp(robloxId: string) {
+		try {
+			const operation = await fetchApi(getCloudV2UsersUserIdGenerateThumbnail,
+				{ user_id: robloxId, shape: 'SQUARE', format: 'PNG' },
+				{ throwOnError: true }
+			);
+
+			const res = await fetch(`https://apis.roblox.com/cloud/v2/${operation.path}`, {
+				method: 'GET',
+				headers: {
+					'Cookie': `.ROBLOSECURITY=${Bun.env.ROBLOX_COOKIE}`,
+					'x-api-key': Bun.env.OPEN_CLOUD_API_KEY
+				}
+			});
+
+			if (!res.ok) throw new Error;
+
+			const result = await res.json() as any;
+
+			return result.done && result.response ? result.response.imageUri : this.logos.placeholder;
+
+		} catch (error) {
+			console.error(error);
+
+			return this.logos.placeholder;
+		}
+	}
+
+	private async updateEnvCookie(newCookie: string, poolIndex: number) {
+		try {
+			const envPath = join(process.cwd(), '.env');
+			const file = Bun.file(envPath);
+
+			if (!(await file.exists())) throw new Error('.env file not found in the current working directory.');
+
+			const content = await file.text();
+			const lines = content.split('\n');
+
+			let cookieUpdated = false;
+
+			const updatedLines = lines.map(line => {
+				const trimmed = line.trim();
+
+				if (trimmed.startsWith('ROBLOX_COOKIE=')) {
+					cookieUpdated = true;
+
+					return `ROBLOX_COOKIE=${newCookie}`;
+				}
+
+				return line;
+			});
+
+			if (!cookieUpdated) updatedLines.push(`ROBLOX_COOKIE=${newCookie}`);
+
+			await Bun.write(envPath, updatedLines.join('\n'));
+
+			Bun.env.ROBLOX_COOKIE = newCookie;
+
+			console.log(`Successfully updated the Roblox cookie for account ${poolIndex}.`);
+		} catch (error) {
+			console.error(`An error has occured while updating the Roblox cookie for account ${poolIndex}.\n${error}`);
+		}
 	}
 
 	private async initCommands() {
@@ -142,16 +214,35 @@ class Bot extends Client {
 	}
 
 	private async initDb() {
+		if (!(Bun.env.DB_HOST && Bun.env.DB_NAME && Bun.env.DB_PASS && Bun.env.DB_PORT && Bun.env.DB_USER))
+			throw new Error('Database connection credentials missing in env.');
+
 		this.knex = knex({
 			client: 'mysql2',
 			connection: {
 				host: Bun.env.DB_HOST,
 				port: Bun.env.DB_PORT,
-				user: Bun.env.DB_USER ?? 'nologin',
-				password: Bun.env.DB_PASS ?? 'nologin',
+				user: Bun.env.DB_USER,
+				password: Bun.env.DB_PASS,
 				database: Bun.env.DB_NAME
+			},
+			migrations: {
+				extension: 'ts',
+				directory: './database/migrations',
+				loadExtensions: ['.ts']
 			}
 		});
+
+		console.log('Starting database migrations...');
+
+		const [batchNo, log]: [number, string[]] = await this.knex.migrate.latest();
+
+		if (log.length === 0) console.log('Database is already up to date.');
+		else {
+			console.log(`${log.length} successful migrations (batch ${batchNo}).\nApplied files list:`);
+
+			log.forEach(file => console.log(`	- ${file}`));
+		}
 
 		await this.knex.raw('select 1');
 
@@ -161,6 +252,21 @@ class Bot extends Client {
 			.select('*');
 
 		settings.forEach(setting => this.botSettings.set(setting.settingName, setting));
+	}
+
+	private async initRoblox() {
+		if (!(Bun.env.ROBLOX_COOKIE && Bun.env.OPEN_CLOUD_API_KEY))
+			throw new Error('Roblox connection credentials missing in env.');
+
+		configureServer({
+			cookies: Bun.env.ROBLOX_COOKIE,
+			cloudKey: Bun.env.OPEN_CLOUD_API_KEY,
+			onCookieRefresh: async ({ oldCookie, newCookie, poolIndex }) => await this.updateEnvCookie(newCookie, poolIndex)
+		});
+
+		const me = await fetchApi(getUsersAuthenticated, undefined, { throwOnError: true });
+
+		console.log(`Logged into Roblox as ${me.name} (${me.id}).`);
 	}
 
 	private async start() {
@@ -175,16 +281,13 @@ class Bot extends Client {
 			}
 
 			await this.initDb();
+			await this.initRoblox();
 			await this.login(Bun.env.TOKEN);
 		} catch (error) {
-			console.error(`Bot startup failure: ${error}`);
+			console.error(`Bot startup failure.\n${error}`);
 
 			process.exit(1);
 		}
-	}
-
-	getSetting(name: string) {
-		return this.botSettings.get(name)?.settingValue;
 	}
 
 	constructor() {

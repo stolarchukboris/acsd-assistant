@@ -1,6 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.ts';
-import axios from 'axios';
 import type { loggedShift, partialPersonnelInfo, personnelCredits, personnelInfo, punishmentInfo } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
@@ -37,21 +36,6 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		})
 		.first() : cmdUser;
 
-	async function getRobloxPfp(robloxId: string) {
-		const key = Bun.env.OPEN_CLOUD_API_KEY;
-
-		if (!key) return bot.logos.placeholder;
-
-		try {
-			const res = await axios.get(`https://apis.roblox.com/cloud/v2/users/${robloxId}:generateThumbnail?shape=SQUARE`, { headers: { 'x-api-key': key } });
-
-			return res.data.response.imageUri;
-		} catch {
-			return bot.logos.placeholder;
-		}
-
-	}
-
 	if (stats) {
 		const shifts = await bot.knex<loggedShift>('loggedShifts')
 			.select('*')
@@ -80,7 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			)
 		}
 
-		const pfpURL = await getRobloxPfp(stats.robloxId);
+		const pfpURL = await bot.getRobloxPfp(stats.robloxId);
 
 		await interaction.editReply({
 			embeds: [
@@ -126,7 +110,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			.where('robloxId', partial.robloxId)
 			.then(stats => stats.map(stat => stat.lenMinutes).reduce((a, b) => a + b, 0));
 
-		const pfpURL = await getRobloxPfp(partial.robloxId);
+		const pfpURL = await bot.getRobloxPfp(partial.robloxId);
 
 		await interaction.editReply({
 			embeds: [

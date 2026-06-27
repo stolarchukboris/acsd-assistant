@@ -1,7 +1,9 @@
 import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ComponentType, SlashCommandSubcommandBuilder, TextChannel } from 'discord.js';
 import bot from '../../index.ts';
-import axios from 'axios';
 import type { personnelInfo } from '../../types/knex.ts';
+import { fetchApi } from 'rozod';
+import { postUsernamesUsers } from 'rozod/endpoints/usersv1';
+import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('start')
@@ -17,7 +19,6 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	await interaction.deferReply();
 
 	const username = interaction.options.getString('roblox_username', true);
-	const key = Bun.env.OPEN_CLOUD_API_KEY;
 
 	const existingRequest = await bot.knex<personnelInfo>('pendingRegs')
 		.select('*')
@@ -60,44 +61,36 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (!rankRoleName) return await interaction.editReply({
 		embeds: [
-			bot.embeds.error.setDescription('You have not been assigned a rank role yet. Please contact the ACSD administration about this or get a Recruit role in <#1435039843985002660>.')
+			bot.embeds.error.setDescription(`You have not been assigned a rank role yet. Please get a Recruit role in <#${bot.getSetting('roleGiverChannelId')}>.`)
 		]
 	});
 
-	if (!key) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription(`No Open Cloud API key detected. Please contact <@${Bun.env.OWNER_ID}> about this issue.`)
-		]
-	});
+	const responseUsernamesData = await fetchApi(postUsernamesUsers, {
+		body: {
+			usernames: [username],
+			excludeBannedUsers: true
+		}
+	}, { throwOnError: true });
 
-	const responseId = await axios.post('https://users.roblox.com/v1/usernames/users', {
-		"usernames": [username],
-		"excludeBannedUsers": true
-	});
+	const userId = responseUsernamesData.data[0]?.id;
 
-	if (responseId.data.data.length === 0 || !responseId) return await interaction.editReply({
+	if (!userId) return await interaction.editReply({
 		embeds: [
 			bot.embeds.notFound.setDescription(`A user named \`${username}\` is banned or does not exist.`)
 		]
 	});
 
-	const userId = responseId.data.data[0].id;
-	const responseUser = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userId}`, { headers: { 'x-api-key': key } });
-
-	let pfpURL = bot.logos.placeholder;
-
-	await axios.get(`https://apis.roblox.com/cloud/v2/users/${userId}:generateThumbnail?shape=SQUARE`, { headers: { 'x-api-key': key } })
-		.then(res => pfpURL = res.data.response.imageUri)
-		.catch(_ => { });
-
+	const responseUser = await fetchApi(getCloudV2UsersUserId, { user_id: `${userId}` }, { throwOnError: true })
+	const pfpUrl = await bot.getRobloxPfp(`${userId}`);
+	
 	const profileEmbed = bot.embed
-		.setThumbnail(pfpURL)
-		.setTitle(`${responseUser.data.name} (${responseUser.data.displayName})`)
+		.setThumbnail(pfpUrl)
+		.setTitle(`${responseUser.name} (${responseUser.displayName})`)
 		.addFields(
-			{ name: 'Username:', value: responseUser.data.name, inline: true },
-			{ name: 'ID:', value: responseUser.data.id, inline: true },
-			{ name: 'Created:', value: `<t:${Math.floor(Date.parse(responseUser.data.createTime) / 1000)}:f>`, inline: true },
-			{ name: 'Description:', value: responseUser.data.about || 'No description provided.' }
+			{ name: 'Username:', value: responseUser.name, inline: true },
+			{ name: 'ID:', value: responseUser.id, inline: true },
+			{ name: 'Created:', value: `<t:${Math.floor(Date.parse(responseUser.createTime) / 1000)}:f>`, inline: true },
+			{ name: 'Description:', value: responseUser.about || 'No description provided.' }
 		);
 
 	const row = new ActionRowBuilder<ButtonBuilder>().setComponents(
@@ -144,51 +137,51 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (!confirmation) return;
 
-	await confirmation?.deferUpdate();
+	await confirmation.deferUpdate();
 
-	if (confirmation?.customId === 'confirm') {
-		await bot.knex<personnelInfo>('pendingRegs')
-			.insert({
-				discordId: interaction.user.id,
-				robloxId: userId,
-				robloxUsername: responseUser.data.name,
-				acsdRank: rankRoleName
-			});
+	if (confirmation.customId === 'cancel') return await confirmation.editReply({
+		embeds: [
+			bot.embeds.cancel.setDescription('Registration cancelled.')
+		],
+		components: []
+	});
 
-		const adminMsg = await (bot.channels.cache.get(bot.getSetting('pendingRegsChannelId')!) as TextChannel).send({
-			embeds: [
-				bot.embed
-					.setColor('Orange')
-					.setThumbnail(bot.logos.questionmark)
-					.setTitle('Registration request pending.')
-					.setDescription(`${interaction.user} has sent a registration request.
+	await bot.knex<personnelInfo>('pendingRegs')
+		.insert({
+			discordId: interaction.user.id,
+			robloxId: `${userId}`,
+			robloxUsername: responseUser.name,
+			acsdRank: rankRoleName
+		});
+
+	const adminMsg = await (bot.channels.cache.get(bot.getSetting('pendingRegsChannelId')!) as TextChannel).send({
+		embeds: [
+			bot.embed
+				.setColor('Orange')
+				.setThumbnail(bot.logos.questionmark)
+				.setTitle('Registration request pending.')
+				.setDescription(`${interaction.user} has sent a registration request.
 
 Please verify that the Roblox account provided in the request (below) matches the one provided in their application, and that their rank is correct, then confirm or deny the request.
 
 Their auto-detected rank is **${rankRoleName}**.`),
-				profileEmbed
-			],
-			components: [row]
-		});
+			profileEmbed
+		],
+		components: [row]
+	});
 
-		await bot.knex<personnelInfo & { adminMessageId: string }>('pendingRegs')
-			.update('adminMessageId', adminMsg.id)
-			.where('discordId', interaction.user.id);
+	await bot.knex<personnelInfo & { adminMessageId: string }>('pendingRegs')
+		.update('adminMessageId', adminMsg.id)
+		.where('discordId', interaction.user.id);
 
-		await confirmation.editReply({
-			embeds: [
-				bot.embeds.success
-					.setDescription('Successfully forwarded a registration request to the ACSD administration. You will be notified of their decision.')
-					.setFields(
-						{ name: 'Linked Roblox account:', value: `[${responseUser.data.name}](https://www.roblox.com/users/${userId}/profile)`, inline: true },
-						{ name: 'Rank:', value: rankRoleName, inline: true }
-					)
-			],
-			components: []
-		});
-	} else if (confirmation?.customId === 'cancel') await confirmation.editReply({
+	await confirmation.editReply({
 		embeds: [
-			bot.embeds.cancel.setDescription('Registration cancelled.')
+			bot.embeds.success
+				.setDescription('Successfully forwarded a registration request to the ACSD administration. You will be notified of their decision.')
+				.setFields(
+					{ name: 'Linked Roblox account:', value: `[${responseUser.name}](https://www.roblox.com/users/${userId}/profile)`, inline: true },
+					{ name: 'Rank:', value: rankRoleName, inline: true }
+				)
 		],
 		components: []
 	});

@@ -1,5 +1,4 @@
 import { Glob } from "bun";
-import { writeFileSync } from "fs";
 
 async function buildManifest() {
 	console.log('Generating command and event manifest...');
@@ -32,7 +31,7 @@ export const bundledCommands = [\n${commandsArrayElements}];
 export const bundledEvents = [\n${eventsArrayElements}];
 `;
 
-	writeFileSync("./src/regManifest.ts", finalContent);
+	await Bun.write("./src/regManifest.ts", finalContent);
 	console.log('Successfully generated the manifest at src/regManifest.ts');
 }
 

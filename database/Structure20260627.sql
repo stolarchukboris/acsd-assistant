@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS `activemshifts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `activemshifts` (
-  `shiftId` varchar(36) NOT NULL,
+  `shiftId` char(36) NOT NULL,
   `discordId` varchar(20) NOT NULL,
   `robloxId` varchar(20) NOT NULL,
   `robloxUsername` varchar(20) NOT NULL,
@@ -45,11 +45,11 @@ DROP TABLE IF EXISTS `activeshifts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `activeshifts` (
-  `jobId` varchar(36) NOT NULL,
+  `jobId` char(36) NOT NULL,
   `whMessageId` varchar(20) NOT NULL,
   `fwMessageId` varchar(20) NOT NULL,
   `robloxId` varchar(20) NOT NULL,
-  `startedTimestamp` varchar(10) NOT NULL,
+  `startedTimestamp` int unsigned NOT NULL,
   UNIQUE KEY `whMessageId` (`whMessageId`),
   UNIQUE KEY `fwMessageId` (`fwMessageId`),
   UNIQUE KEY `robloxId` (`robloxId`)
@@ -96,7 +96,7 @@ DROP TABLE IF EXISTS `credittransactions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `credittransactions` (
-  `transactionId` varchar(36) NOT NULL,
+  `transactionId` char(36) NOT NULL,
   `execRbxId` varchar(20) NOT NULL,
   `targetRbxId` varchar(20) NOT NULL,
   `balanceBefore` smallint NOT NULL,
@@ -115,10 +115,10 @@ DROP TABLE IF EXISTS `loggedshifts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `loggedshifts` (
-  `shiftId` varchar(36) NOT NULL,
+  `shiftId` char(36) NOT NULL,
   `robloxId` varchar(20) NOT NULL,
-  `startedTimestamp` varchar(10) NOT NULL,
-  `endedTimestamp` varchar(10) NOT NULL,
+  `startedTimestamp` int unsigned NOT NULL,
+  `endedTimestamp` int unsigned NOT NULL,
   `lenMinutes` smallint unsigned NOT NULL,
   `proof` text NOT NULL,
   PRIMARY KEY (`shiftId`)
@@ -154,12 +154,12 @@ DROP TABLE IF EXISTS `pendingshiftlogs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `pendingshiftlogs` (
-  `jobId` varchar(36) NOT NULL,
+  `jobId` char(36) NOT NULL,
   `whMessageId` varchar(20) NOT NULL,
   `fwMessageId` varchar(20) NOT NULL,
   `robloxId` varchar(20) NOT NULL,
-  `startedTimestamp` varchar(10) NOT NULL,
-  `endedTimestamp` varchar(10) NOT NULL,
+  `startedTimestamp` int unsigned NOT NULL,
+  `endedTimestamp` int unsigned NOT NULL,
   `lenMinutes` smallint unsigned NOT NULL,
   UNIQUE KEY `whMessageId` (`whMessageId`),
   UNIQUE KEY `fwMessageId` (`fwMessageId`)
@@ -211,10 +211,10 @@ DROP TABLE IF EXISTS `punishments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `punishments` (
-  `punishmentId` varchar(36) NOT NULL,
+  `punishmentId` char(36) NOT NULL,
   `targetRbxId` varchar(20) NOT NULL,
   `execRbxId` varchar(20) NOT NULL,
-  `punishmentType` varchar(6) NOT NULL,
+  `punishmentType` enum('warn','strike') NOT NULL,
   `reason` text NOT NULL,
   `createdAt` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`punishmentId`)
@@ -229,15 +229,15 @@ DROP TABLE IF EXISTS `trainings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `trainings` (
-  `trainingId` varchar(36) NOT NULL,
+  `trainingId` char(36) NOT NULL,
   `hostDiscordId` varchar(20) NOT NULL,
   `hostRobloxUsername` varchar(20) NOT NULL,
   `messageId` varchar(20) DEFAULT NULL,
-  `trainingTimestamp` varchar(20) NOT NULL,
+  `startingTimestamp` int unsigned NOT NULL,
   `isReminded` tinyint(1) DEFAULT '0',
   `isStarted` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`trainingId`),
-  UNIQUE KEY `trainingTimestamp` (`trainingTimestamp`),
+  UNIQUE KEY `startingTimestamp` (`startingTimestamp`),
   UNIQUE KEY `messageId` (`messageId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -251,4 +251,4 @@ CREATE TABLE `trainings` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-13 17:29:30
+-- Dump completed on 2026-06-27 21:11:13

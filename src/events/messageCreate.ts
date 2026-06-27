@@ -1,17 +1,22 @@
 import { Message, TextChannel } from 'discord.js';
 import bot from '../index.ts';
 import type { activeMShift, activeShift } from '../types/knex.ts';
-import axios from 'axios';
+import { fetchApi, fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
+import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
+import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
 
 export async function execute(message: Message) {
 	try {
-		if (!(((message.channelId === bot.getSetting('shiftLogsChannelId')) && (message.webhookId === bot.getSetting('shiftLogWebhookId')))
-			|| ((message.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (message.webhookId === Bun.env.DEV_WEBHOOK_ID)))) return;
+		const messageFromProd = (message.channelId === bot.getSetting('shiftLogsChannelId')) && (message.webhookId === bot.getSetting('shiftLogWebhookId'));
+		const messageFromDev = (message.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (message.webhookId === Bun.env.DEV_WEBHOOK_ID);
+		const embedIncludesStarted = message.embeds[0]?.title?.includes('started');
+
+		if (!((messageFromProd || messageFromDev) && embedIncludesStarted)) return;
 
 		const backupChannel = bot.channels.cache.get(Bun.env.BACKUP_SHIFT_LOGS_CH_ID) as TextChannel;
-		const forwarded = await backupChannel.send({ embeds: message.embeds });
+		const forwarded = await backupChannel.send(message.embeds.length > 0 ? { embeds: message.embeds } : { content: message.content });
 		const userId = message.embeds[0]?.description?.match(/\(([^)]+)\)/)?.[1];
-		const startTime = message.embeds[0]?.description?.match(/\:([^:]+)\:/)?.[1];
+		const startTime = message.embeds[0]?.description?.match(/\:([^:]+)\:/)?.[1] as number | undefined;
 
 		if (!userId) throw new Error('⚠️ Could not retrieve Roblox user ID from the embed.');
 
@@ -27,7 +32,11 @@ export async function execute(message: Message) {
 			.where('robloxId', userId)
 			.first();
 
-		const jobId = message.embeds[0]?.fields[0]?.value;
+		const jobId = message.embeds[0]?.fields[0]?.value as `${string}-${string}-${string}-${string}-${string}` | undefined;
+
+		if (jobId?.includes('STUDIO')) return await message.react('🟥');
+	
+		if (!jobId) throw new Error('⚠️ Could not retrieve Roblox Job ID from the embed.');
 
 		if (existingShift) {
 			await bot.knex<activeShift>('activeShifts')
@@ -41,40 +50,33 @@ export async function execute(message: Message) {
 			return await message.react('🟦');
 		}
 
-		const key = Bun.env.OPEN_CLOUD_API_KEY;
+		const responsePlayer = await fetchApi(getCloudV2UsersUserId, { user_id: userId });
 
-		if (key) {
-			const player = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userId}`, { headers: { 'x-api-key': key } }).catch(async e => {
-				await forwarded.reply(`<@${Bun.env.OWNER_ID}>\n⚠️ An error has occured while validating the player: ${e}`);
-			});
+		if (isAnyErrorResponse(responsePlayer) && responsePlayer.code) throw new Error(`⚠️ No player with user ID ${userId} has been found.`);
 
-			if (player?.data.id !== userId) await forwarded.reply(`<@${Bun.env.OWNER_ID}>\n⚠️ Player validation failed. ${player?.data.id} !== ${userId}`);
-		} else await forwarded.reply(`<@${Bun.env.OWNER_ID}>\n⚠️ Open Cloud API key not configured. Player validation skipped.`);
+		const pages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
+			placeId: Number(bot.getSetting('gamePlaceId')),
+			serverType: 0,
+			limit: 100
+		});
 
-		async function validateJobId(cursor = null) {
-			try {
-				let url = `https://games.roblox.com/v1/games/${bot.getSetting('gamePlaceId')}/servers/0?limit=100`;
+		let serverFound = false;
 
-				if (cursor) url += `&cursor=${cursor}`;
+		for await (const pageResponse of pages) {
+			if (isAnyErrorResponse(pageResponse)) {
+				console.error(pageResponse.message);
 
-				const response = await axios.get(url);
-				const found = response.data.data.some((server: any) => server.id === jobId);
+				break;
+			}
 
-				if (found) return true;
+			if (pageResponse.data.some(server => server.id === jobId)) {
+				serverFound = true;
 
-				const nextPageCursor = response.data.nextPageCursor;
-
-				if (nextPageCursor) return await validateJobId(nextPageCursor);
-				else return false;
-
-			} catch (e) {
-				await forwarded.reply(`<@${Bun.env.OWNER_ID}>\n⚠️ An error has occured while validating the job ID: ${e}`);
+				break;
 			}
 		}
 
-		const serverValid = await validateJobId();
-
-		if (!serverValid) await forwarded.reply(`<@${Bun.env.OWNER_ID}>\n⚠️ Job ID validation failed.`);
+		if (!serverFound) return await message.react('🟥');
 
 		await bot.knex<activeShift>('activeShifts')
 			.insert({
@@ -82,7 +84,7 @@ export async function execute(message: Message) {
 				whMessageId: message.id,
 				fwMessageId: forwarded.id,
 				robloxId: userId,
-				startedTimestamp: startTime ?? String(Math.floor(message.createdTimestamp / 1000))
+				startedTimestamp: startTime ?? Math.floor(message.createdTimestamp / 1000)
 			});
 
 		await message.react('🟦');

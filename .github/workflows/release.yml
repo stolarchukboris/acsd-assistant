@@ -43,18 +43,43 @@ jobs:
       - name: Install dependencies
         run: bun i --frozen-lockfile
 
-      - name: Compile Windows executable
-        run: bun "release:win-x64"
+      - name: Install RAR
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rar
 
-      - name: Compile Linux binary
-        run: bun "release:linux-x64"
+      - name: Compile Windows executable and pack it with dependencies
+        run: |
+          bun "release:win-x64"
+
+          cp -r ./database/migrations ./dist/acsd-assistant-windows/database/migrations
+
+          cp .env.example ./dist/acsd-assistant-windows/.env
+
+          cd ./dist
+          zip -r acsd-assistant-${{ github.ref_name }}-win-x64.zip ./acsd-assistant-windows
+          rar a -r acsd-assistant-${{ github.ref_name }}-win-x64.rar ./acsd-assistant-windows
+
+      - name: Compile Linux binary and pack it with dependencies
+        run: |
+          bun "release:linux-x64"
+
+          cp -r ./database/migrations ./dist/acsd-assistant-linux/database/migrations
+
+          cp .env.example ./dist/acsd-assistant-linux/.env
+
+          cd ./dist
+          zip -r acsd-assistant-${{ github.ref_name }}-linux-x64.zip ./acsd-assistant-linux
+          rar a -r acsd-assistant-${{ github.ref_name }}-linux-x64.rar ./acsd-assistant-linux
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            ./dist/acsd-assistant-win.exe
-            ./dist/acsd-assistant-linux
+            ./dist/acsd-assistant-win-x64.zip
+            ./dist/acsd-assistant-win-x64.rar
+            ./dist/acsd-assistant-linux-x64.zip
+            ./dist/acsd-assistant-linux-x64.rar
           draft: false
           prerelease: false
         env:

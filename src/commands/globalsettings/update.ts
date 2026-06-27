@@ -55,7 +55,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		...existingSetting,
 		settingValue: newValue,
 		lastUpdatedBy: cmdUser.discordId,
-		lastUpdatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+		lastUpdatedAt: new Date()
 	});
 
 	await interaction.editReply({
