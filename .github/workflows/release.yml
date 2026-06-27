@@ -52,9 +52,9 @@ jobs:
         run: |
           bun "release:win-x64"
 
-          cp -r ./database/migrations ./dist/acsd-assistant-windows/database/migrations
+          cp -r ./database/migrations ./dist/acsd-assistant-win/database/migrations
 
-          cp .env.example ./dist/acsd-assistant-windows/.env
+          cp .env.example ./dist/acsd-assistant-win/.env
 
           cd ./dist
           zip -r acsd-assistant-${{ github.ref_name }}-win-x64.zip ./acsd-assistant-windows
