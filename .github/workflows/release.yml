@@ -80,10 +80,10 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            ./dist/acsd-assistant-win-x64.zip
-            ./dist/acsd-assistant-win-x64.rar
-            ./dist/acsd-assistant-linux-x64.zip
-            ./dist/acsd-assistant-linux-x64.rar
+            ./dist/acsd-assistant-${{ github.ref_name }}-win-x64.zip
+            ./dist/acsd-assistant-${{ github.ref_name }}-win-x64.rar
+            ./dist/acsd-assistant-${{ github.ref_name }}-linux-x64.zip
+            ./dist/acsd-assistant-${{ github.ref_name }}-linux-x64.rar
           draft: false
           prerelease: false
         env:
