@@ -59,8 +59,8 @@ jobs:
           cp .env.example ./dist/acsd-assistant-win/.env
 
           cd ./dist
-          zip -r acsd-assistant-${{ github.ref_name }}-win-x64.zip ./acsd-assistant-windows
-          rar a -r acsd-assistant-${{ github.ref_name }}-win-x64.rar ./acsd-assistant-windows
+          zip -r acsd-assistant-${{ github.ref_name }}-win-x64.zip ./acsd-assistant-win
+          rar a -r acsd-assistant-${{ github.ref_name }}-win-x64.rar ./acsd-assistant-win
 
       - name: Compile Linux binary and pack it with dependencies
         run: |
