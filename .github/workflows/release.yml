@@ -52,6 +52,8 @@ jobs:
         run: |
           bun "release:win-x64"
 
+          mkdir -p ./dist/acsd-assistant-win/database
+
           cp -r ./database/migrations ./dist/acsd-assistant-win/database/migrations
 
           cp .env.example ./dist/acsd-assistant-win/.env
@@ -63,6 +65,8 @@ jobs:
       - name: Compile Linux binary and pack it with dependencies
         run: |
           bun "release:linux-x64"
+
+          mkdir -p ./dist/acsd-assistant-linux/database
 
           cp -r ./database/migrations ./dist/acsd-assistant-linux/database/migrations
 
