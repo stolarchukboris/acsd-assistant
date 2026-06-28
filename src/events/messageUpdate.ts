@@ -12,9 +12,10 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 
 		if (!((messageFromProd || messageFromDev) && wordsIncluded)) return;
 
+		const messageId = messageFromDev ? `${newMessage.id}d` : newMessage.id;
 		const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
 			.select('*')
-			.where('whMessageId', newMessage.id)
+			.where('whMessageId', messageId)
 			.first();
 
 		if (!activeShiftEntry) return;
@@ -31,7 +32,9 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 				.where('jobId', activeShiftEntry.jobId);
 
 			for (const shift of unfinishedShifts) {
-				const message = await (bot.channels.cache.get(bot.getSetting('shiftLogsChannelId')!) as TextChannel).messages.fetch(shift.whMessageId);
+				const message = shift.whMessageId.includes('d')
+					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(shift.whMessageId.slice(0, -1))
+					: await (bot.channels.cache.get(bot.getSetting('shiftLogsChannelId')!) as TextChannel).messages.fetch(shift.whMessageId);
 				const [started, ended] = [Math.floor(message.createdTimestamp / 1000), Math.floor(Date.now() / 1000)];
 				const lengthMins = Math.round((ended - started) / 60);
 

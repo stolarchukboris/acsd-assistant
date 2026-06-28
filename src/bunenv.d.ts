@@ -7,9 +7,6 @@ declare module "bun" {
 		OWNER_ID: string;
 
 		BACKUP_SHIFT_LOGS_CH_ID: string;
-		DEV_SHIFT_LOGS_CH_ID: string;
-		DEV_WEBHOOK_ID: string;
-		DEV_GUILD_ID: string;
 
 		OPEN_CLOUD_API_KEY: string;
 		ROBLOX_COOKIE: string;
@@ -19,5 +16,10 @@ declare module "bun" {
 		DB_USER: string;
 		DB_PORT: number;
 		DB_NAME: string;
+
+		DEV_SHIFT_LOGS_CH_ID: string;
+		DEV_WEBHOOK_ID: string;
+		DEV_GUILD_ID: string;
+		DEV_TEST_PLACE_ID: string;
 	}
 }

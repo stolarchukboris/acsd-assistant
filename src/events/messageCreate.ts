@@ -38,11 +38,13 @@ export async function execute(message: Message) {
 	
 		if (!jobId) throw new Error('⚠️ Could not retrieve Roblox Job ID from the embed.');
 
+		const messageId = messageFromDev ? `${message.id}d` : message.id;
+
 		if (existingShift) {
 			await bot.knex<activeShift>('activeShifts')
 				.update({
 					jobId: jobId,
-					whMessageId: message.id,
+					whMessageId: messageId,
 					fwMessageId: forwarded.id
 				})
 				.where('robloxId', userId);
@@ -55,7 +57,7 @@ export async function execute(message: Message) {
 		if (isAnyErrorResponse(responsePlayer) && responsePlayer.code) throw new Error(`⚠️ No player with user ID ${userId} has been found.`);
 
 		const pages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
-			placeId: Number(bot.getSetting('gamePlaceId')),
+			placeId: Number(messageFromDev ? Bun.env.DEV_TEST_PLACE_ID : bot.getSetting('gamePlaceId')),
 			serverType: 0,
 			limit: 100
 		});
@@ -63,11 +65,7 @@ export async function execute(message: Message) {
 		let serverFound = false;
 
 		for await (const pageResponse of pages) {
-			if (isAnyErrorResponse(pageResponse)) {
-				console.error(pageResponse.message);
-
-				break;
-			}
+			if (isAnyErrorResponse(pageResponse)) throw new Error(pageResponse.message);
 
 			if (pageResponse.data.some(server => server.id === jobId)) {
 				serverFound = true;
@@ -81,7 +79,7 @@ export async function execute(message: Message) {
 		await bot.knex<activeShift>('activeShifts')
 			.insert({
 				jobId: jobId,
-				whMessageId: message.id,
+				whMessageId: messageId,
 				fwMessageId: forwarded.id,
 				robloxId: userId,
 				startedTimestamp: startTime ?? Math.floor(message.createdTimestamp / 1000)
