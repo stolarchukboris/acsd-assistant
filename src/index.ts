@@ -39,30 +39,27 @@ class Bot extends Client {
 	}
 
 	get embeds() {
+		const bot = this;
+
 		return {
-			'accessDenied': this.embed
-				.setColor('Red')
-				.setTitle('Access denied.')
-				.setThumbnail(this.logos.cross),
-			'error': this.embed
-				.setColor('Red')
-				.setTitle('Error.')
-				.setThumbnail(this.logos.warning),
-			'warning': this.embed
-				.setColor('Yellow')
-				.setTitle('Warning.')
-				.setThumbnail(this.logos.warning),
-			'success': this.embed
-				.setColor('Green')
-				.setTitle('Success.')
-				.setThumbnail(this.logos.checkmark),
-			'cancel': this.embed
-				.setTitle('Cancelled.')
-				.setThumbnail(this.logos.trashbin),
-			'notFound': this.embed
-				.setColor('Grey')
-				.setTitle('Not found.')
-				.setThumbnail(this.logos.placeholder)
+			get accessDenied() {
+				return bot.embed.setColor('Red').setTitle('Access denied.').setThumbnail(bot.logos.cross);
+			},
+			get error() {
+				return bot.embed.setColor('Red').setTitle('Error.').setThumbnail(bot.logos.warning);
+			},
+			get warning() {
+				return bot.embed.setColor('Yellow').setTitle('Warning.').setThumbnail(bot.logos.warning);
+			},
+			get success() {
+				return bot.embed.setColor('Green').setTitle('Success.').setThumbnail(bot.logos.checkmark);
+			},
+			get cancel() {
+				return bot.embed.setTitle('Cancelled.').setThumbnail(bot.logos.trashbin);
+			},
+			get notFound() {
+				return bot.embed.setColor('Grey').setTitle('Not found.').setThumbnail(bot.logos.placeholder);
+			}
 		} as const;
 	}
 

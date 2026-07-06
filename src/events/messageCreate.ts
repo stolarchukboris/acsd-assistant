@@ -54,7 +54,17 @@ export async function execute(message: Message) {
 
 		const responsePlayer = await fetchApi(getCloudV2UsersUserId, { user_id: userId });
 
-		if (isAnyErrorResponse(responsePlayer) && responsePlayer.code) throw new Error(`⚠️ No player with user ID ${userId} has been found.`);
+		if (isAnyErrorResponse(responsePlayer))
+			if (responsePlayer.code == 404) {
+				await forwarded.reply(`⚠️ No player with ID ${userId} has been found.`);
+
+				return await message.react('🟥');
+			} else {
+				await forwarded.reply(`⚠️ An error has occured while validating the player.\n${responsePlayer.message}`);
+				await message.reply('⚠️ An error has occured while validating the player.');
+
+				throw new Error(responsePlayer.message);
+			}
 
 		const pages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
 			placeId: Number(messageFromDev ? Bun.env.DEV_TEST_PLACE_ID : bot.getSetting('gamePlaceId')),

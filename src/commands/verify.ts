@@ -8,7 +8,18 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	await interaction.member.roles.add(bot.getSetting('verifRoleId')!);
+	const roleId = bot.getSetting('verifRoleId');
+	const role = roleId ? interaction.guild.roles.cache.get(roleId) : undefined;
+
+	if (!role) return await interaction.editReply({
+		embeds: [
+			bot.embeds.error.setDescription(
+				`No verification role has been found in this server. Please check the bot settings or contact ACSD administration about this.`
+			)
+		]
+	});
+
+	await interaction.member.roles.add(role);
 
 	await interaction.editReply({
 		embeds: [
