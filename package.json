@@ -28,7 +28,7 @@
 		"discord.js": "^14.26.4",
 		"knex": "^3.3.0",
 		"ms": "^2.1.3",
-		"mysql2": "^3.22.5",
+		"mysql2": "^3.22.6",
 		"rozod": "^6.7.1"
 	},
 	"devDependencies": {
