@@ -9,7 +9,7 @@
         "knex": "^3.3.0",
         "ms": "^2.1.3",
         "mysql2": "^3.24.1",
-        "rozod": "^6.7.1",
+        "rozod": "^6.9.0",
       },
       "devDependencies": {
         "@types/bun": "^1.4.0",
@@ -116,7 +116,7 @@
 
     "roblox-bat": ["roblox-bat@0.6.5", "", {}, "sha512-aHcCSTT92uze1u4zKyG6AUR+IGzTTBnVSAZj6U/a9wIhQT7aid0iKrVu2ts4RXD+hMrV0xSN9YnpCR6hhQkW9Q=="],
 
-    "rozod": ["rozod@6.7.1", "", { "dependencies": { "parse-roblox-errors": "^1.2.2", "roblox-bat": "^0.6.5", "zod": "^4.3.6" } }, "sha512-W4fpjYVTH3CBcs8qAbbUhxg27Igu4WLkMIfCmjM5xxq9GN7Ycn4733kClQnyeQ83UGS2kAw8hLxscKPz3ZtRpQ=="],
+    "rozod": ["rozod@6.9.0", "", { "dependencies": { "parse-roblox-errors": "^1.2.2", "roblox-bat": "^0.6.5", "zod": "^4.3.6" } }, "sha512-8AbpHXWsO7F9ITw+BBJKkMHT69NOfOjRdp8QQSG+CMaSobQEokkBKeO5nV8CO3V+KxFOTMHlVwqFrpan43pOhw=="],
 
     "safer-buffer": ["safer-buffer@2.1.2", "", {}, "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg=="],
 
