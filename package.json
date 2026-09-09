@@ -32,7 +32,7 @@
 		"rozod": "^6.9.0"
 	},
 	"devDependencies": {
-		"@types/bun": "^1.4.0",
+		"@types/bun": "^1.4.1",
 		"@types/ms": "^2.1.0"
 	}
 }
