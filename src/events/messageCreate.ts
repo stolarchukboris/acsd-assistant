@@ -97,7 +97,7 @@ export async function execute(message: Message) {
 
 		await message.react('🟦');
 	} catch (error) {
-		console.error(error);
+		bot.logger.error(error);
 
 		await message.react('❌');
 	}

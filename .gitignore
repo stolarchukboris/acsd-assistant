@@ -1,6 +1,7 @@
 .env
 node_modules
-start.cmd
+*.bat
+*.txt
 database/Fulldump*.sql
 src/regManifest.ts
 dist

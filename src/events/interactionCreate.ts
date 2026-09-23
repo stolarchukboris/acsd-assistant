@@ -130,14 +130,14 @@ Please review the denial reason below. If you have any questions, please contact
 
 	let command: botCommand<any> | undefined = bot.commands.get(interaction.commandName);
 
-	if (!command) return console.error(`No command matching ${interaction.commandName} was found.`);
+	if (!command) return bot.logger.error(`No command matching ${interaction.commandName} was found.`);
 
 	const subcommandOption = interaction.options.getSubcommand(false);
 
 	if (subcommandOption) {
 		command = bot.subcommands.get(`${interaction.commandName}:${subcommandOption}`);
 
-		if (!command) return console.error(`No subcommand matching ${subcommandOption} was found.`);
+		if (!command) return bot.logger.error(`No subcommand matching ${subcommandOption} was found.`);
 	}
 
 	if (interaction.isChatInputCommand()) {
@@ -191,7 +191,7 @@ Please review the denial reason below. If you have any questions, please contact
 		try {
 			await command.execute(interaction, ...args);
 		} catch (error) {
-			console.error(error);
+			bot.logger.error(error);
 
 			interaction.replied || interaction.deferred
 				? await interaction.followUp({
@@ -209,7 +209,7 @@ Please review the denial reason below. If you have any questions, please contact
 		try {
 			await command.autocomplete!(interaction);
 		} catch (error) {
-			console.error(error);
+			bot.logger.error(error);
 		}
 	}
 }

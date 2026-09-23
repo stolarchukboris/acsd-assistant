@@ -44,7 +44,7 @@ export async function managePendingLogs() {
 
 				await message.react(emoji);
 			} catch (error) {
-				console.warn(`Failed to fetch or react to message ${log.whMessageId}.\n${error}`);
+				bot.logger.warn(`Failed to fetch or react to message ${log.whMessageId}.\n${error}`);
 			}
 		}
 

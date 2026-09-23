@@ -76,7 +76,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 
 		await newMessage.react('🟨');
 	} catch (error) {
-		console.error(error);
+		bot.logger.error(error);
 
 		await newMessage.react('❌');
 	}

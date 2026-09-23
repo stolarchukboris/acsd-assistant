@@ -7,6 +7,7 @@ import { configureServer, fetchApi } from 'rozod';
 import { getUsersAuthenticated } from 'rozod/endpoints/usersv1';
 import { join } from 'path';
 import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
+import logger from './logger.ts';
 
 class Bot extends Client {
 	name = 'ACSD Assistant';
@@ -31,6 +32,8 @@ class Bot extends Client {
 	commit: string | null;
 
 	knex!: Knex;
+
+	logger = logger;
 
 	get embed() {
 		return new EmbedBuilder()
@@ -89,7 +92,7 @@ class Bot extends Client {
 			return result.done && result.response ? result.response.imageUri : this.logos.placeholder;
 
 		} catch (error) {
-			console.error(error);
+			this.logger.error(error);
 
 			return this.logos.placeholder;
 		}
@@ -125,9 +128,9 @@ class Bot extends Client {
 
 			Bun.env.ROBLOX_COOKIE = newCookie;
 
-			console.log(`Successfully updated the Roblox cookie for account ${poolIndex}.`);
+			this.logger.log(`Successfully updated the Roblox cookie for account ${poolIndex}.`);
 		} catch (error) {
-			console.error(`An error has occured while updating the Roblox cookie for account ${poolIndex}.\n${error}`);
+			this.logger.error(`An error has occured while updating the Roblox cookie for account ${poolIndex}.\n${error}`);
 		}
 	}
 
@@ -136,7 +139,7 @@ class Bot extends Client {
 			const module = item.module as Partial<botCommand<SlashCommandBuilder | SlashCommandSubcommandBuilder>>;
 
 			if (!(module.data && module.execute)) {
-				console.warn(`Command at ${item.path} is missing a required \`data\` or \`execute\` property.`);
+				this.logger.warn(`Command at ${item.path} is missing a required \`data\` or \`execute\` property.`);
 
 				continue;
 			}
@@ -174,22 +177,22 @@ class Bot extends Client {
 			const rest = new REST().setToken(Bun.env.TOKEN);
 
 			try {
-				console.log(`Started refreshing ${this.apiCommands.length} application (/) commands.`);
+				this.logger.log(`Started refreshing ${this.apiCommands.length} application (/) commands.`);
 
 				const data = await rest.put(
 					Routes.applicationCommands(Bun.env.CLIENT_ID),
 					{ body: this.apiCommands }
 				) as RESTPutAPIApplicationCommandsResult;
 
-				console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+				this.logger.log(`Successfully reloaded ${data.length} application (/) commands.`);
 			} catch (error) {
-				console.error(error);
+				this.logger.error(error);
 
 				process.exit(1);
 			}
 		}
 
-		console.log('Commands initialized successfully.');
+		this.logger.log('Commands initialized successfully.');
 	}
 
 	private async initEvents() {
@@ -197,7 +200,7 @@ class Bot extends Client {
 			const event = item.module as Partial<botEvent>;
 
 			if (!event.execute) {
-				console.warn(`Event at ${item.path} is missing a required \`execute\` property.`);
+				this.logger.warn(`Event at ${item.path} is missing a required \`execute\` property.`);
 
 				continue;
 			}
@@ -207,7 +210,7 @@ class Bot extends Client {
 				: this.on(item.path.split('/').pop()!, (...args) => event.execute!(...args))
 		}
 
-		console.log('Events loaded successfully.');
+		this.logger.log('Events loaded successfully.');
 	}
 
 	private async initDb() {
@@ -230,20 +233,20 @@ class Bot extends Client {
 			}
 		});
 
-		console.log('Starting database migrations...');
+		this.logger.log('Starting database migrations...');
 
 		const [batchNo, log]: [number, string[]] = await this.knex.migrate.latest();
 
-		if (log.length === 0) console.log('Database is already up to date.');
+		if (log.length === 0) this.logger.log('Database is already up to date.');
 		else {
-			console.log(`${log.length} successful migrations (batch ${batchNo}).\nApplied files list:`);
+			this.logger.log(`${log.length} successful migrations (batch ${batchNo}).\nApplied files list:`);
 
-			log.forEach(file => console.log(`	- ${file}`));
+			log.forEach(file => this.logger.log(`	- ${file}`));
 		}
 
 		await this.knex.raw('select 1');
 
-		console.log(`Connected to database successfully.`);
+		this.logger.log(`Connected to database successfully.`);
 
 		const settings = await this.knex<botSettingInfo>('botSettings')
 			.select('*');
@@ -263,7 +266,7 @@ class Bot extends Client {
 
 		const me = await fetchApi(getUsersAuthenticated, undefined, { throwOnError: true });
 
-		console.log(`Logged into Roblox as ${me.name} (${me.id}).`);
+		this.logger.log(`Logged into Roblox as ${me.name} (${me.id}).`);
 	}
 
 	private async start() {
@@ -272,7 +275,7 @@ class Bot extends Client {
 			await this.initCommands();
 
 			if (Bun.argv.includes('--nologin')) {
-				console.log('[CI] Workflow test passed. Shutting down.');
+				this.logger.log('[CI] Workflow test passed. Shutting down.');
 
 				process.exit(0);
 			}
@@ -281,7 +284,7 @@ class Bot extends Client {
 			await this.initRoblox();
 			await this.login(Bun.env.TOKEN);
 		} catch (error) {
-			console.error(`Bot startup failure.\n${error}`);
+			this.logger.error(`Bot startup failure.\n${error}`);
 
 			process.exit(1);
 		}
