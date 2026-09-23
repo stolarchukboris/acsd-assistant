@@ -5,7 +5,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.specificType('shiftId', 'char(36)').primary();
 		table.string('discordId', 20).notNullable().unique();
 		table.string('robloxId', 20).notNullable().unique();
-		table.string('robloxUsername', 20).notNullable().unique();
+		table.string('robloxUsername', 22).notNullable().unique();
 		table.datetime('startedTimestamp').defaultTo(knex.fn.now());
 	});
 }
