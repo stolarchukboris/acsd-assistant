@@ -8,10 +8,10 @@
 	"scripts": {
 		"manifest": "bun run src/manifestGen.ts",
 		"start": "bun run src/processManager.ts",
-		"deploy-start": "bun start --deploy",
+		"deploy-start": "bun manifest && bun start --deploy",
 		"stop": "curl http://localhost:3322/stop",
-		"restart": "curl http://localhost:3322/restart",
-		"deploy-restart": "curl http://localhost:3322/deploy-restart",
+		"restart": "bun manifest && curl http://localhost:3322/restart",
+		"deploy-restart": "bun manifest && curl http://localhost:3322/deploy-restart",
 		"ci:test": "bun manifest && bun run . --nologin",
 		"build:bundle": "bun manifest && bun build ./src/processManager.ts --outfile=./dist/bundle.js --target=bun --external=pg --external=better-sqlite3 --external=pg-query-stream --external=tedious --external=oracledb --external=sqlite3 --external=pgnative --external=redshift --external=mysql --external=zlib-sync --external=mariadb",
 		"build:obfuscate": "bunx javascript-obfuscator ./dist/bundle.js --output ./dist/obfuscated.js --compact true --self-defending true",
