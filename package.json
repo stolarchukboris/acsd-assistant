@@ -7,7 +7,7 @@
 	"type": "module",
 	"scripts": {
 		"manifest": "bun run src/manifestGen.ts",
-		"start": "bun run src/processManager.ts",
+		"start": "bun manifest && bun run src/processManager.ts",
 		"deploy-start": "bun manifest && bun start --deploy",
 		"stop": "curl http://localhost:3322/stop",
 		"restart": "bun manifest && curl http://localhost:3322/restart",

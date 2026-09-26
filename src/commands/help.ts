@@ -63,12 +63,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
     - **Warning: This encompasses both automatic and manual shift logs.**`
 	} as const;
 
-	await interaction.editReply({
-		embeds: [
-			bot.embed
-				.setColor('Blurple')
-				.setTitle('ACSD Assistant help.')
-				.setDescription(topics[selectedTopic as keyof typeof topics])
-		]
-	});
+	await interaction.editReply(
+		bot.v2Response(
+			bot.createContainer({
+				title: 'ACSD Assistant help.',
+				color: 'Blurple',
+				description: topics[selectedTopic as keyof typeof topics]
+			})
+		)
+	);
 }

@@ -9,12 +9,12 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	await interaction.editReply({
-		embeds: [
-			bot.embed
-				.setColor('Blurple')
-				.setTitle('ACSD Assistant information.')
-				.setDescription(`Below is plenty of miscellaneous information about this bot instance.
+	await interaction.editReply(
+		bot.v2Response(
+			bot.createContainer({
+				title: 'ACSD Assistant information.',
+				color: 'Blurple',
+				description: `Below is plenty of miscellaneous information about this bot instance.
 You can view the source code in the [repository](https://github.com/stolarchukboris/acsd-assistant).\n
 \`\`\`ini
 [
@@ -26,7 +26,8 @@ You can view the source code in the [repository](https://github.com/stolarchukbo
 ]\`\`\`
 \`\`\`yml
 Git commit: ${bot.commit ?? '-'}
-\`\`\``)
-		]
-	});
+\`\`\``
+			})
+		)
+	);
 }

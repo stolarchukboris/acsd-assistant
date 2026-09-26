@@ -6,18 +6,23 @@ export const data = new SlashCommandBuilder()
 	.setDescription('Check the websocket heartbeat.');
 
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
-	const embed = bot.embed.setDescription("Pinging...").setColor('Yellow');
-	const response = await interaction.reply({ embeds: [embed], withResponse: true });
+	const container = bot.createContainer({
+		title: 'Pinging...',
+		color: 'Yellow',
+		description: 'Please wait...'
+	});
+	const response = await interaction.reply({ ...bot.v2Response(container), withResponse: true });
 	const timestamp = interaction.createdTimestamp;
 	const msg = response.resource?.message;
 
-	embed.setColor('Green')
-		.setTitle(`Pong!`)
-		.setDescription(null)
-		.addFields(
-			{ name: "Latency", value: `${Math.floor(msg?.createdTimestamp as number - timestamp)} ms`, inline: true },
-			{ name: "API latency", value: `${Math.round(interaction.client.ws.ping)} ms`, inline: true },
-		);
-
-	await msg?.edit({ embeds: [embed] });
+	await msg?.edit(
+		bot.v2Response(
+			bot.createContainer({
+				title: 'Pong!',
+				color: 'Green',
+				description:
+`**Latency**: ${Math.floor(msg?.createdTimestamp as number - timestamp)} ms | **API latency**: ${Math.round(interaction.client.ws.ping)} ms`
+			})
+		)
+	);
 }

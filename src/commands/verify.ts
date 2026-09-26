@@ -11,19 +11,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const roleId = bot.getSetting('verifRoleId');
 	const role = roleId ? interaction.guild.roles.cache.get(roleId) : undefined;
 
-	if (!role) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription(
-				`No verification role has been found in this server. Please check the bot settings or contact ACSD administration about this.`
-			)
-		]
-	});
+	if (!role) return await interaction.editReply(
+		bot.v2Response(
+			bot.containers.error(`No verification role has been found in this server. Please check the bot settings or contact ACSD administration about this.`)
+		)
+	);
 
 	await interaction.member.roles.add(role);
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success.setDescription('Successfully verified.')
-		]
-	});
+	await interaction.editReply(bot.v2Response(bot.containers.success('Successfully verified.')));
 }

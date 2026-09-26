@@ -1,4 +1,4 @@
-import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions } from 'discord.js';
+import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions, ContainerBuilder, MessageFlags, type ColorResolvable, resolveColor, ComponentType } from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
@@ -8,6 +8,11 @@ import { getUsersAuthenticated } from 'rozod/endpoints/usersv1';
 import { join } from 'path';
 import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
 import logger from './logger.ts';
+
+interface V2Field {
+	name: string;
+	value: string;
+}
 
 class Bot extends Client {
 	name = 'ACSD Assistant';
@@ -22,7 +27,7 @@ class Bot extends Client {
 		warning: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Noto_Emoji_Oreo_2757.svg/1200px-Noto_Emoji_Oreo_2757.svg.png',
 		heart: 'https://gas-kvas.com/grafic/uploads/posts/2024-01/gas-kvas-com-p-znak-serdtsa-na-prozrachnom-fone-44.png',
 		questionmark: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Orange_question_mark.svg/2048px-Orange_question_mark.svg.png',
-		cross: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Not_allowed.svg/1200px-Not_allowed.svg.png',
+		cross: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Deletion_icon.svg/1280px-Deletion_icon.svg.png',
 		placeholder: 'https://static.wikia.nocookie.net/7d5db291-d700-4b6a-944b-eb0c84bf5781/scale-to-width/755',
 		trashbin: 'https://cdn-icons-png.freepik.com/512/8367/8367793.png'
 	} as const;
@@ -34,6 +39,168 @@ class Bot extends Client {
 	knex!: Knex;
 
 	logger = logger;
+
+	private get timestamp() {
+		return `<t:${Math.floor(Date.now() / 1000)}:s>`
+	}
+
+	private get container() {
+		return new ContainerBuilder()
+			.addTextDisplayComponents(tdc => tdc.setContent(`-# ${this.name}${this.commit}${this.timestamp}`))
+			.addSeparatorComponents(sepc => sepc.setDivider(false));
+	}
+
+	// DANGER AI SLOP AHEAD
+	createContainer(options: {
+		title: string;
+		description: string;
+		color?: ColorResolvable;
+		thumbnailUrl?: string;
+		fields?: V2Field[]
+	}) {
+		const containerComponents: any[] = [
+			{
+				type: ComponentType.TextDisplay as number,
+				content: `-# ${this.name} • ${this.commit ?? 'insider'} • ${this.timestamp}`
+			},
+			{
+				type: ComponentType.Separator as number,
+				divider: false
+			}
+		];
+
+		const hasThumbnail = options.thumbnailUrl &&
+			options.thumbnailUrl.trim() !== '' &&
+			options.thumbnailUrl !== 'undefined';
+
+		if (hasThumbnail) {
+			const sectionComponents: any[] = [
+				{
+					type: ComponentType.TextDisplay as number,
+					content: `## ${options.title}`
+				}
+			];
+
+			if (options.description && options.description.trim() !== '') {
+				sectionComponents.push({
+					type: ComponentType.TextDisplay as number,
+					content: options.description
+				});
+			}
+
+			containerComponents.push({
+				type: 9,
+				components: sectionComponents,
+				accessory: {
+					type: 11,
+					media: {
+						url: options.thumbnailUrl!.trim()
+					}
+				}
+			});
+		} else {
+			containerComponents.push({
+				type: ComponentType.TextDisplay as number,
+				content: `## ${options.title}`
+			});
+
+			if (options.description && options.description.trim() !== '') {
+				containerComponents.push({
+					type: ComponentType.TextDisplay as number,
+					content: options.description
+				});
+			}
+		}
+
+		if (options.fields && options.fields.length > 0) {
+			options.fields.forEach(field => {
+				containerComponents.push({
+					type: ComponentType.Separator as number,
+					divider: false
+				});
+
+				containerComponents.push({
+					type: ComponentType.TextDisplay as number,
+					content: `**${field.name}**\n${field.value}`
+				});
+			});
+		}
+
+		const containerData = {
+			type: 17,
+			accent_color: options.color ? resolveColor(options.color) : undefined,
+			components: containerComponents
+		};
+
+		return containerData;
+	}
+
+	get containers() {
+		const bot = this;
+
+		return {
+			accessDenied(desc?: string) {
+				return bot.createContainer({
+					title: 'Access denied.',
+					description: desc ?? 'You are not authorized to access this.',
+					color: 'Red',
+					thumbnailUrl: bot.logos.cross
+				});
+			},
+
+			error(desc?: string) {
+				return bot.createContainer({
+					title: 'Error.',
+					description: desc ?? 'An error has occured.',
+					color: 'Red',
+					thumbnailUrl: bot.logos.cross
+				});
+			},
+
+			warning(desc?: string) {
+				return bot.createContainer({
+					title: 'Warning.',
+					description: desc ?? 'Action has been performed with a warning.',
+					color: 'Yellow',
+					thumbnailUrl: bot.logos.warning
+				});
+			},
+
+			success(desc?: string) {
+				return bot.createContainer({
+					title: 'Success.',
+					description: desc ?? 'Successfully performed the action.',
+					color: 'Green',
+					thumbnailUrl: bot.logos.checkmark
+				});
+			},
+
+			cancel(desc?: string) {
+				return bot.createContainer({
+					title: 'Cancelled.',
+					description: desc ?? 'Action is cancelled.',
+					thumbnailUrl: bot.logos.trashbin
+				});
+			},
+
+			notFound(desc?: string) {
+				return bot.createContainer({
+					title: 'Not found.',
+					description: desc ?? 'Requested resource is not found.',
+					color: 'Grey',
+					thumbnailUrl: bot.logos.placeholder
+				});
+			}
+		} as const;
+	}
+
+	v2Response(container: any) {
+		return {
+			flags: MessageFlags.IsComponentsV2 as number,
+			components: [container] // Передаем сырой объект контейнера без валидации классов
+		};
+	}
+
 
 	get embed() {
 		return new EmbedBuilder()
@@ -301,9 +468,10 @@ class Bot extends Client {
 		this.start();
 
 		try {
-			this.commit = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] }).stdout
+			this.commit = `${Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] }).stdout
 				.toString()
-				.trim();
+				.trim()
+				.substring(0, 7)}`;
 		} catch (_) {
 			this.commit = null;
 		}

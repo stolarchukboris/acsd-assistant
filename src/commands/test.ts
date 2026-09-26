@@ -2,11 +2,11 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import bot from '../index.ts';
 
 export const data = new SlashCommandBuilder()
-	.setName('uuid')
-	.setDescription('Generate a random UUIDv4.');
+	.setName('test')
+	.setDescription('cv2 container test.');
 
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	await interaction.editReply(bot.v2Response(bot.containers.success(`Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`)));
+	await interaction.editReply(bot.v2Response(bot.containers.accessDenied()));
 }
