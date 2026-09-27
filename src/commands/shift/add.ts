@@ -52,11 +52,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		})
 		.first();
 
-	if (!target) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription(`${member ?? playerUsername} is not registered in the ACSD database.`)
-		]
-	});
+	if (!target) return await bot.sendContainer(interaction, 'notFound', `${member ?? playerUsername} is not registered in the ACSD database.`);
 
 	const id = crypto.randomUUID();
 
@@ -70,14 +66,11 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			proof: reason
 		});
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription(`Successfully added ${minutes} minutes to ${target.robloxUsername}'s stats.`)
-				.setFields(
-					{ name: 'Shift ID:', value: id },
-					{ name: 'Reason:', value: reason }
-				)
+	await bot.sendContainer(interaction, 'success', {
+		description: `Successfully added ${minutes} minutes to ${target.robloxUsername}'s stats.`,
+		fields: [
+			{ name: 'Shift ID:', value: id },
+			{ name: 'Reason:', value: reason }
 		]
 	});
 }

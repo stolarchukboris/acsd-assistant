@@ -29,21 +29,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.del()
 		.where('trainingId', training.trainingId);
 
-	if (annsMessage) await annsMessage.reply({
-		content: `<@&${role}>`,
-		embeds: [
-			bot.embed
-				.setColor('Red')
-				.setTitle(`${training.hostRobloxUsername}'s scheduled training has been cancelled.`)
-				.setThumbnail(bot.logos.cross)
-				.setDescription(`The training session is cancelled. Sorry for the inconvenience!`)
-				.setFields({ name: 'Reason:', value: reason })
-		]
-	});
+	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainer({
+		color: 'Red',
+		title: `${training.hostRobloxUsername}'s scheduled training has been cancelled.`,
+		description: `<@&${role}>\nThe training session is cancelled. Sorry for the inconvenience!`,
+		thumbnailUrl: bot.logos.cross,
+		fields: [{ name: 'Reason:', value: reason }]
+	}));
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success.setDescription('Successfully cancelled the training.')
-		]
-	});
+	await bot.sendContainer(interaction, 'success', 'Successfully cancelled the training.');
 }

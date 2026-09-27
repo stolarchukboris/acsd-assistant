@@ -1,5 +1,5 @@
 import { Glob } from "bun";
-import logger from "./logger";
+import logger from "./logger.ts";
 
 async function buildManifest() {
 	logger.log('Generating command and event manifest...');
@@ -34,7 +34,7 @@ export const bundledCommands = [\n${commandsArrayElements}];
 export const bundledEvents = [\n${eventsArrayElements}];
 `;
 
-	await Bun.write("./src/regManifest.ts", finalContent);
+	await Bun.write("../regManifest.ts", finalContent);
 
 	logger.log('Successfully generated the manifest at src/regManifest.ts');
 }

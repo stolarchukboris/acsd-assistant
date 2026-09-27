@@ -1,6 +1,6 @@
 import { ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
-import bot from './index.ts';
-import type { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from './types/knex.ts';
+import bot from '../index.ts';
+import type { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from '../types/knex.ts';
 import { fetchApi, fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
 import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
 import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';

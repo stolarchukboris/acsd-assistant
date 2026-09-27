@@ -49,33 +49,22 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.andWhere('startingTimestamp', '<=', time + 3600)
 		.first();
 
-	if (trainingAroundThisTime) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error
-				.setDescription('There is another training scheduled in less than an hour from this one.')
-				.setFields(
-					{ name: 'Training ID:', value: trainingAroundThisTime.trainingId, inline: true },
-					{ name: 'Starting:', value: `<t:${trainingAroundThisTime.startingTimestamp}>`, inline: true }
-				)
+	if (trainingAroundThisTime) return await bot.sendContainer(interaction, bot.containers.error({
+		description: 'There is another scheduled or concluded training within an hour from this one.',
+		fields: [
+			{ name: 'Training ID:', value: trainingAroundThisTime.trainingId },
+			{ name: 'Starting:', value: `<t:${trainingAroundThisTime.startingTimestamp}>` }
 		]
-	});
+	}));
 
 	const gameUrl = interaction.options.getString('game_url', true);
 	const placeId = Number(gameUrl.split('/')[4]);
 
-	if (isNaN(placeId)) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription('Could not retrieve Place ID from the provided link.')
-		]
-	});
+	if (isNaN(placeId)) return await bot.sendContainer(interaction, 'error', 'Could not retrieve Place ID from the game URL');
 
 	const gameResponse = await fetchApi(getGamesMultigetPlaceDetails, { placeIds: [placeId] }, { throwOnError: true });
 
-	if (gameResponse.length === 0) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription('Could not find the provided game.')
-		]
-	});
+	if (gameResponse.length === 0) return await bot.sendContainer(interaction, 'error', 'Could not find the game from the provided link.');
 
 	const minAttend = interaction.options.getInteger('min_attendance', true);
 	const maxAttend = interaction.options.getInteger('max_attendance');
@@ -93,12 +82,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			startingTimestamp: time
 		});
 
-	const sentAnns = await channel.send({
-		content: `<@&${role}>`,
-		embeds: [
-			bot.embed
-				.setTitle(`A training has been scheduled on <t:${time}:F>.`)
-				.setDescription(`This training will take place in ${gameName}. The time is pre-converted to your local timezone.
+	const sentAnns = await bot.sendContainer(channel, bot.createContainer({
+		title: `A training has been scheduled on <t:${time}:F>.`,
+		description: `<@&${role}>\nThis training will take place in ${gameName}. The time is pre-converted to your local timezone.
 
 ## General training rules:
 - Listen to the host's instructions;
@@ -109,15 +95,12 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 - To prevent last-moment cancellations, **you cannot remove your reaction less than 10 minutes prior to training start**.
 
 If you are ready to attend this training, please react with ✅ below to confirm your attendance.
-**You react you attend.**`)
-				.setFields(
-					{ name: 'Training host:', value: `${cmdUser.acsdRank} ${cmdUser.robloxUsername} (<@${cmdUser.discordId}>)` },
-					{ name: 'Details:', value: `Attendance minimum: ${minAttend}\n${maxAttend ? `Attendance maximum: ${maxAttend}\n` : ''}${duration ? `Training duration: ${duration}\n` : ''}`, inline: true },
-					{ name: 'Training ID:', value: trainingId, inline: true },
-					...(comment ? [{ name: 'Note from host:', value: comment }] : [])
-				)
-		]
-	});
+**You react you attend.**`,
+		fields: [{ name: 'Training host:', value: `${cmdUser.acsdRank} ${cmdUser.robloxUsername} (<@${cmdUser.discordId}>)` },
+			{ name: 'Details:', value: `\nAttendance minimum: ${minAttend}\n${maxAttend ? `Attendance maximum: ${maxAttend}\n` : ''}${duration ? `Training duration: ${duration}\n` : ''}` },
+			{ name: 'Training ID:', value: trainingId },
+			...(comment ? [{ name: 'Note from host:', value: comment }] : [])]
+	}));
 
 	await sentAnns.react('✅');
 	await channel.send(gameUrl);
@@ -126,11 +109,8 @@ If you are ready to attend this training, please react with ✅ below to confirm
 		.update('messageId', sentAnns.id)
 		.where('trainingId', trainingId);
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription(`Successfully scheduled the training on <t:${time}:F>.`)
-				.setFields({ name: 'Training ID:', value: trainingId })
-		]
+	await bot.sendContainer(interaction, 'success', {
+		description: `Successfully scheduled the training on <t:${time}:F>.`,
+		fields: [{ name: 'Training ID:', value: trainingId }]
 	});
 }

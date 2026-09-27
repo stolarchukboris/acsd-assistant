@@ -21,19 +21,11 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			.where('robloxId', cmdUser.robloxId)
 			.first();
 
-	if (!existingShift) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription('You don\'t have an active shift.')
-		]
-	});
+	if (!existingShift) return await bot.sendContainer(interaction, 'notFound', `You don't have an active shift.`);
 
 	await bot.knex<activeMShift | activeShift>('shiftId' in existingShift ? 'activeMShifts' : 'activeShifts')
 		.del()
 		.where('robloxId', cmdUser.robloxId);
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success.setDescription('Successfully cancelled your shift.')
-		]
-	});
+	await bot.sendContainer(interaction, 'success', 'Successfully cancelled your shift.');
 }

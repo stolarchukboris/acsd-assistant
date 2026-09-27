@@ -1,4 +1,4 @@
-import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions, ContainerBuilder, MessageFlags, type ColorResolvable, resolveColor, ComponentType } from 'discord.js';
+import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions, ContainerBuilder, MessageFlags, type ColorResolvable, resolveColor, TextDisplayBuilder, type APIContainerComponent, ChatInputCommandInteraction, type Interaction, AutocompleteInteraction, CommandInteraction, Message, TextChannel, DMChannel, NewsChannel } from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
@@ -7,22 +7,18 @@ import { configureServer, fetchApi } from 'rozod';
 import { getUsersAuthenticated } from 'rozod/endpoints/usersv1';
 import { join } from 'path';
 import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
-import logger from './logger.ts';
-
-interface V2Field {
-	name: string;
-	value: string;
-}
+import logger from './utils/logger.ts';
+import { createTemplateContainers, createContainer, type ContainerOptions } from './utils/containers.ts';
 
 class Bot extends Client {
-	name = 'ACSD Assistant';
+	public name = 'ACSD Assistant';
 
-	botSettings = new Collection<string, botSettingInfo>();
-	commands = new Collection<string, botCommand<SlashCommandBuilder>>();
-	subcommands = new Collection<string, botCommand<SlashCommandSubcommandBuilder>>();
-	apiCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
+	public botSettings = new Collection<string, botSettingInfo>();
+	public commands = new Collection<string, botCommand<SlashCommandBuilder>>();
+	public subcommands = new Collection<string, botCommand<SlashCommandSubcommandBuilder>>();
+	public apiCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 
-	logos = {
+	public logos = {
 		checkmark: 'https://septik-komffort.ru/wp-content/uploads/2020/11/galochka_zel.png',
 		warning: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Noto_Emoji_Oreo_2757.svg/1200px-Noto_Emoji_Oreo_2757.svg.png',
 		heart: 'https://gas-kvas.com/grafic/uploads/posts/2024-01/gas-kvas-com-p-znak-serdtsa-na-prozrachnom-fone-44.png',
@@ -32,175 +28,88 @@ class Bot extends Client {
 		trashbin: 'https://cdn-icons-png.freepik.com/512/8367/8367793.png'
 	} as const;
 
-	highRanks = ['Administrator', 'Director of Defense', 'Deputy Director of Defense', 'Executive Director'];
+	public highRanks = ['Administrator', 'Director of Defense', 'Deputy Director of Defense', 'Executive Director'];
 
-	commit: string | null;
+	public commit: string | null;
 
-	knex!: Knex;
+	public knex!: Knex;
 
-	logger = logger;
+	public logger = logger;
 
-	private get timestamp() {
-		return `<t:${Math.floor(Date.now() / 1000)}:s>`
-	}
+	public containers: ReturnType<typeof createTemplateContainers> = createTemplateContainers(this);
 
-	private get container() {
-		return new ContainerBuilder()
-			.addTextDisplayComponents(tdc => tdc.setContent(`-# ${this.name}${this.commit}${this.timestamp}`))
-			.addSeparatorComponents(sepc => sepc.setDivider(false));
-	}
+	public createContainer = (options: ContainerOptions) => createContainer(this, options);
 
-	// DANGER AI SLOP AHEAD
-	createContainer(options: {
-		title: string;
-		description: string;
-		color?: ColorResolvable;
-		thumbnailUrl?: string;
-		fields?: V2Field[]
-	}) {
-		const containerComponents: any[] = [
-			{
-				type: ComponentType.TextDisplay as number,
-				content: `-# ${this.name} • ${this.commit ?? 'insider'} • ${this.timestamp}`
-			},
-			{
-				type: ComponentType.Separator as number,
-				divider: false
-			}
-		];
-
-		const hasThumbnail = options.thumbnailUrl &&
-			options.thumbnailUrl.trim() !== '' &&
-			options.thumbnailUrl !== 'undefined';
-
-		if (hasThumbnail) {
-			const sectionComponents: any[] = [
-				{
-					type: ComponentType.TextDisplay as number,
-					content: `## ${options.title}`
-				}
-			];
-
-			if (options.description && options.description.trim() !== '') {
-				sectionComponents.push({
-					type: ComponentType.TextDisplay as number,
-					content: options.description
-				});
-			}
-
-			containerComponents.push({
-				type: 9,
-				components: sectionComponents,
-				accessory: {
-					type: 11,
-					media: {
-						url: options.thumbnailUrl!.trim()
-					}
-				}
-			});
-		} else {
-			containerComponents.push({
-				type: ComponentType.TextDisplay as number,
-				content: `## ${options.title}`
-			});
-
-			if (options.description && options.description.trim() !== '') {
-				containerComponents.push({
-					type: ComponentType.TextDisplay as number,
-					content: options.description
-				});
-			}
-		}
-
-		if (options.fields && options.fields.length > 0) {
-			options.fields.forEach(field => {
-				containerComponents.push({
-					type: ComponentType.Separator as number,
-					divider: false
-				});
-
-				containerComponents.push({
-					type: ComponentType.TextDisplay as number,
-					content: `**${field.name}**\n${field.value}`
-				});
-			});
-		}
-
-		const containerData = {
-			type: 17,
-			accent_color: options.color ? resolveColor(options.color) : undefined,
-			components: containerComponents
-		};
-
-		return containerData;
-	}
-
-	get containers() {
-		const bot = this;
-
-		return {
-			accessDenied(desc?: string) {
-				return bot.createContainer({
-					title: 'Access denied.',
-					description: desc ?? 'You are not authorized to access this.',
-					color: 'Red',
-					thumbnailUrl: bot.logos.cross
-				});
-			},
-
-			error(desc?: string) {
-				return bot.createContainer({
-					title: 'Error.',
-					description: desc ?? 'An error has occured.',
-					color: 'Red',
-					thumbnailUrl: bot.logos.cross
-				});
-			},
-
-			warning(desc?: string) {
-				return bot.createContainer({
-					title: 'Warning.',
-					description: desc ?? 'Action has been performed with a warning.',
-					color: 'Yellow',
-					thumbnailUrl: bot.logos.warning
-				});
-			},
-
-			success(desc?: string) {
-				return bot.createContainer({
-					title: 'Success.',
-					description: desc ?? 'Successfully performed the action.',
-					color: 'Green',
-					thumbnailUrl: bot.logos.checkmark
-				});
-			},
-
-			cancel(desc?: string) {
-				return bot.createContainer({
-					title: 'Cancelled.',
-					description: desc ?? 'Action is cancelled.',
-					thumbnailUrl: bot.logos.trashbin
-				});
-			},
-
-			notFound(desc?: string) {
-				return bot.createContainer({
-					title: 'Not found.',
-					description: desc ?? 'Requested resource is not found.',
-					color: 'Grey',
-					thumbnailUrl: bot.logos.placeholder
-				});
-			}
-		} as const;
-	}
-
-	v2Response(container: any) {
+	private v2Response(container: APIContainerComponent) {
 		return {
 			flags: MessageFlags.IsComponentsV2 as number,
-			components: [container] // Передаем сырой объект контейнера без валидации классов
-		};
+			components: [container]
+		}
 	}
 
+	public async sendContainer(
+		target: CommandInteraction<'cached'>,
+		type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
+		options?: string | (Partial<ContainerOptions> & { withResponse?: boolean })
+	): Promise<Message<true>>;
+
+	public async sendContainer(
+		target: TextChannel | DMChannel | NewsChannel | any,
+		type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
+		options?: string | Partial<ContainerOptions>
+	): Promise<Message<true>>;
+
+	public async sendContainer(
+		target: any,
+		type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
+		options: any = {}
+	): Promise<Message<true>> {
+		const parsedOptions = typeof options === 'string' ? { description: options } : options;
+		const containerData = typeof type === 'string' ? this.containers[type](parsedOptions) : type;
+
+		const isInteraction = target && typeof target.reply === 'function';
+
+		if (isInteraction) {
+			const payload = this.v2Response(containerData);
+			const hasWithResponse = typeof options !== 'string' && options.withResponse === true;
+
+			if (target.replied || target.deferred) return await target.editReply(payload);
+			else {
+				const res = await target.reply({
+					...payload,
+					withResponse: hasWithResponse
+				});
+
+				if (hasWithResponse && res && 'resource' in res && res.resource) return (res.resource as any).message as Message<true>;
+
+				return res as unknown as Message<true>;
+			}
+		} else return await target.send({ flags: MessageFlags.IsComponentsV2 as number, components: [containerData] });
+	}
+
+	// public async sendContainer(
+	// 	interaction: Exclude<Interaction<'cached'>, AutocompleteInteraction>,
+	// 	type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
+	// 	options: string | (Partial<ContainerOptions> & { withResponse?: boolean }) = {}
+	// ): Promise<Message> {
+	// 	const parsedOptions = typeof options === 'string' ? { description: options } : options;
+	// 	const containerData = typeof type === 'string' ? this.containers[type](parsedOptions) : type;
+		
+	// 	const payload = this.v2Response(containerData);
+	// 	const hasWithResponse = typeof options !== 'string' && options.withResponse === true;
+
+	// 	if (interaction.replied || interaction.deferred) return await interaction.editReply(payload);
+	// 	else {
+	// 		const res = await interaction.reply({
+	// 			...payload,
+	// 			withResponse: hasWithResponse
+	// 		});
+
+	// 		if (hasWithResponse && res && 'resource' in res && res.resource) return (res.resource as any).message as Message;
+
+	// 		return res as unknown as Message;
+	// 	}
+	// }
 
 	get embed() {
 		return new EmbedBuilder()
@@ -233,11 +142,11 @@ class Bot extends Client {
 		} as const;
 	}
 
-	getSetting(name: string) {
+	public getSetting(name: string) {
 		return this.botSettings.get(name)?.settingValue;
 	}
 
-	async getRobloxPfp(robloxId: string) {
+	public async getRobloxPfp(robloxId: string) {
 		try {
 			const operation = await fetchApi(getCloudV2UsersUserIdGenerateThumbnail,
 				{ user_id: robloxId, shape: 'SQUARE', format: 'PNG' },

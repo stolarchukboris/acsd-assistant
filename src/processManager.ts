@@ -1,6 +1,6 @@
 import { sleep } from "bun";
 import { renameSync } from "fs";
-import logger from "./logger";
+import logger from "./utils/logger.ts";
 
 if (Bun.argv.includes("--worker-mode") || process.argv.includes('--worker-mode')) await import('./index.ts');
 else {

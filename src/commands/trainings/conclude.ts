@@ -21,34 +21,24 @@ export const data = new SlashCommandSubcommandBuilder()
 export const highRank = true;
 export const training = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo, training: trainingInfo, annsMessage: Message) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, __cmdUser: personnelInfo, training: trainingInfo, annsMessage: Message) {
 	const comment = interaction.options.getString('comment');
 
-	if (!training.isStarted) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error
-				.setDescription('This training has not been started yet.')
-				.setFields({ name: 'Training ID:', value: training.trainingId })
-		]
+	if (!training.isStarted) return await bot.sendContainer(interaction, 'error', {
+		description: 'This training has not been started yet.',
+		fields: [{ name: 'Training ID:', value: training.trainingId }]
 	});
 
 	await bot.knex<trainingInfo>('trainings')
 		.del()
 		.where('trainingId', training.trainingId);
 
-	if (annsMessage) await annsMessage.reply({
-		embeds: [
-			bot.embed
-				.setColor('Grey')
-				.setTitle(`${training.hostRobloxUsername}'s training has been concluded.`)
-				.setDescription(`The training is over. Thanks to those who have attended!`)
-				.setFields(comment ? [{ name: 'Comment from host:', value: comment }] : [])
-		]
-	});
+	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainer({
+		color: 'Grey',
+		title: `${training.hostRobloxUsername}'s training has been concluded.`,
+		description: 'The training is over. Thanks to those who have attended!',
+		fields: comment ? [{ name: 'Comment from host:', value: comment }] : []
+	}));
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success.setDescription('Successfully concluded the training.')
-		]
-	});
+	await bot.sendContainer(interaction, 'success', 'Successfully concluded the training.');
 }

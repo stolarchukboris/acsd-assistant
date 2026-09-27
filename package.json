@@ -6,7 +6,7 @@
 	"module": "src/index.ts",
 	"type": "module",
 	"scripts": {
-		"manifest": "bun run src/manifestGen.ts",
+		"manifest": "bun run src/utils/manifestGen.ts",
 		"start": "bun manifest && bun run src/processManager.ts",
 		"deploy-start": "bun manifest && bun start --deploy",
 		"stop": "curl http://localhost:3322/stop",

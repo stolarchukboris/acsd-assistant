@@ -8,5 +8,5 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	await interaction.editReply(bot.v2Response(bot.containers.success(`Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`)));
+	await bot.sendContainer(interaction, 'success', `Your randomly generated UUID is: \`${crypto.randomUUID()}\`.`);
 }

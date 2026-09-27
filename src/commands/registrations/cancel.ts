@@ -14,11 +14,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.where('discordId', interaction.user.id)
 		.first();
 
-	if (!req) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription('You don\'t have an active registration request.')
-		]
-	});
+	if (!req) return await bot.sendContainer(interaction, 'error', 'You don\'t have an active registration request.');
 
 	await bot.knex<personnelInfo>('pendingRegs').del().where('discordId', interaction.user.id);
 
@@ -33,9 +29,5 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		components: []
 	});
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success.setDescription('Successfully cancelled your registration request.')
-		]
-	});
+	await bot.sendContainer(interaction, 'success', 'Successfully cancelled your registration request.');
 }

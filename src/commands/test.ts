@@ -8,5 +8,5 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	await interaction.editReply(bot.v2Response(bot.containers.accessDenied()));
+	await bot.sendContainer(interaction, 'accessDenied');
 }

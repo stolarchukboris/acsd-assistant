@@ -63,13 +63,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
     - **Warning: This encompasses both automatic and manual shift logs.**`
 	} as const;
 
-	await interaction.editReply(
-		bot.v2Response(
-			bot.createContainer({
-				title: 'ACSD Assistant help.',
-				color: 'Blurple',
-				description: topics[selectedTopic as keyof typeof topics]
-			})
-		)
-	);
+	await bot.sendContainer(interaction, bot.createContainer({
+		title: 'ACSD Assistant help.',
+		color: 'Blurple',
+		description: topics[selectedTopic as keyof typeof topics]
+	}));
 }

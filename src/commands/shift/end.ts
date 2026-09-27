@@ -30,28 +30,18 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			.where('robloxId', cmdUser.robloxId)
 			.first();
 
-	if (!existingShift) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription('You don\'t have an active shift.')
-		]
-	});
+	if (!existingShift) return await bot.sendContainer(interaction, 'notFound', `You don't have an active shift.`);
 
 	const startedTimestamp = 'shiftId' in existingShift ? Math.floor(Date.parse(existingShift.startedTimestamp) / 1000) : Number(existingShift.startedTimestamp);
 
-	if (now - startedTimestamp < 300) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription('Your shift is less than 5 minutes in length. If you would like to cancel it, use the `/shift cancel` command.')
-		]
-	});
+	if (now - startedTimestamp < 300) return await bot.sendContainer(interaction, 'error',
+		'Your shift is less than 5 minutes in length. If you would like to cancel it, use the `/shift cancel` command.');
 
 	const attach = interaction.options.getAttachment('proof_image');
 	const url = interaction.options.getString('proof_url');
 
-	if (!(url || (attach && attach.contentType?.includes('image')))) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription('Please provide a screenshot (or a URL to it) of you playing as security.')
-		]
-	});
+	if (!(url || (attach && attach.contentType?.includes('image')))) return await bot.sendContainer(interaction, 'error',
+		'Please provide a screenshot (or a URL to it) of you playing as security.');
 
 	await bot.knex<activeMShift | activeShift>('shiftId' in existingShift ? 'activeMShifts' : 'activeShifts')
 		.del()
@@ -69,12 +59,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			proof: (attach?.url ?? url)!
 		});
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription('Successfully ended your shift.')
-				.setImage(attach?.url ?? url)
-				.setFields({ name: 'Length:', value: `${length} minutes.` })
-		]
+	await bot.sendContainer(interaction, 'success', {
+		description: 'Successfully ended your shift.',
+		fields: [{ name: 'Length:', value: `${length} minutes.` }],
+		bigImageUrl: (attach?.url ?? url)!
 	});
 }

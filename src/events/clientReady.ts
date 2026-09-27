@@ -1,4 +1,4 @@
-import { managePartialMembers, managePendingLogs, manageOnDutyChats, trainingReminder } from '../worker.ts';
+import { managePartialMembers, managePendingLogs, manageOnDutyChats, trainingReminder } from '../utils/worker.ts';
 import bot from '../index.ts';
 import { ActivityType, Client } from 'discord.js';
 

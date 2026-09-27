@@ -21,12 +21,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		})
 		.first() as { label: string; id: string } | undefined;
 
-	if (existingEntry) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error
-				.setDescription('You already have an active shift log.')
-				.setFields({ name: `${existingEntry.label} ID:`, value: existingEntry.id })
-		]
+	if (existingEntry) return await bot.sendContainer(interaction, 'error', {
+		description: 'You already have a running shift log.',
+		fields: [{ name: `${existingEntry.label} ID:`, value: existingEntry.id }]
 	});
 
 	const id = crypto.randomUUID();
@@ -39,11 +36,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			robloxUsername: cmdUser.robloxUsername
 		});
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription('Successfully started the shift.')
-				.setFields({ name: 'Shift ID:', value: id })
-		]
+	await bot.sendContainer(interaction, 'success', {
+		description: 'Successfully started your shift.',
+		fields: [{ name: 'Shift ID:', value: id }]
 	});
 }
