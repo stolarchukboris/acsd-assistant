@@ -3,5 +3,5 @@ node_modules
 *.bat
 *.txt
 database/Fulldump*.sql
-regManifest.ts
+src/regManifest.ts
 dist
