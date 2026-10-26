@@ -1,5 +1,5 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import bot from '../index.ts';
+import { AttachmentBuilder, ChatInputCommandInteraction, ContainerBuilder, SlashCommandBuilder } from 'discord.js';
+import { join } from 'path';
 
 export const data = new SlashCommandBuilder()
 	.setName('test')
@@ -8,5 +8,17 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	await bot.sendContainer(interaction, 'accessDenied');
+	console.log(process.cwd());
+
+	await interaction.editReply({
+		flags: 'IsComponentsV2',
+		components: [
+			new ContainerBuilder()
+				.addSectionComponents(sc => sc
+					.addTextDisplayComponents(tdc => tdc.setContent('geh'))
+					.setThumbnailAccessory(ta => ta.setURL('attachment://checkmark.png'))
+				)
+		],
+		files: [new AttachmentBuilder(join(process.cwd(), 'static/checkmark.png'))]
+	})
 }

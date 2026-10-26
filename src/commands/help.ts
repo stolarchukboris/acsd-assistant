@@ -63,7 +63,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
     - **Warning: This encompasses both automatic and manual shift logs.**`
 	} as const;
 
-	await bot.sendContainer(interaction, bot.createContainer({
+	await bot.sendContainer(interaction, bot.createContainerPayload({
 		title: 'ACSD Assistant help.',
 		color: 'Blurple',
 		description: topics[selectedTopic as keyof typeof topics]

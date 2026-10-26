@@ -34,7 +34,7 @@ export const bundledCommands = [\n${commandsArrayElements}];
 export const bundledEvents = [\n${eventsArrayElements}];
 `;
 
-	await Bun.write("../regManifest.ts", finalContent);
+	await Bun.write("./src/regManifest.ts", finalContent);
 
 	logger.log('Successfully generated the manifest at src/regManifest.ts');
 }

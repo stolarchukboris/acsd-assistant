@@ -27,7 +27,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.update('isStarted', true)
 		.where('trainingId', training.trainingId);
 
-	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainer({
+	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Green',
 		title: `${training.hostRobloxUsername}'s scheduled training is starting now!`,
 		description: `<@&${role}>\nThe training is commencing, attendees can join the training server.

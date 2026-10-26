@@ -82,7 +82,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			startingTimestamp: time
 		});
 
-	const sentAnns = await bot.sendContainer(channel, bot.createContainer({
+	const sentAnns = await bot.sendContainer(channel, bot.createContainerPayload({
 		title: `A training has been scheduled on <t:${time}:F>.`,
 		description: `<@&${role}>\nThis training will take place in ${gameName}. The time is pre-converted to your local timezone.
 

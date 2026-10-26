@@ -64,6 +64,14 @@ export type partialPersonnelInfo = Readonly<{
 	entryCreated: string;
 }>;
 
+export type pendingRegs = Readonly<{
+	robloxId: string;
+	discordId: string;
+	robloxUsername: string;
+	challenge: string;
+	entryCreated: string
+}>;
+
 export type personnelCredits = Readonly<{
 	robloxId: string;
 	amount: number;

@@ -15,7 +15,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	if (manualShifts.length === 0 && autoShifts.length === 0) return await bot.sendContainer(interaction, 'notFound',
 		'There are no active shifts right now.');
 
-	await bot.sendContainer(interaction, bot.createContainer({
+	await bot.sendContainer(interaction, bot.createContainerPayload({
 		color: 'Blurple',
 		title: 'Active shifts.',
 		description: `${manualShifts.length > 0

@@ -29,7 +29,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.del()
 		.where('trainingId', training.trainingId);
 
-	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainer({
+	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Red',
 		title: `${training.hostRobloxUsername}'s scheduled training has been cancelled.`,
 		description: `<@&${role}>\nThe training session is cancelled. Sorry for the inconvenience!`,

@@ -24,7 +24,7 @@ else {
 				setTimeout(async _ => {
 					await this.stop(true);
 
-					logger.log('Successfully shut down runner and state server.\n--------------------');
+					logger.log('Successfully shut down runner and orchestrator.\n--------------------');
 
 					process.exit(0);
 				}, 500);

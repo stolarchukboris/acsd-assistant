@@ -9,7 +9,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	await bot.sendContainer(interaction, bot.createContainer({
+	await bot.sendContainer(interaction, bot.createContainerPayload({
 		title: 'ACSD Assistant information.',
 		color: 'Blurple',
 		description: `Below is plenty of miscellaneous information about this bot instance.

@@ -1,4 +1,4 @@
-import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions, ContainerBuilder, MessageFlags, type ColorResolvable, resolveColor, TextDisplayBuilder, type APIContainerComponent, ChatInputCommandInteraction, type Interaction, AutocompleteInteraction, CommandInteraction, Message, TextChannel, DMChannel, NewsChannel } from 'discord.js';
+import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions, MessageFlags, CommandInteraction, Message, InteractionCallbackResponse, BaseGuildTextChannel, InteractionResponse, type APIContainerComponent, type Interaction } from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
@@ -8,7 +8,7 @@ import { getUsersAuthenticated } from 'rozod/endpoints/usersv1';
 import { join } from 'path';
 import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
 import logger from './utils/logger.ts';
-import { createTemplateContainers, createContainer, type ContainerOptions } from './utils/containers.ts';
+import { createTemplateContainers, createContainerPayload, type ContainerOptions, type ContainerPayload } from './utils/containers.ts';
 
 class Bot extends Client {
 	public name = 'ACSD Assistant';
@@ -19,13 +19,13 @@ class Bot extends Client {
 	public apiCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 
 	public logos = {
-		checkmark: 'https://septik-komffort.ru/wp-content/uploads/2020/11/galochka_zel.png',
-		warning: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Noto_Emoji_Oreo_2757.svg/1200px-Noto_Emoji_Oreo_2757.svg.png',
-		heart: 'https://gas-kvas.com/grafic/uploads/posts/2024-01/gas-kvas-com-p-znak-serdtsa-na-prozrachnom-fone-44.png',
-		questionmark: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Orange_question_mark.svg/2048px-Orange_question_mark.svg.png',
-		cross: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Deletion_icon.svg/1280px-Deletion_icon.svg.png',
-		placeholder: 'https://static.wikia.nocookie.net/7d5db291-d700-4b6a-944b-eb0c84bf5781/scale-to-width/755',
-		trashbin: 'https://cdn-icons-png.freepik.com/512/8367/8367793.png'
+		checkmark: 'static/checkmark.png',
+		warning: 'static/exclamation-mark.webp',
+		heart: 'static/heart.png',
+		questionmark: 'static/question-mark.png',
+		cross: 'static/cross.png',
+		placeholder: 'static/placeholder.png',
+		trashbin: 'static/trashbin.png'
 	} as const;
 
 	public highRanks = ['Administrator', 'Director of Defense', 'Deputy Director of Defense', 'Executive Director'];
@@ -38,40 +38,42 @@ class Bot extends Client {
 
 	public containers: ReturnType<typeof createTemplateContainers> = createTemplateContainers(this);
 
-	public createContainer = (options: ContainerOptions) => createContainer(this, options);
-
-	private v2Response(container: APIContainerComponent) {
-		return {
-			flags: MessageFlags.IsComponentsV2 as number,
-			components: [container]
-		}
-	}
+	public createContainerPayload = (options: ContainerOptions) => createContainerPayload(this, options);
 
 	public async sendContainer(
 		target: CommandInteraction<'cached'>,
-		type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
+		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | (Partial<ContainerOptions> & { withResponse?: boolean })
-	): Promise<Message<true>>;
+	): Promise<Message<true> | InteractionResponse<true>>
 
 	public async sendContainer(
-		target: TextChannel | DMChannel | NewsChannel | any,
-		type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
+		target: Message,
+		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | Partial<ContainerOptions>
-	): Promise<Message<true>>;
+	): Promise<Message<true>>
 
 	public async sendContainer(
-		target: any,
-		type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
-		options: any = {}
-	): Promise<Message<true>> {
+		target: BaseGuildTextChannel,
+		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
+		options?: string | Partial<ContainerOptions>
+	): Promise<Message<true>>
+
+	public async sendContainer(
+		target: CommandInteraction<'cached'> | Message | BaseGuildTextChannel,
+		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
+		options?: string | Partial<ContainerOptions> | (Partial<ContainerOptions> & { withResponse?: boolean })
+	): Promise<Message<true> | InteractionResponse<true>> {
 		const parsedOptions = typeof options === 'string' ? { description: options } : options;
 		const containerData = typeof type === 'string' ? this.containers[type](parsedOptions) : type;
+		const payload = {
+			flags: MessageFlags.IsComponentsV2 as number,
+			components: [containerData.container],
+			files: containerData.files
+		}
 
-		const isInteraction = target && typeof target.reply === 'function';
-
-		if (isInteraction) {
-			const payload = this.v2Response(containerData);
-			const hasWithResponse = typeof options !== 'string' && options.withResponse === true;
+		if (target instanceof CommandInteraction) {
+			const hasWithResponse = typeof options !== 'string'
+				&& (options as (Partial<ContainerOptions> & { withResponse?: boolean }) | undefined)?.withResponse === true;
 
 			if (target.replied || target.deferred) return await target.editReply(payload);
 			else {
@@ -80,36 +82,12 @@ class Bot extends Client {
 					withResponse: hasWithResponse
 				});
 
-				if (hasWithResponse && res && 'resource' in res && res.resource) return (res.resource as any).message as Message<true>;
+				if (hasWithResponse) return (res as unknown as InteractionCallbackResponse<true>).resource?.message as Message<true>;
 
-				return res as unknown as Message<true>;
+				return res;
 			}
-		} else return await target.send({ flags: MessageFlags.IsComponentsV2 as number, components: [containerData] });
+		} else return target instanceof Message ? await target.reply(payload) as any : await target.send(payload);
 	}
-
-	// public async sendContainer(
-	// 	interaction: Exclude<Interaction<'cached'>, AutocompleteInteraction>,
-	// 	type: keyof ReturnType<typeof createTemplateContainers> | APIContainerComponent,
-	// 	options: string | (Partial<ContainerOptions> & { withResponse?: boolean }) = {}
-	// ): Promise<Message> {
-	// 	const parsedOptions = typeof options === 'string' ? { description: options } : options;
-	// 	const containerData = typeof type === 'string' ? this.containers[type](parsedOptions) : type;
-		
-	// 	const payload = this.v2Response(containerData);
-	// 	const hasWithResponse = typeof options !== 'string' && options.withResponse === true;
-
-	// 	if (interaction.replied || interaction.deferred) return await interaction.editReply(payload);
-	// 	else {
-	// 		const res = await interaction.reply({
-	// 			...payload,
-	// 			withResponse: hasWithResponse
-	// 		});
-
-	// 		if (hasWithResponse && res && 'resource' in res && res.resource) return (res.resource as any).message as Message;
-
-	// 		return res as unknown as Message;
-	// 	}
-	// }
 
 	get embed() {
 		return new EmbedBuilder()

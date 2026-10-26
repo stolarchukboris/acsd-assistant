@@ -33,7 +33,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.del()
 		.where('trainingId', training.trainingId);
 
-	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainer({
+	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Grey',
 		title: `${training.hostRobloxUsername}'s training has been concluded.`,
 		description: 'The training is over. Thanks to those who have attended!',
