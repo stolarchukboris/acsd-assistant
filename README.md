@@ -29,5 +29,11 @@ Features shift, credit, punishment and training management commands.
 2. Fill out the .env file.
 3. Run the executable.
 
-*In order to deploy commands, please open the terminal and run the executable with the `--deploy` flag.*  
+#### How to control
+In order to restart or stop the bot you have to send a request to the daemon:  
+- `http://127.0.0.1:3322/restart` - this will restart the bot.
+- `http://127.0.0.1:3322/deploy-restart` - this will deploy commands and restart the bot.
+- `http://127.0.0.1:3322/stop` - this will kill both the bot and the daemon.
+
+*In order to deploy commands when starting the application for the first time, run the executable with the `--deploy` flag.*  
 *Example: `acsd-assistant-win.exe --deploy`*
