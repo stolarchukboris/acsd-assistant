@@ -4,7 +4,7 @@ import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
 import type { botSettingInfo } from './types/knex.ts';
-import { configureServer, fetchApi } from 'rozod';
+import { configureServer, fetchApi, fetchApiOperation } from 'rozod';
 import { getUsersAuthenticated } from 'rozod/endpoints/usersv1';
 import { join } from 'path';
 import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
@@ -130,25 +130,11 @@ class Bot extends Discord.Client {
 
 	public async getRobloxPfp(robloxId: string) {
 		try {
-			const operation = await fetchApi(getCloudV2UsersUserIdGenerateThumbnail,
-				{ user_id: robloxId, shape: 'SQUARE', format: 'PNG' },
-				{ throwOnError: true }
+			const { imageUri } = await fetchApiOperation(getCloudV2UsersUserIdGenerateThumbnail,
+				{ user_id: robloxId, shape: 'SQUARE', format: 'PNG' }
 			);
 
-			const res = await fetch(`https://apis.roblox.com/cloud/v2/${operation.path}`, {
-				method: 'GET',
-				headers: {
-					'Cookie': `.ROBLOSECURITY=${Bun.env.ROBLOX_COOKIE}`,
-					'x-api-key': Bun.env.OPEN_CLOUD_API_KEY
-				}
-			});
-
-			if (!res.ok) throw new Error;
-
-			const result = await res.json() as any;
-
-			return result.done && result.response ? result.response.imageUri : this.logos.placeholder;
-
+			return imageUri;
 		} catch (error) {
 			this.logger.error(error);
 
@@ -327,7 +313,7 @@ class Bot extends Discord.Client {
 		this.logger.log(`Logged into Roblox as ${me.name} (${me.id}).`);
 	}
 
-	private async start() {
+	public async start() {
 		try {
 			await this.initEvents();
 			await this.initCommands();
@@ -356,8 +342,6 @@ class Bot extends Discord.Client {
 			partials: [Discord.Partials.Message]
 		});
 
-		this.start();
-
 		try {
 			this.commit = `${Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] }).stdout
 				.toString()
@@ -369,4 +353,8 @@ class Bot extends Discord.Client {
 	}
 }
 
-export default new Bot();
+const bot = new Bot();
+
+await bot.start();
+
+export default bot;
