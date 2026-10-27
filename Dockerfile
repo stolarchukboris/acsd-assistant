@@ -8,4 +8,6 @@ RUN bun i --frozen-lockfile
 
 COPY . .
 
-CMD ["bun", "run", "src/index.ts"]
+EXPOSE 3322
+
+CMD ["bun", "run", "./src/processManager.ts"]

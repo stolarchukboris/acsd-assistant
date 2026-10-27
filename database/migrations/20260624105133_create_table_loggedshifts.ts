@@ -1,7 +1,7 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	return knex.schema.createTable('loggedshifts', table => {
+	return knex.schema.createTable('loggedShifts', table => {
 		table.specificType('shiftId', 'char(36)').primary();
 		table.string('robloxId', 20).notNullable();
 		table.foreign('robloxId')

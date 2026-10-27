@@ -1,7 +1,7 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	return knex.schema.createTable('botsettings', table => {
+	return knex.schema.createTable('botSettings', table => {
 		table.string('settingName', 30).primary();
 		table.text('settingDesc').notNullable();
 		table.string('settingValue', 20).notNullable().unique();

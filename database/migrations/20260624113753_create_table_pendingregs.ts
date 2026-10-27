@@ -1,7 +1,7 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	return knex.schema.createTable('pendingregs', table => {
+	return knex.schema.createTable('pendingRegs', table => {
 		table.string('robloxId', 20).primary();
 		table.string('discordId', 20).notNullable().unique();
 		table.string('robloxUsername', 22).notNullable().unique();

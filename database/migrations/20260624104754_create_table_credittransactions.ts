@@ -1,7 +1,7 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	return knex.schema.createTable('credittransactions', table => {
+	return knex.schema.createTable('creditTransactions', table => {
 		table.specificType('transactionId', 'char(36)').primary();
 		table.string('execRbxId', 20).notNullable();
 		table.index('execRbxId', 'idx_exec_rbx_id');

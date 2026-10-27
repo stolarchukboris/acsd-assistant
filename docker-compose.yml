@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: my-bot
+    container_name: acsd-assistant
     ports:
-      - "3000:3000"
+      - "3322:3322"
     env_file:
       - .env
