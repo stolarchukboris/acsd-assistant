@@ -1,3 +1,4 @@
+import './utils/globals.ts';
 import * as Discord from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
@@ -9,12 +10,6 @@ import { join } from 'path';
 import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
 import logger from './utils/logger.ts';
 import { createTemplateContainers, createContainerPayload, type ContainerOptions, type ContainerPayload } from './utils/containers.ts';
-
-declare global {
-	var unixNow: () => number;
-}
-
-globalThis.unixNow = () => ~~(Date.now() / 1000);
 
 class Bot extends Discord.Client {
 	public name = 'ACSD Assistant';
