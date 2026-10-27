@@ -58,6 +58,8 @@ jobs:
 
           cp .env.example ./dist/acsd-assistant-win/.env
 
+          cp -r ./static ./dist/acsd-assistant-win/static
+
           cd ./dist
           zip -r acsd-assistant-${{ github.ref_name }}-win-x64.zip ./acsd-assistant-win
           rar a -r acsd-assistant-${{ github.ref_name }}-win-x64.rar ./acsd-assistant-win
@@ -71,6 +73,8 @@ jobs:
           cp -r ./database/migrations ./dist/acsd-assistant-linux/database/migrations
 
           cp .env.example ./dist/acsd-assistant-linux/.env
+
+          cp -r ./static ./dist/acsd-assistant-linux/static
 
           cd ./dist
           zip -r acsd-assistant-${{ github.ref_name }}-linux-x64.zip ./acsd-assistant-linux
