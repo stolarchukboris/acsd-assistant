@@ -1,4 +1,4 @@
-import { managePartialMembers, managePendingLogs, manageOnDutyChats, trainingReminder, managePendingRegs, managePendingTerminations } from '../utils/worker.ts';
+import { managePendingLogs, manageOnDutyChats, trainingReminder, databaseCleanup } from '../utils/worker.ts';
 import bot from '../index.ts';
 import { ActivityType, Client } from 'discord.js';
 
@@ -13,9 +13,7 @@ export async function execute(client: Client<true>) {
 		while (true) {
 			try {
 				await Promise.allSettled([
-					managePendingTerminations(),
-					managePendingRegs(),
-					managePartialMembers(),
+					databaseCleanup(),
 					managePendingLogs(),
 					trainingReminder()
 				]);

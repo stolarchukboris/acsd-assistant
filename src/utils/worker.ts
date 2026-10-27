@@ -1,16 +1,16 @@
 import { ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { pendingRegs, activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from '../types/knex.ts';
-import { fetchApi, fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
-import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
+import type { pendingRegs, activeShift, loggedShift, pendingShift, personnelInfo, trainingInfo, activeMShift } from '../types/knex.ts';
+import { fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
 import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
 
-export async function managePendingRegs() {
-	return await bot.knex<pendingRegs>('pendingRegs').del().where('entryCreated', '<', unixNow() - 300);
-}
+export async function databaseCleanup() {
+	await bot.knex<pendingRegs>('pendingRegs').del().where('entryCreated', '<', unixNow() - 300);
 
-export async function managePendingTerminations() {
-	return await bot.knex<personnelInfo>('personnel').del().where('toBeDeletedAt', '<', unixNow());
+	await bot.knex<personnelInfo>('personnel').del().where('toBeDeletedAt', '<', unixNow());
+
+	await bot.knex<activeShift>('activeShifts').del().where('startedTimestamp', '<', unixNow() - 4800);
+	await bot.knex<activeMShift>('activeMShifts').del().where('startedTimestamp', '<', unixNow() - 4800);
 }
 
 export async function managePendingLogs() {
@@ -71,39 +71,6 @@ export async function managePendingLogs() {
 				.del()
 				.whereIn('whMessageId', userLogs.map(log => log.whMessageId));
 		});
-	}
-}
-
-export async function managePartialMembers() {
-	const pendingLogs = await bot.knex<pendingShift>('pendingShiftLogs').select('*');
-
-	if (pendingLogs.length === 0) return;
-
-	const robloxIds: string[] = [];
-
-	for (const log of pendingLogs) if (!robloxIds.includes(log.robloxId)) robloxIds.push(log.robloxId);
-
-	for (const id of robloxIds) {
-		const registeredAcc = await bot.knex<personnelInfo>('personnel')
-			.select('*')
-			.where('robloxId', id)
-			.first();
-
-		if (!registeredAcc) {
-			const existingPartial = await bot.knex<partialPersonnelInfo>('personnelPartial')
-				.select('*')
-				.where('robloxId', id);
-
-			if (existingPartial) continue;
-
-			const playerResponse = await fetchApi(getCloudV2UsersUserId, { user_id: id }, { throwOnError: true });
-
-			await bot.knex<partialPersonnelInfo>('personnelPartial')
-				.insert({
-					robloxId: id,
-					robloxUsername: playerResponse.name
-				});
-		}
 	}
 }
 

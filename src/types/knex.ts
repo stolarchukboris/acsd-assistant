@@ -59,12 +59,6 @@ export type personnelInfo = Readonly<{
 	toBeDeletedAt?: number;
 }>;
 
-export type partialPersonnelInfo = Readonly<{
-	robloxId: string;
-	robloxUsername: string;
-	entryCreated: string;
-}>;
-
 export type pendingRegs = Readonly<{
 	robloxId: string;
 	discordId: string;

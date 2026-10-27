@@ -9,6 +9,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.datetime('entryCreated').defaultTo(knex.fn.now());
 		table.datetime('entryUpdated').defaultTo(knex.raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
 		table.integer('toBeDeletedAt').unsigned();
+		table.index('toBeDeletedAt', 'idx_personnel_deletion');
 	});
 }
 

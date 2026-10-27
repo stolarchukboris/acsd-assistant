@@ -7,6 +7,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.string('robloxUsername', 22).notNullable().unique();
 		table.string('challenge', 100).notNullable().unique();
 		table.integer('entryCreated').unsigned().notNullable();
+		table.index('entryCreated', 'idx_entry_created');
 	});
 }
 

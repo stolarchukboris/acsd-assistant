@@ -1,6 +1,6 @@
 import { Message, TextChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { activeMShift, activeShift } from '../types/knex.ts';
+import type { personnelInfo, activeMShift, activeShift } from '../types/knex.ts';
 import { fetchApi, fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
 import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
 import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
@@ -89,6 +89,13 @@ export async function execute(message: Message) {
 		}
 
 		if (!serverFound) return await message.react('🟥');
+
+		const existingPlayer = await bot.knex<personnelInfo>('personnel')
+			.select('*')
+			.where('robloxId', userId)
+			.first();
+
+		if (!existingPlayer) return await message.react('🟥');
 
 		await bot.knex<activeShift>('activeShifts')
 			.insert({

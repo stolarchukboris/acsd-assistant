@@ -6,6 +6,11 @@ export async function up(knex: Knex): Promise<void> {
 		table.string('whMessageId', 20).primary();
 		table.string('fwMessageId', 20).notNullable().unique();
 		table.string('robloxId', 20).notNullable();
+		table.foreign('robloxId')
+			.references('robloxId')
+			.inTable('personnel')
+			.onDelete('CASCADE')
+			.onUpdate('CASCADE');
 		table.integer('startedTimestamp').unsigned().notNullable();
 		table.integer('endedTimestamp').unsigned().notNullable();
 		table.smallint('lenMinutes').unsigned().notNullable();
