@@ -31,10 +31,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Red',
-		title: `${training.hostRobloxUsername}'s scheduled training has been cancelled.`,
-		description: `<@&${role}>\nThe training session is cancelled. Sorry for the inconvenience!`,
-		thumbnailUrl: bot.logos.cross,
-		fields: [{ name: 'Reason:', value: reason }]
+		allowedMentions: { parse: ['roles'] },
+		sections: [{
+			title: `${training.hostRobloxUsername}'s scheduled training has been cancelled.`,
+			description: `<@&${role}>\nThe training session is cancelled. Sorry for the inconvenience!`,
+			thumbnailUrl: bot.logos.cross,
+			fields: [{ name: 'Reason:', value: reason }]
+		}]
 	}));
 
 	await bot.sendContainer(interaction, 'success', 'Successfully cancelled the training.');

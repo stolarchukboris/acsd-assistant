@@ -1,9 +1,17 @@
 import { ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from '../types/knex.ts';
+import type { pendingRegs, activeShift, loggedShift, partialPersonnelInfo, pendingShift, personnelInfo, trainingInfo } from '../types/knex.ts';
 import { fetchApi, fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
 import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
 import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
+
+export async function managePendingRegs() {
+	return await bot.knex<pendingRegs>('pendingRegs').del().where('entryCreated', '<', unixNow() - 300);
+}
+
+export async function managePendingTerminations() {
+	return await bot.knex<personnelInfo>('personnel').del().where('toBeDeletedAt', '<', unixNow());
+}
 
 export async function managePendingLogs() {
 	const pendingLogs = await bot.knex<pendingShift>('pendingShiftLogs').select('*');
@@ -30,7 +38,7 @@ export async function managePendingLogs() {
 
 		if (associatedActiveShift) continue;
 
-		if (Math.floor(Date.now() / 1000) - latestLog!.endedTimestamp < 60) continue;
+		if (unixNow() - latestLog!.endedTimestamp < 60) continue;
 
 		const totalMinutes = userLogs.map(log => log.lenMinutes).reduce((a, b) => a + b, 0);
 		const success = totalMinutes >= 5;
@@ -48,19 +56,21 @@ export async function managePendingLogs() {
 			}
 		}
 
-		if (success) await bot.knex<loggedShift>('loggedShifts')
-			.insert({
-				shiftId: crypto.randomUUID(),
-				robloxId: robloxId,
-				startedTimestamp: userLogs[0]?.startedTimestamp,
-				endedTimestamp: latestLog?.endedTimestamp,
-				lenMinutes: totalMinutes,
-				proof: `Job ID: ${latestLog?.jobId}`
-			});
+		await bot.knex.transaction(async trx => {
+			if (success) await trx<loggedShift>('loggedShifts')
+				.insert({
+					shiftId: crypto.randomUUID(),
+					robloxId: robloxId,
+					startedTimestamp: userLogs[0]?.startedTimestamp,
+					endedTimestamp: latestLog?.endedTimestamp,
+					lenMinutes: totalMinutes,
+					proof: `Job ID: ${latestLog?.jobId}`
+				});
 
-		await bot.knex<pendingShift>('pendingShiftLogs')
-			.del()
-			.whereIn('whMessageId', userLogs.map(log => log.whMessageId));
+			await trx<pendingShift>('pendingShiftLogs')
+				.del()
+				.whereIn('whMessageId', userLogs.map(log => log.whMessageId));
+		});
 	}
 }
 
@@ -98,27 +108,26 @@ export async function managePartialMembers() {
 }
 
 export async function trainingReminder() {
-	const now = Math.floor(Date.now() / 1000);
 	const trainingSoon = await bot.knex<trainingInfo>('trainings')
 		.select('*')
-		.where('startingTimestamp', '<=', now + 600)
+		.where('startingTimestamp', '<=', unixNow() + 600)
 		.andWhere('isReminded', false)
 		.andWhere('isStarted', false)
 		.first();
 
 	if (!trainingSoon) return;
 
-	await (bot.channels.cache.get(bot.getSetting('trainingRemindChannelId')!) as TextChannel).send({
-		content: `<@${trainingSoon.hostDiscordId}>`,
-		embeds: [
-			bot.embed
-				.setColor('Orange')
-				.setTitle('Training reminder.')
-				.setDescription(`Your training is going to start <t:${trainingSoon.startingTimestamp}:R>. Make sure you are ready to host it.
+	await bot.sendContainer(bot.channels.cache.get(bot.getSetting('trainingRemindChannelId')!) as TextChannel, bot.createContainerPayload({
+		color: 'Orange',
+		allowedMentions: { parse: ['users'] },
+		sections: [{
+			title: 'Training reminder.',
+			description: `<@${trainingSoon.hostDiscordId}>
+Your training is going to start <t:${trainingSoon.startingTimestamp}:R>. Make sure you are ready to host it.
 
-If you are not ready to host the training or if there are insufficient reactions, you can cancel the training with the \`/trainings cancel\` command.`)
-		]
-	});
+If you are not ready to host the training or if there are insufficient reactions, you can cancel the training with the \`/trainings cancel\` command.`
+		}]
+	}));
 
 	await bot.knex<trainingInfo>('trainings')
 		.update('isReminded', true)
@@ -168,29 +177,33 @@ export async function manageOnDutyChats() {
 			}
 
 			if (!thread) {
+				const containerData = bot.createContainerPayload({
+					color: 'Blurple',
+					sections: [{
+						title: `Chat port for server ${partialId}.`,
+						description: 'Use this thread as an alternative to chat with other ACSD members playing in this server.',
+						fields: [{ name: 'Player count:', value: statusText }]
+					}]
+				});
+
 				thread = await chatForum.threads.create({
 					name: partialId,
 					message: {
-						embeds: [
-							bot.embed
-								.setColor('Blurple')
-								.setTitle(`Chat for server ${partialId}.`)
-								.setDescription('Use this thread to chat with other ACSD members playing in this server.')
-								.setFields({ name: 'Player count:', value: statusText })
-						]
+						flags: 'IsComponentsV2',
+						components: [containerData.container],
+						files: containerData.files
 					}
 				});
 
 				existingThreads.set(thread.id, thread);
-			} else await thread.fetchStarterMessage().then(async message => await message?.edit({
-				embeds: [
-					bot.embed
-						.setColor(message.embeds[0]!.color)
-						.setTitle(message.embeds[0]!.title)
-						.setDescription(message.embeds[0]!.description)
-						.setFields({ name: 'Player count:', value: statusText })
-				]
-			}));
+			} else await thread.fetchStarterMessage().then(async message => await message?.edit(bot.createContainerPayload({
+				color: 'Blurple',
+				sections: [{
+					title: `Chat port for server ${partialId}.`,
+					description: 'Use this thread as an alternative to chat with other ACSD members playing in this server.',
+					fields: [{ name: 'Player count:', value: statusText }]
+				}]
+			})));
 
 			await bot.rest.put(`/channels/${vc.id}/voice-status`, {
 				body: { status: statusText }
@@ -199,9 +212,5 @@ export async function manageOnDutyChats() {
 	}
 
 	existingVcs.filter(vc => !partialIds.includes(vc.name)).forEach(async vc => await vc.delete());
-	existingThreads.filter(thread => !partialIds.includes(thread.name)).forEach(async thread => {
-		await thread.messages.fetch();
-
-		thread.messages.cache.size > 1 ? await thread.setArchived() : await thread.delete();
-	});
+	existingThreads.filter(thread => !partialIds.includes(thread.name)).forEach(async thread => await thread.delete());
 }

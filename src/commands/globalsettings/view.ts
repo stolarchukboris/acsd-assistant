@@ -17,34 +17,28 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const settingToView = interaction.options.getString('setting');
 
-	if (!settingToView) return await interaction.editReply({
-		embeds: [
-			bot.embed
-				.setColor('DarkOrange')
-				.setTitle('Global settings.')
-				.setDescription(bot.botSettings.map(setting => `- ${setting.settingDesc}: \`${setting.settingValue}\``).join('\n'))
-		]
-	});
+	if (!settingToView) return await bot.sendContainer(interaction, bot.createContainerPayload({
+		color: 'DarkOrange',
+		sections: [{
+			title: 'Global settings.',
+			description: bot.botSettings.map(setting => `- ${setting.settingDesc}: \`${setting.settingValue}\``).join('\n')
+		}]
+	}));
 
 	const setting = bot.botSettings.get(settingToView);
 
-	if (!setting) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription(`Setting with name \`${settingToView}\` does not exist.`)
-		]
-	});
+	if (!setting) return await bot.sendContainer(interaction, 'notFound', `Setting with name \`${settingToView}\` does not exist.`);
 
-	await interaction.editReply({
-		embeds: [
-			bot.embed
-				.setColor('DarkOrange')
-				.setTitle('Setting information.')
-				.setDescription(`**Name**: \`${setting.settingName}\` (${setting.settingDesc})
+	await bot.sendContainer(interaction, bot.createContainerPayload({
+		color: 'DarkOrange',
+		sections: [{
+			title: 'Setting information.',
+			description: `**Name**: \`${setting.settingName}\` (${setting.settingDesc})
 **Value:** \`${setting.settingValue}\`
 
-**Last updated** by <@${setting.lastUpdatedBy}> <t:${Math.floor(Date.parse(setting.lastUpdatedAt as string) / 1000)}:R>.`)
-		]
-	})
+**Last updated** by <@${setting.lastUpdatedBy}> <t:${Math.floor(Date.parse(setting.lastUpdatedAt as string) / 1000)}:R>.`
+		}]
+	}));
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {

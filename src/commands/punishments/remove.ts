@@ -30,11 +30,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.where('punishmentId', id)
 		.first();
 
-	if (!existingPunishment) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription(`No punishment with ID \`${id}\` has been found in the database.`)
-		]
-	});
+	if (!existingPunishment) return await bot.sendContainer(interaction, 'notFound', `No punishment with ID \`${id}\` has been found in the database.`);
 
 	const target = await bot.knex<personnelInfo>('personnel')
 		.select('*')
@@ -47,30 +43,29 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	let extra = '';
 
-	if (target && (interaction.user.id !== target.discordId)) await bot.users.send(target.discordId, {
-		embeds: [
-			bot.embed
-				.setColor('Green')
-				.setTitle('Punishment removed.')
-				.setDescription(`Your punishment with ID \`${id}\` has been removed. Please review the information below. For any questions about this, please contact the ACSD administration.`)
-				.setThumbnail(bot.logos.checkmark)
-				.setFields(
-					{ name: 'Original punishment reason:', value: existingPunishment.reason },
-					...(reason ? [{ name: 'Punishment removal reason:', value: reason }] : []),
-					{ name: 'Punishment ID:', value: id }
-				)
-		]
-	}).catch(_ => extra = ' (⚠️ could not notify the user)');
+	if (target && (interaction.user.id !== target.discordId)) await bot.users.send(target.discordId, bot.createContainerPayload({
+		color: 'Green',
+		sections: [{
+			title: 'Punishment removed.',
+			description: `Your punishment with ID \`${id}\` has been removed.
+Please review the information below. For any questions about this, please contact the ACSD administration.`,
+			thumbnailUrl: bot.logos.checkmark,
+			fields: [
+				{ name: 'Original punishment reason:', value: existingPunishment.reason },
+				...(reason ? [{ name: 'Punishment removal reason:', value: reason }] : []),
+				{ name: 'Punishment ID:', value: id }
+			]
+		}]
+	})).catch(_ => extra = ' (⚠️ could not notify the user)');
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription(`Successfully removed ${target ? `${target.robloxUsername}'s` : 'the'} punishment${extra}.`)
-				.setFields(
-					{ name: 'Original punishment reason:', value: existingPunishment.reason },
-					...(reason ? [{ name: 'Punishment removal reason:', value: reason }] : []),
-					{ name: 'Punishment ID:', value: id }
-				)
-		]
+	await bot.sendContainer(interaction, 'success', {
+		sections: [{
+			description: `Successfully removed ${target ? `${target.robloxUsername}'s` : 'the'} punishment${extra}.`,
+			fields: [
+				{ name: 'Original punishment reason:', value: existingPunishment.reason },
+				...(reason ? [{ name: 'Punishment removal reason:', value: reason }] : []),
+				{ name: 'Punishment ID:', value: id }
+			]
+		}]
 	});
 }

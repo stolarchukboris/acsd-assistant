@@ -19,7 +19,7 @@ export const auth = true;
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
 	await interaction.deferReply();
 
-	const now = Math.floor(Date.now() / 1000);
+	const now = unixNow();
 	const existingShift =
 		await bot.knex<activeShift>('activeShifts')
 			.select('*')
@@ -32,7 +32,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (!existingShift) return await bot.sendContainer(interaction, 'notFound', `You don't have an active shift.`);
 
-	const startedTimestamp = 'shiftId' in existingShift ? Math.floor(Date.parse(existingShift.startedTimestamp) / 1000) : Number(existingShift.startedTimestamp);
+	const startedTimestamp = 'shiftId' in existingShift
+		? Math.floor(Date.parse(existingShift.startedTimestamp) / 1000)
+		: Number(existingShift.startedTimestamp);
 
 	if (now - startedTimestamp < 300) return await bot.sendContainer(interaction, 'error',
 		'Your shift is less than 5 minutes in length. If you would like to cancel it, use the `/shift cancel` command.');
@@ -43,25 +45,29 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	if (!(url || (attach && attach.contentType?.includes('image')))) return await bot.sendContainer(interaction, 'error',
 		'Please provide a screenshot (or a URL to it) of you playing as security.');
 
-	await bot.knex<activeMShift | activeShift>('shiftId' in existingShift ? 'activeMShifts' : 'activeShifts')
-		.del()
-		.where('robloxId', cmdUser.robloxId);
-
 	const length = Math.round((now - startedTimestamp) / 60);
 
-	await bot.knex<loggedShift>('loggedShifts')
-		.insert({
-			shiftId: 'shiftId' in existingShift ? existingShift.shiftId : crypto.randomUUID(),
-			robloxId: cmdUser.robloxId,
-			startedTimestamp: startedTimestamp,
-			endedTimestamp: now,
-			lenMinutes: length,
-			proof: (attach?.url ?? url)!
-		});
+	await bot.knex.transaction(async trx => {
+		await trx<activeMShift | activeShift>('shiftId' in existingShift ? 'activeMShifts' : 'activeShifts')
+			.del()
+			.where('robloxId', cmdUser.robloxId);
+
+		await trx<loggedShift>('loggedShifts')
+			.insert({
+				shiftId: 'shiftId' in existingShift ? existingShift.shiftId : crypto.randomUUID(),
+				robloxId: cmdUser.robloxId,
+				startedTimestamp: startedTimestamp,
+				endedTimestamp: now,
+				lenMinutes: length,
+				proof: (attach?.url ?? url)!
+			});
+	});
 
 	await bot.sendContainer(interaction, 'success', {
-		description: 'Successfully ended your shift.',
-		fields: [{ name: 'Length:', value: `${length} minutes.` }],
-		bigImageUrl: (attach?.url ?? url)!
+		sections: [{
+			description: 'Successfully ended your shift.',
+			fields: [{ name: 'Length:', value: `${length} minutes.` }],
+			bigImageUrl: (attach?.url ?? url)!
+		}]
 	});
 }

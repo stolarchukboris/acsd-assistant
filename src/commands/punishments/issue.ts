@@ -52,11 +52,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		})
 		.first();
 
-	if (!target) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription(`${member ?? playerUsername} is not registered in the ACSD database.`)
-		]
-	});
+	if (!target) return await bot.sendContainer(interaction, 'notFound', `${member ?? playerUsername} is not registered in the ACSD database.`);
 
 	const punishmentId = crypto.randomUUID();
 
@@ -71,29 +67,28 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	let extra = '';
 
-	if (interaction.user.id !== target.discordId) await bot.users.send(target.discordId, {
-		embeds: [
-			bot.embed
-				.setColor(type === 'warn' ? 'Orange' : 'Red')
-				.setTitle(`Punishment issued.`)
-				.setDescription(`You have been issued a **${type === 'warn' ? 'warning' : 'strike'}**. Please review the information below. For any questions about this, please contact the ACSD administration.`)
-				.setThumbnail(bot.logos.warning)
-				.setFields(
-					{ name: 'Reason:', value: reason },
-					{ name: 'Punishment ID:', value: punishmentId }
-				)
-		]
-	}).catch(_ => extra = ' (⚠️ could not notify the user)');
+	if (interaction.user.id !== target.discordId) await bot.users.send(target.discordId, bot.createContainerPayload({
+		color: type === 'warn' ? 'Orange' : 'Red',
+		sections: [{
+			title: 'Punishment issued.',
+			description: `You have been issued a **${type === 'warn' ? 'warning' : 'strike'}**.
+Please review the information below. For any questions about this, please contact the ACSD administration.`,
+			thumbnailUrl: bot.logos.warning,
+			fields: [
+				{ name: 'Reason:', value: reason },
+				{ name: 'Punishment ID:', value: punishmentId }
+			]
+		}]
+	})).catch(_ => extra = ' (⚠️ could not notify the user)');
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription(`Successfully issued a ${type === 'warn' ? 'warning' : 'strike'} to ${target.robloxUsername}${extra}.`)
-				.setFields(
-					{ name: 'Reason:', value: reason },
-					{ name: 'Punishment ID:', value: punishmentId }
-				)
-		]
+	await bot.sendContainer(interaction, 'success', {
+		sections: [{
+			description: `Successfully issued a ${type === 'warn' ? 'warning' : 'strike'} to ${target.robloxUsername}${extra}.`,
+			fields: [
+				{ name: 'Reason:', value: reason },
+				{ name: 'Punishment ID:', value: punishmentId }
+			]
+		}]
 	});
 }
 

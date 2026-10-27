@@ -1,4 +1,4 @@
-import { EmbedBuilder, Client, Collection, GatewayIntentBits, REST, SlashCommandBuilder, SlashCommandSubcommandBuilder, Routes, type RESTPutAPIApplicationCommandsResult, Partials, type RESTPostAPIApplicationCommandsJSONBody, InteractionContextType, ApplicationIntegrationType, DefaultWebSocketManagerOptions, MessageFlags, CommandInteraction, Message, InteractionCallbackResponse, BaseGuildTextChannel, InteractionResponse, type APIContainerComponent, type Interaction } from 'discord.js';
+import * as Discord from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
@@ -10,13 +10,19 @@ import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud
 import logger from './utils/logger.ts';
 import { createTemplateContainers, createContainerPayload, type ContainerOptions, type ContainerPayload } from './utils/containers.ts';
 
-class Bot extends Client {
+declare global {
+	var unixNow: () => number;
+}
+
+globalThis.unixNow = () => ~~(Date.now() / 1000);
+
+class Bot extends Discord.Client {
 	public name = 'ACSD Assistant';
 
-	public botSettings = new Collection<string, botSettingInfo>();
-	public commands = new Collection<string, botCommand<SlashCommandBuilder>>();
-	public subcommands = new Collection<string, botCommand<SlashCommandSubcommandBuilder>>();
-	public apiCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
+	public botSettings = new Discord.Collection<string, botSettingInfo>();
+	public commands = new Discord.Collection<string, botCommand<Discord.SlashCommandBuilder>>();
+	public subcommands = new Discord.Collection<string, botCommand<Discord.SlashCommandSubcommandBuilder>>();
+	public apiCommands: Discord.RESTPostAPIApplicationCommandsJSONBody[] = [];
 
 	public logos = {
 		checkmark: 'static/checkmark.png',
@@ -41,37 +47,40 @@ class Bot extends Client {
 	public createContainerPayload = (options: ContainerOptions) => createContainerPayload(this, options);
 
 	public async sendContainer(
-		target: CommandInteraction<'cached'>,
+		target: Discord.CommandInteraction<'cached'>,
 		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | (Partial<ContainerOptions> & { withResponse?: boolean })
-	): Promise<Message<true> | InteractionResponse<true>>
+	): Promise<Discord.Message<true> | Discord.InteractionResponse<true>>
 
 	public async sendContainer(
-		target: Message,
+		target: Discord.Message,
 		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | Partial<ContainerOptions>
-	): Promise<Message<true>>
+	): Promise<Discord.Message<true>>
 
 	public async sendContainer(
-		target: BaseGuildTextChannel,
+		target: Discord.BaseGuildTextChannel,
 		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | Partial<ContainerOptions>
-	): Promise<Message<true>>
+	): Promise<Discord.Message<true>>
 
 	public async sendContainer(
-		target: CommandInteraction<'cached'> | Message | BaseGuildTextChannel,
+		target: Discord.CommandInteraction<'cached'> | Discord.Message | Discord.BaseGuildTextChannel,
 		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | Partial<ContainerOptions> | (Partial<ContainerOptions> & { withResponse?: boolean })
-	): Promise<Message<true> | InteractionResponse<true>> {
-		const parsedOptions = typeof options === 'string' ? { description: options } : options;
+	): Promise<Discord.Message<true> | Discord.InteractionResponse<true>> {
+		const parsedOptions = typeof options === 'string' ? {
+			sections: [{ description: options }]
+		} : options;
 		const containerData = typeof type === 'string' ? this.containers[type](parsedOptions) : type;
 		const payload = {
-			flags: MessageFlags.IsComponentsV2 as number,
+			flags: Discord.MessageFlags.IsComponentsV2 as number,
 			components: [containerData.container],
-			files: containerData.files
+			files: containerData.files,
+			allowedMentions: containerData.allowedMentions
 		}
 
-		if (target instanceof CommandInteraction) {
+		if (target instanceof Discord.CommandInteraction) {
 			const hasWithResponse = typeof options !== 'string'
 				&& (options as (Partial<ContainerOptions> & { withResponse?: boolean }) | undefined)?.withResponse === true;
 
@@ -82,15 +91,15 @@ class Bot extends Client {
 					withResponse: hasWithResponse
 				});
 
-				if (hasWithResponse) return (res as unknown as InteractionCallbackResponse<true>).resource?.message as Message<true>;
+				if (hasWithResponse) return (res as unknown as Discord.InteractionCallbackResponse<true>).resource?.message as Discord.Message<true>;
 
 				return res;
 			}
-		} else return target instanceof Message ? await target.reply(payload) as any : await target.send(payload);
+		} else return target instanceof Discord.Message ? await target.reply(payload) as any : await target.send(payload);
 	}
 
 	get embed() {
-		return new EmbedBuilder()
+		return new Discord.EmbedBuilder()
 			.setTimestamp()
 			.setFooter({ text: `${this.name}${this.commit ? ` • ${this.commit.substring(0, 7)}` : ''}` });
 	}
@@ -190,7 +199,7 @@ class Bot extends Client {
 
 	private async initCommands() {
 		for (const item of bundledCommands) {
-			const module = item.module as Partial<botCommand<SlashCommandBuilder | SlashCommandSubcommandBuilder>>;
+			const module = item.module as Partial<botCommand<Discord.SlashCommandBuilder | Discord.SlashCommandSubcommandBuilder>>;
 
 			if (!(module.data && module.execute)) {
 				this.logger.warn(`Command at ${item.path} is missing a required \`data\` or \`execute\` property.`);
@@ -202,23 +211,23 @@ class Bot extends Client {
 
 			let existingCommand = this.commands.get(fileOrFolderName);
 
-			if (module.data instanceof SlashCommandSubcommandBuilder) {
-				this.subcommands.set(`${fileOrFolderName}:${module.data.name}`, module as botCommand<SlashCommandSubcommandBuilder>);
+			if (module.data instanceof Discord.SlashCommandSubcommandBuilder) {
+				this.subcommands.set(`${fileOrFolderName}:${module.data.name}`, module as botCommand<Discord.SlashCommandSubcommandBuilder>);
 
 				if (!existingCommand) existingCommand = {
-					data: new SlashCommandBuilder()
+					data: new Discord.SlashCommandBuilder()
 						.setName(fileOrFolderName)
 						.setDescription(fileOrFolderName)
-						.setContexts(InteractionContextType.Guild)
-						.setIntegrationTypes(ApplicationIntegrationType.GuildInstall),
+						.setContexts(Discord.InteractionContextType.Guild)
+						.setIntegrationTypes(Discord.ApplicationIntegrationType.GuildInstall),
 					execute: () => Promise.resolve(undefined)
 				};
 
 				existingCommand.data.addSubcommand(module.data);
-			} else if (module.data instanceof SlashCommandBuilder) existingCommand = {
+			} else if (module.data instanceof Discord.SlashCommandBuilder) existingCommand = {
 				data: module.data
-					.setContexts(InteractionContextType.Guild)
-					.setIntegrationTypes(ApplicationIntegrationType.GuildInstall),
+					.setContexts(Discord.InteractionContextType.Guild)
+					.setIntegrationTypes(Discord.ApplicationIntegrationType.GuildInstall),
 				execute: module.execute
 			};
 
@@ -228,15 +237,15 @@ class Bot extends Client {
 		if (Bun.argv.includes('--deploy')) {
 			this.commands.forEach(command => this.apiCommands.push(command.data.toJSON()));
 
-			const rest = new REST().setToken(Bun.env.TOKEN);
+			const rest = new Discord.REST().setToken(Bun.env.TOKEN);
 
 			try {
 				this.logger.log(`Started refreshing ${this.apiCommands.length} application (/) commands.`);
 
 				const data = await rest.put(
-					Routes.applicationCommands(Bun.env.CLIENT_ID),
+					Discord.Routes.applicationCommands(Bun.env.CLIENT_ID),
 					{ body: this.apiCommands }
-				) as RESTPutAPIApplicationCommandsResult;
+				) as Discord.RESTPutAPIApplicationCommandsResult;
 
 				this.logger.log(`Successfully reloaded ${data.length} application (/) commands.`);
 			} catch (error) {
@@ -345,11 +354,11 @@ class Bot extends Client {
 	}
 
 	constructor() {
-		Object.defineProperty(DefaultWebSocketManagerOptions.identifyProperties, 'browser', { value: 'Discord iOS' });
+		Object.defineProperty(Discord.DefaultWebSocketManagerOptions.identifyProperties, 'browser', { value: 'Discord iOS' });
 
 		super({
-			intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
-			partials: [Partials.Message]
+			intents: [Discord.GatewayIntentBits.Guilds, Discord.GatewayIntentBits.GuildMessages, Discord.GatewayIntentBits.MessageContent],
+			partials: [Discord.Partials.Message]
 		});
 
 		this.start();

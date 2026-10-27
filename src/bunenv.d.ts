@@ -17,6 +17,8 @@ declare module "bun" {
 		DB_PORT: number;
 		DB_NAME: string;
 
+		MODE: string;
+
 		MAX_LOG_FILE_SIZE_MEGABYTES: number;
 
 		DEV_SHIFT_LOGS_CH_ID: string;

@@ -29,17 +29,22 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Green',
-		title: `${training.hostRobloxUsername}'s scheduled training is starting now!`,
-		description: `<@&${role}>\nThe training is commencing, attendees can join the training server.
+		allowedMentions: { parse: ['roles'] },
+		sections: [{
+			title: `${training.hostRobloxUsername}'s scheduled training is starting now!`,
+			description: `<@&${role}>\nThe training is commencing, attendees can join the training server.
 Remember to follow the training rules and show your best!
 
 **You have a few minutes to join the server before it gets locked.**
 ${join ? `## Join the training: ${join}` : ''}`,
-		fields: [{ name: 'Training ID:', value: training.trainingId }]
+			fields: [{ name: 'Training ID:', value: training.trainingId }]
+		}]
 	}));
 
-	await bot.sendContainer(interaction, bot.containers.success({
-		description: 'Successfully started the training.',
-		fields: [{ name: 'Training ID:', value: training.trainingId }]
-	}));
+	await bot.sendContainer(interaction, 'success', {
+		sections: [{
+			description: 'Successfully started the training.',
+			fields: [{ name: 'Training ID:', value: training.trainingId }]
+		}]
+	});
 }

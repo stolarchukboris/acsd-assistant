@@ -38,7 +38,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const minutes = interaction.options.getInteger('minutes', true);
 	const reason = interaction.options.getString('reason', true);
-	const startTime = interaction.options.getInteger('start_time') ?? Math.floor(Date.now() / 1000);
+	const startTime = interaction.options.getInteger('start_time') ?? unixNow();
 	const member = interaction.options.getMember('server_member');
 	const playerUsername = interaction.options.getString('roblox_username');
 
@@ -67,11 +67,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		});
 
 	await bot.sendContainer(interaction, 'success', {
-		description: `Successfully added ${minutes} minutes to ${target.robloxUsername}'s stats.`,
-		fields: [
-			{ name: 'Shift ID:', value: id },
-			{ name: 'Reason:', value: reason }
-		]
+		sections: [{
+			description: `Successfully added ${minutes} minutes to ${target.robloxUsername}'s stats.`,
+			fields: [
+				{ name: 'Shift ID:', value: id },
+				{ name: 'Reason:', value: reason }
+			]
+		}]
 	});
 }
 

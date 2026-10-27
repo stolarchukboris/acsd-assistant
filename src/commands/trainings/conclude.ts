@@ -25,8 +25,10 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const comment = interaction.options.getString('comment');
 
 	if (!training.isStarted) return await bot.sendContainer(interaction, 'error', {
-		description: 'This training has not been started yet.',
-		fields: [{ name: 'Training ID:', value: training.trainingId }]
+		sections: [{
+			description: 'This training has not been started yet.',
+			fields: [{ name: 'Training ID:', value: training.trainingId }]
+		}]
 	});
 
 	await bot.knex<trainingInfo>('trainings')
@@ -35,9 +37,11 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Grey',
-		title: `${training.hostRobloxUsername}'s training has been concluded.`,
-		description: 'The training is over. Thanks to those who have attended!',
-		fields: comment ? [{ name: 'Comment from host:', value: comment }] : []
+		sections: [{
+			title: `${training.hostRobloxUsername}'s training has been concluded.`,
+			description: 'The training is over. Thanks to those who have attended!',
+			fields: comment ? [{ name: 'Comment from host:', value: comment }] : []
+		}]
 	}));
 
 	await bot.sendContainer(interaction, 'success', 'Successfully concluded the training.');

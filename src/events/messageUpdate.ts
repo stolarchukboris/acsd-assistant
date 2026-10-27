@@ -35,43 +35,47 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 				const message = shift.whMessageId.includes('d')
 					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(shift.whMessageId.slice(0, -1))
 					: await (bot.channels.cache.get(bot.getSetting('shiftLogsChannelId')!) as TextChannel).messages.fetch(shift.whMessageId);
-				const [started, ended] = [Math.floor(message.createdTimestamp / 1000), Math.floor(Date.now() / 1000)];
+				const [started, ended] = [Math.floor(message.createdTimestamp / 1000), unixNow()];
 				const lengthMins = Math.round((ended - started) / 60);
 
-				await bot.knex<activeShift>('activeShifts')
-					.del()
-					.where('robloxId', shift.robloxId);
+				await bot.knex.transaction(async trx => {
+					await trx<activeShift>('activeShifts')
+						.del()
+						.where('robloxId', shift.robloxId);
 
-				await bot.knex<pendingShift>('pendingShiftLogs')
-					.insert({
-						jobId: shift.jobId,
-						robloxId: shift.robloxId,
-						whMessageId: shift.whMessageId,
-						fwMessageId: shift.fwMessageId,
-						startedTimestamp: started,
-						endedTimestamp: ended,
-						lenMinutes: lengthMins
-					});
+					await trx<pendingShift>('pendingShiftLogs')
+						.insert({
+							jobId: shift.jobId,
+							robloxId: shift.robloxId,
+							whMessageId: shift.whMessageId,
+							fwMessageId: shift.fwMessageId,
+							startedTimestamp: started,
+							endedTimestamp: ended,
+							lenMinutes: lengthMins
+						});
+				});
 			}
 		} else {
 			const fields = newMessage.embeds[0]?.fields;
 			const [started, ended] = [Number(fields?.[0]?.value.match(timestampRegex)?.[1]), Number(fields?.[1]?.value.match(timestampRegex)?.[1])];
 			const lengthMins = Math.round((ended - started) / 60);
 
-			await bot.knex<activeShift>('activeShifts')
-				.del()
-				.where('robloxId', activeShiftEntry.robloxId);
+			await bot.knex.transaction(async trx => {
+				await trx<activeShift>('activeShifts')
+					.del()
+					.where('robloxId', activeShiftEntry.robloxId);
 
-			await bot.knex<pendingShift>('pendingShiftLogs')
-				.insert({
-					jobId: activeShiftEntry.jobId,
-					robloxId: activeShiftEntry.robloxId,
-					whMessageId: activeShiftEntry.whMessageId,
-					fwMessageId: activeShiftEntry.fwMessageId,
-					startedTimestamp: started,
-					endedTimestamp: ended,
-					lenMinutes: lengthMins
-				});
+				await trx<pendingShift>('pendingShiftLogs')
+					.insert({
+						jobId: activeShiftEntry.jobId,
+						robloxId: activeShiftEntry.robloxId,
+						whMessageId: activeShiftEntry.whMessageId,
+						fwMessageId: activeShiftEntry.fwMessageId,
+						startedTimestamp: started,
+						endedTimestamp: ended,
+						lenMinutes: lengthMins
+					});
+			});
 		}
 
 		await newMessage.react('🟨');

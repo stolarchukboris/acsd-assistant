@@ -15,7 +15,7 @@ export const data = new SlashCommandSubcommandBuilder()
 	.addIntegerOption(o => o
 		.setName('time')
 		.setDescription('The UNIX timestamp of the training start.')
-		.setMinValue(Math.floor(Date.now() / 1000))
+		.setMinValue(unixNow())
 		.setRequired(true)
 	)
 	.addIntegerOption(o => o
@@ -50,11 +50,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.first();
 
 	if (trainingAroundThisTime) return await bot.sendContainer(interaction, bot.containers.error({
-		description: 'There is another scheduled or concluded training within an hour from this one.',
-		fields: [
-			{ name: 'Training ID:', value: trainingAroundThisTime.trainingId },
-			{ name: 'Starting:', value: `<t:${trainingAroundThisTime.startingTimestamp}>` }
-		]
+		sections: [{
+			description: 'There is another scheduled or concluded training within an hour from this one.',
+			fields: [
+				{ name: 'Training ID:', value: trainingAroundThisTime.trainingId },
+				{ name: 'Starting:', value: `<t:${trainingAroundThisTime.startingTimestamp}>` }
+			]
+		}]
 	}));
 
 	const gameUrl = interaction.options.getString('game_url', true);
@@ -83,8 +85,10 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		});
 
 	const sentAnns = await bot.sendContainer(channel, bot.createContainerPayload({
-		title: `A training has been scheduled on <t:${time}:F>.`,
-		description: `<@&${role}>\nThis training will take place in ${gameName}. The time is pre-converted to your local timezone.
+		allowedMentions: { parse: ['roles'] },
+		sections: [{
+			title: `A training has been scheduled on <t:${time}:F>.`,
+			description: `<@&${role}>\nThis training will take place in ${gameName}. The time is pre-converted to your local timezone.
 
 ## General training rules:
 - Listen to the host's instructions;
@@ -96,10 +100,11 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 If you are ready to attend this training, please react with ✅ below to confirm your attendance.
 **You react you attend.**`,
-		fields: [{ name: 'Training host:', value: `${cmdUser.acsdRank} ${cmdUser.robloxUsername} (<@${cmdUser.discordId}>)` },
+			fields: [{ name: 'Training host:', value: `${cmdUser.acsdRank} ${cmdUser.robloxUsername} (<@${cmdUser.discordId}>)` },
 			{ name: 'Details:', value: `\nAttendance minimum: ${minAttend}\n${maxAttend ? `Attendance maximum: ${maxAttend}\n` : ''}${duration ? `Training duration: ${duration}\n` : ''}` },
 			{ name: 'Training ID:', value: trainingId },
 			...(comment ? [{ name: 'Note from host:', value: comment }] : [])]
+		}]
 	}));
 
 	await sentAnns.react('✅');
@@ -110,7 +115,9 @@ If you are ready to attend this training, please react with ✅ below to confirm
 		.where('trainingId', trainingId);
 
 	await bot.sendContainer(interaction, 'success', {
-		description: `Successfully scheduled the training on <t:${time}:F>.`,
-		fields: [{ name: 'Training ID:', value: trainingId }]
+		sections: [{
+			description: `Successfully scheduled the training on <t:${time}:F>.`,
+			fields: [{ name: 'Training ID:', value: trainingId }]
+		}]
 	});
 }

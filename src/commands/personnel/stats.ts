@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.ts';
 import type { loggedShift, partialPersonnelInfo, personnelCredits, personnelInfo, punishmentInfo } from '../../types/knex.ts';
+import type { ContainerOptions } from '../../utils/containers.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('stats')
@@ -19,6 +20,8 @@ export const data = new SlashCommandSubcommandBuilder()
 		.setName('hidden')
 		.setDescription('Whether to make the command output ephemeral (defaults to TRUE).')
 	);
+
+export const auth = true;
 
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
 	const hidden = interaction.options.getBoolean('hidden') ?? true;
@@ -58,51 +61,52 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			if (punishments.length > 0) for (const punishment of punishments) desc = desc.concat(
 				`**__${punishment.punishmentType === 'warn' ? 'Warning' : 'Strike'}__ ${punishment.punishmentId}:**
 - **Issued**: <t:${Math.floor(Date.parse(punishment.createdAt) / 1000)}>
-- **Reason**: ${punishment.reason}
-
-`
-			)
+- **Reason**: ${punishment.reason}\n\n`
+			);
 		}
 
 		const pfpURL = await bot.getRobloxPfp(stats.robloxId);
 
-		await interaction.editReply({
-			embeds: [
-				bot.embed
-					.setColor('Blurple')
-					.setThumbnail(pfpURL)
-					.setTitle(`${stats.robloxUsername}'s statistics.`)
-					.setFields(
-						{ name: 'Linked Discord:', value: `<@${stats.discordId}>`, inline: true },
-						{ name: 'Linked Roblox:', value: `[${stats.robloxUsername}](https://www.roblox.com/users/${stats.robloxId}/profile)`, inline: true },
-						{ name: 'Register date:', value: `<t:${Math.floor(Date.parse(stats.entryCreated) / 1000)}>`, inline: true },
-						{ name: 'Total time on-duty:', value: `${totalTime} minutes.`, inline: true },
-						{ name: 'Total credits:', value: credits?.amount.toString() ?? '0', inline: true },
-						{ name: 'Rank:', value: stats.acsdRank, inline: true }
-					),
-				...(shifts[0] ? [bot.embed
-					.setColor('Blurple')
-					.setTitle(`${stats.robloxUsername}'s latest shift.`)
-					.setFields(
-						{ name: 'Shift ID:', value: shifts[0].shiftId },
-						{ name: 'Started:', value: `<t:${shifts[0].startedTimestamp}>`, inline: true },
-						{ name: 'Ended:', value: `<t:${shifts[0].endedTimestamp}>`, inline: true },
-						{ name: 'Length:', value: `${shifts[0].lenMinutes} minutes.`, inline: true }
-					)] : []),
-				...(desc !== `` ? [bot.embed
-					.setColor('Grey')
-					.setTitle(`${stats.robloxUsername}'s active punishments.`)
-					.setDescription(desc)
-				] : [])
+		const sections: ContainerOptions['sections'] = [{
+			title: `${stats.robloxUsername}'s statistics.`,
+			description: `Here are ${stats.robloxUsername}'s Security Division statistics.
+Depending on your rank, some information may not be available to you.`,
+			thumbnailUrl: pfpURL,
+			fields: [
+				{ name: 'Linked Discord:', value: `<@${stats.discordId}>` },
+				{ name: 'Linked Roblox:', value: `[${stats.robloxUsername}](https://www.roblox.com/users/${stats.robloxId}/profile)` },
+				{ name: 'Register date:', value: `<t:${Math.floor(Date.parse(stats.entryCreated) / 1000)}>` },
+				{ name: 'Total time on-duty:', value: `${totalTime} minutes.` },
+				{ name: 'Total credits:', value: credits?.amount.toString() ?? '0' },
+				{ name: 'Rank:', value: stats.acsdRank }
+			]
+		}];
+
+		if (shifts[0]) sections.push({
+			title: 'Latest shift.',
+			fields: [
+				{ name: 'Shift ID:', value: shifts[0].shiftId },
+				{ name: 'Started:', value: `<t:${shifts[0].startedTimestamp}>` },
+				{ name: 'Ended:', value: `<t:${shifts[0].endedTimestamp}>` },
+				{ name: 'Length:', value: `${shifts[0].lenMinutes} minutes.` }
 			]
 		});
+
+		if (desc !== '') sections.push({
+			title: 'Active punishments.',
+			description: desc
+		});
+
+		await bot.sendContainer(interaction, bot.createContainerPayload({ color: 'Blurple', sections }));
 	} else {
 		const partial = playerUsername
 			? await bot.knex<partialPersonnelInfo>('personnelPartial').select('*').where('robloxUsername', playerUsername).first()
 			: undefined;
 
-		if (!partial) return await interaction.editReply({
-			embeds: [bot.embeds.notFound.setDescription(`Could not find ${playerUsername ? `${playerUsername}'s` : 'your'} stats in the ACSD database.`)]
+		if (!partial) return await bot.sendContainer(interaction, 'notFound', {
+			sections: [{
+				description: `Could not find ${playerUsername ? `${playerUsername}'s` : 'your'} stats in the ACSD database.`
+			}]
 		});
 
 		const totalTime = await bot.knex<loggedShift>('loggedShifts')
@@ -112,16 +116,15 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 		const pfpURL = await bot.getRobloxPfp(partial.robloxId);
 
-		await interaction.editReply({
-			embeds: [
-				bot.embed
-					.setColor('Orange')
-					.setThumbnail(pfpURL)
-					.setTitle(`${partial.robloxUsername}'s partial statistics.`)
-					.setDescription('This user is not registered in the ACSD database, but they have shift time logged.')
-					.setFields({ name: 'Total time on-duty:', value: `${totalTime} minutes.` })
-			]
-		});
+		await bot.sendContainer(interaction, bot.createContainerPayload({
+			color: 'Orange',
+			sections: [{
+				title: `${partial.robloxUsername}'s partial statistics.`,
+				thumbnailUrl: pfpURL,
+				description: 'This user is not registered in the ACSD database, but they have shift time logged.',
+				fields: [{ name: 'Total time on-duty:', value: `${totalTime} minutes.` }]
+			}]
+		}));
 	}
 }
 

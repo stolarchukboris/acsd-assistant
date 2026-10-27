@@ -13,32 +13,38 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const personnel = await bot.knex<personnelInfo>('personnel').select('*');
 	const errors: string[] = [];
+	const deletionLogs: string[] = [];
 	const updates: {
 		discordId: string;
 		robloxId: string;
 		robloxUsername: string;
 		oldRank: string;
 		acsdRank: string;
-		regApprovedBy: string;
 	}[] = [];
 
-	await interaction.editReply({
-		embeds: [
-			bot.embed
-				.setColor('Grey')
-				.setTitle('Refreshing...')
-				.setDescription('Started refreshing personnel ranks. This might take a while...')
-		]
-	});
+	await bot.sendContainer(interaction, bot.createContainerPayload({
+		color: 'Grey',
+		sections: [{
+			title: 'Refreshing...',
+			description: 'Started refreshing personnel ranks. This might take a while...'
+		}]
+	}));
 
 	for (const guard of personnel) {
-		const serverMember = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.members.fetch(guard.discordId).catch(_ => { });
+		const serverMember = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.members.fetch(guard.discordId).catch(async e => {
+			if (e.code !== 10007) errors.push(`- Error fetching ${guard.robloxUsername} (<@${guard.discordId}>): ${e}`);
+			else if (!guard.toBeDeletedAt) {
+				await bot.knex<personnelInfo>('personnel')
+					.update('toBeDeletedAt', unixNow() + 7 * 24 * 3600)
+					.where('robloxId', guard.robloxId);
+				
+				deletionLogs.push(`${guard.robloxUsername} (<@${guard.discordId}>) has been marked for termination in 7 days.`)
+			}
 
-		if (!serverMember) {
-			errors.push(`- ${guard.robloxUsername} (<@${guard.discordId}>) is not a member of this server.`);
+			return null;
+		});
 
-			continue;
-		}
+		if (!serverMember) continue;
 
 		const memberRoleNames = serverMember.roles.cache.map(role => role.name);
 		const roleSearchRegex = /Security - L\d \|([^|]+)\|/;
@@ -64,8 +70,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			robloxId: guard.robloxId,
 			robloxUsername: guard.robloxUsername,
 			oldRank: guard.acsdRank,
-			acsdRank: rankRoleName,
-			regApprovedBy: guard.regApprovedBy
+			acsdRank: rankRoleName
 		});
 	}
 
@@ -79,23 +84,16 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	}
 
 	const updateLog = updates.length === 0
-		? 'No changes have been made.'
+		? 'No rank updates have been made.'
 		: updates.map(u => `- ${u.robloxUsername} (<@${u.discordId}>): ${u.oldRank} => ${u.acsdRank}`).join('\n');
 
-	await interaction.editReply({
-		embeds: [
-			errors.length === 0
-				? bot.embeds.success
-					.setDescription('Successfully refreshed all personnel ranks.')
-					.setFields({ name: 'Changelog:', value: updateLog })
-				: bot.embed
-					.setColor('Yellow')
-					.setTitle('Refresh completed with errors.')
-					.setDescription('Personnel ranks have been refreshed with some errors.')
-					.setFields(
-						{ name: 'Changelog:', value: updateLog },
-						{ name: 'Errors:', value: errors.join('\n') }
-					)
-		]
+	await bot.sendContainer(interaction, errors.length === 0 ? 'success' : 'warning', {
+		sections: [{
+			description: errors.length === 0 ? 'Successfully refreshed all personnel ranks.' : 'Personnel ranks have been refreshed with some errors',
+			fields: [
+				{ name: 'Changelog:', value: `\n${updateLog}\n\n${deletionLogs.join('\n')}` },
+				...(errors.length > 0 ? [{ name: 'Errors:', value: `\n${errors.join('\n')}` }] : [])
+			]
+		}]
 	});
 }

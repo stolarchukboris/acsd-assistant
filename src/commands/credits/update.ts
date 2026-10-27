@@ -61,11 +61,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		})
 		.first();
 
-	if (!target) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription(`${member ?? playerUsername} is not registered in the ACSD database.`)
-		]
-	});
+	if (!target) return await bot.sendContainer(interaction, 'notFound', `${member ?? playerUsername} is not registered in the ACSD database.`);
 
 	const credits = await bot.knex<personnelCredits>('credits')
 		.select('*')
@@ -76,34 +72,31 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		: (credits?.amount ?? 0) + amount;
 	const delta = newCredits - (credits?.amount ?? 0);
 
-	if (delta === 0) return await interaction.editReply({
-		embeds: [
-			bot.embeds.warning
-				.setDescription('User\'s balance has not been changed.')
-				.setFields({ name: 'Credits:', value: `${credits?.amount ?? 0}` })
-		]
+	if (delta === 0) return await bot.sendContainer(interaction, 'warning', {
+		sections: [{
+			description: `User's balance has not been changed.`,
+			fields: [{ name: 'Credits:', value: `${credits?.amount ?? 0}` }]
+		}]
 	});
 
-	if (newCredits < -32769 || newCredits > 32768) return await interaction.editReply({
-		embeds: [
-			bot.embeds.error.setDescription('The new credits amount is out of [-32768; 32767] range.')
-		]
-	});
+	if (newCredits < -32769 || newCredits > 32768) return await bot.sendContainer(interaction, 'error',
+		'The new credits amount is out of [-32768; 32767] range.'
+	);
 
 	const transactionId = crypto.randomUUID();
 
-	await bot.knex<creditTransaction>('creditTransactions')
-		.insert({
-			transactionId: transactionId,
-			execRbxId: cmdUser.robloxId,
-			targetRbxId: target.robloxId,
-			balanceBefore: credits?.amount ?? 0,
-			balanceAfter: newCredits,
-			reason: reason
-		});
+	await bot.knex.transaction(async trx => {
+		await trx<creditTransaction>('creditTransactions')
+			.insert({
+				transactionId: transactionId,
+				execRbxId: cmdUser.robloxId,
+				targetRbxId: target.robloxId,
+				balanceBefore: credits?.amount ?? 0,
+				balanceAfter: newCredits,
+				reason: reason
+			});
 
-	await bot.knex.transaction(async trans => {
-		await trans<personnelCredits>('credits')
+		await trx<personnelCredits>('credits')
 			.insert({
 				robloxId: target.robloxId,
 				amount: newCredits
@@ -111,7 +104,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			.onConflict('robloxId')
 			.merge({ amount: action === 'set' ? amount : bot.knex.raw('credits.amount + ?', [amount]) });
 
-		await trans<personnelCredits>('credits')
+		await trx<personnelCredits>('credits')
 			.del()
 			.where('robloxId', target.robloxId)
 			.andWhere('amount', 0);
@@ -119,32 +112,31 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	let extra = '';
 
-	if (interaction.user.id !== target.discordId) await bot.users.send(target.discordId, {
-		embeds: [
-			bot.embed
-				.setColor(delta > 0 ? 'Green' : 'Red')
-				.setTitle(`Credits ${delta > 0 ? 'added' : 'subtracted'}.`)
-				.setDescription(`Your credit balance has been ${delta > 0 ? 'increased' : 'decreased'} by ${amount} credit(s). For any questions about this, please contact the ACSD administration.`)
-				.setFields(
-					{ name: 'Before:', value: `${credits?.amount ?? 0}`, inline: true },
-					{ name: 'After:', value: `${newCredits}`, inline: true },
-					{ name: 'Reason:', value: reason },
-					{ name: 'Transaction ID:', value: transactionId }
-				)
-		]
-	}).catch(_ => extra = ' (⚠️ could not notify the user)');
+	if (interaction.user.id !== target.discordId) await bot.users.send(target.discordId, bot.createContainerPayload({
+		color: delta > 0 ? 'Green' : 'Red',
+		sections: [{
+			title: `Credits ${delta > 0 ? 'added' : 'subtracted'}.`,
+			description: `Your credit balance has been ${delta > 0 ? 'increased' : 'decreased'} by ${amount} credit(s).
+For any questions about this, please contact the ACSD administration.`,
+			fields: [
+				{ name: 'Before:', value: `${credits?.amount ?? 0}` },
+				{ name: 'After:', value: `${newCredits}` },
+				{ name: 'Reason:', value: reason },
+				{ name: 'Transaction ID:', value: transactionId }
+			]
+		}]
+	})).catch(_ => extra = ' (⚠️ could not notify the user)');
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription(`Successfully updated ${target.robloxUsername}'s balance${extra}.`)
-				.setFields(
-					{ name: 'Before:', value: `${credits?.amount ?? 0}`, inline: true },
-					{ name: 'After:', value: `${newCredits}`, inline: true },
-					{ name: 'Reason:', value: reason },
-					{ name: 'Transaction ID:', value: transactionId }
-				)
-		]
+	await bot.sendContainer(interaction, 'success', {
+		sections: [{
+			description: `Successfully updated ${target.robloxUsername}'s balance${extra}.`,
+			fields: [
+				{ name: 'Before:', value: `${credits?.amount ?? 0}` },
+				{ name: 'After:', value: `${newCredits}` },
+				{ name: 'Reason:', value: reason },
+				{ name: 'Transaction ID:', value: transactionId }
+			]
+		}]
 	});
 }
 

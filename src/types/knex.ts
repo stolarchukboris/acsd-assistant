@@ -56,6 +56,7 @@ export type personnelInfo = Readonly<{
 	regApprovedBy: string;
 	entryCreated: string;
 	entryUpdated: string;
+	toBeDeletedAt?: number;
 }>;
 
 export type partialPersonnelInfo = Readonly<{
@@ -69,7 +70,7 @@ export type pendingRegs = Readonly<{
 	discordId: string;
 	robloxUsername: string;
 	challenge: string;
-	entryCreated: string
+	entryCreated: number;
 }>;
 
 export type personnelCredits = Readonly<{

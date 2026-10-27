@@ -28,7 +28,7 @@ CREATE TABLE `activemshifts` (
   `shiftId` char(36) NOT NULL,
   `discordId` varchar(20) NOT NULL,
   `robloxId` varchar(20) NOT NULL,
-  `robloxUsername` varchar(20) NOT NULL,
+  `robloxUsername` varchar(22) NOT NULL,
   `startedTimestamp` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`shiftId`),
   UNIQUE KEY `robloxId` (`robloxId`),
@@ -108,6 +108,36 @@ CREATE TABLE `credittransactions` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `knex_migrations`
+--
+
+DROP TABLE IF EXISTS `knex_migrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `knex_migrations` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `batch` int DEFAULT NULL,
+  `migration_time` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `knex_migrations_lock`
+--
+
+DROP TABLE IF EXISTS `knex_migrations_lock`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `knex_migrations_lock` (
+  `index` int unsigned NOT NULL AUTO_INCREMENT,
+  `is_locked` int DEFAULT NULL,
+  PRIMARY KEY (`index`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `loggedshifts`
 --
 
@@ -135,14 +165,13 @@ DROP TABLE IF EXISTS `pendingregs`;
 CREATE TABLE `pendingregs` (
   `robloxId` varchar(20) NOT NULL,
   `discordId` varchar(20) NOT NULL,
-  `robloxUsername` varchar(20) NOT NULL,
-  `acsdRank` varchar(50) NOT NULL,
-  `adminMessageId` varchar(20) DEFAULT NULL,
-  `entryCreated` datetime DEFAULT CURRENT_TIMESTAMP,
+  `robloxUsername` varchar(22) NOT NULL,
+  `challenge` varchar(100) NOT NULL,
+  `entryCreated` int unsigned NOT NULL,
   PRIMARY KEY (`robloxId`),
   UNIQUE KEY `discordId` (`discordId`),
   UNIQUE KEY `robloxUsername` (`robloxUsername`),
-  UNIQUE KEY `adminMessageId` (`adminMessageId`)
+  UNIQUE KEY `challenge` (`challenge`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -176,11 +205,11 @@ DROP TABLE IF EXISTS `personnel`;
 CREATE TABLE `personnel` (
   `robloxId` varchar(20) NOT NULL,
   `discordId` varchar(20) NOT NULL,
-  `robloxUsername` varchar(20) NOT NULL,
+  `robloxUsername` varchar(22) NOT NULL,
   `acsdRank` varchar(50) NOT NULL,
-  `regApprovedBy` varchar(20) NOT NULL,
   `entryCreated` datetime DEFAULT CURRENT_TIMESTAMP,
   `entryUpdated` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `toBeDeletedAt` int unsigned DEFAULT NULL,
   PRIMARY KEY (`robloxId`),
   UNIQUE KEY `robloxUsername` (`robloxUsername`),
   UNIQUE KEY `discordId` (`discordId`)
@@ -196,7 +225,7 @@ DROP TABLE IF EXISTS `personnelpartial`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `personnelpartial` (
   `robloxId` varchar(20) NOT NULL,
-  `robloxUsername` varchar(20) NOT NULL,
+  `robloxUsername` varchar(22) NOT NULL,
   `entryCreated` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`robloxId`),
   UNIQUE KEY `robloxUsername` (`robloxUsername`)
@@ -231,7 +260,7 @@ DROP TABLE IF EXISTS `trainings`;
 CREATE TABLE `trainings` (
   `trainingId` char(36) NOT NULL,
   `hostDiscordId` varchar(20) NOT NULL,
-  `hostRobloxUsername` varchar(20) NOT NULL,
+  `hostRobloxUsername` varchar(22) NOT NULL,
   `messageId` varchar(20) DEFAULT NULL,
   `startingTimestamp` int unsigned NOT NULL,
   `isReminded` tinyint(1) DEFAULT '0',
@@ -251,4 +280,4 @@ CREATE TABLE `trainings` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-27 21:11:13
+-- Dump completed on 2026-10-27 15:49:34

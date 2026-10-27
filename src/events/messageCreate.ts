@@ -20,17 +20,21 @@ export async function execute(message: Message) {
 
 		if (!userId) throw new Error('⚠️ Could not retrieve Roblox user ID from the embed.');
 
-		const existingMShift = await bot.knex<activeMShift>('activeMShifts')
-			.select('*')
-			.where('robloxId', userId)
-			.first();
+		let existingShift; let existingMShift;
 
-		if (existingMShift) return await message.react('🟥');
+		await bot.knex.transaction(async trx => {
+			existingMShift = await trx<activeMShift>('activeMShifts')
+				.select('*')
+				.where('robloxId', userId)
+				.first();
 
-		const existingShift = await bot.knex<activeShift>('activeShifts')
-			.select('*')
-			.where('robloxId', userId)
-			.first();
+			if (existingMShift) return await message.react('🟥');
+
+			existingShift = await trx<activeShift>('activeShifts')
+				.select('*')
+				.where('robloxId', userId)
+				.first();
+		})
 
 		const jobId = message.embeds[0]?.fields[0]?.value as `${string}-${string}-${string}-${string}-${string}` | undefined;
 

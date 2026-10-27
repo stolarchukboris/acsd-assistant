@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, InteractionCallback } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import bot from '../index.ts';
 import type { pendingRegs, personnelInfo } from '../types/knex.ts';
 import { fetchApi } from 'rozod';
@@ -52,7 +52,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 		await interaction.member.roles.add(role);
 
-		return await bot.sendContainer(interaction, 'success', 'Successfully verified. You may now remove the code from your bio.');
+		return await bot.sendContainer(interaction, 'success', `Successfully verified. Welcome to APOLLO Corporation Security Division!
+You may now remove the code from your bio.`);
 	}
 
 	const existingDiscord = await bot.knex<personnelInfo>('personnel')
@@ -94,14 +95,18 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			robloxId: `${userId}`,
 			discordId: interaction.user.id,
 			robloxUsername: normalizedUsername,
-			challenge: challengeString
+			challenge: challengeString,
+			entryCreated: unixNow()
 		});
 
 	await bot.sendContainer(interaction, bot.createContainerPayload({
-		title: 'Continue verification.',
-		description: `In order to verify, please head to your Roblox profile and add the following to your bio:
+		sections: [{
+			title: 'Continue verification.',
+			description: `In order to verify, please head to your Roblox profile and add the following to your bio:
 \`${challengeString}\`
 
-Once done, please run the command again.`
+Once done, please run the command again.
+Verification will be aborted in 5 minutes.`
+		}]
 	}));
 }

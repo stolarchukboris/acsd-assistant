@@ -1,20 +1,24 @@
-import { AttachmentBuilder, ContainerBuilder, resolveColor, TextDisplayBuilder, type APIContainerComponent, type ColorResolvable } from 'discord.js';
+import { AttachmentBuilder, ContainerBuilder, resolveColor, SeparatorSpacingSize, TextDisplayBuilder, type APIContainerComponent, type ColorResolvable, type MessageMentionOptions } from 'discord.js';
 import type botInstance from '../index';
 import { join } from 'path';
 
 type Bot = typeof botInstance;
 
 export interface ContainerOptions {
-	title: string;
-	description: string;
 	color?: ColorResolvable;
-	thumbnailUrl?: string;
-	bigImageUrl?: string;
-	fields?: { name: string; value: string }[];
+	allowedMentions?: MessageMentionOptions;
+	sections: Partial<{
+		title: string;
+		description: string;
+		thumbnailUrl: string;
+		bigImageUrl: string;
+		fields: { name: string; value: string }[];
+	}>[]
 }
 
 export interface ContainerPayload {
 	container: APIContainerComponent;
+	allowedMentions?: MessageMentionOptions;
 	files: AttachmentBuilder[];
 }
 
@@ -30,33 +34,37 @@ export function createContainerPayload(bot: Bot, options: ContainerOptions) {
 	const files: AttachmentBuilder[] = [];
 
 	const container = new ContainerBuilder()
-		.addTextDisplayComponents(tdc => tdc.setContent(`-# ${bot.name} • ${bot.commit} • <t:${Math.floor(Date.now() / 1000)}:s>`))
+		.addTextDisplayComponents(tdc => tdc.setContent(`-# ${bot.name} • ${bot.commit} • <t:${unixNow()}:s>`))
 		.addSeparatorComponents(sepc => sepc.setDivider(false));
 
 	if (options.color) container.setAccentColor(resolveColor(options.color));
 
-	const tdcs = [
-		new TextDisplayBuilder().setContent(`## ${options.title}`),
-		new TextDisplayBuilder().setContent(options.description)
-	];
+	options.sections.forEach((section, index) => {
+		if (index > 0) container.addSeparatorComponents(sepc => sepc.setDivider(true).setSpacing(SeparatorSpacingSize.Large));
 
-	if (options.thumbnailUrl && options.thumbnailUrl.trim() !== '') {
+		const tdcs: TextDisplayBuilder[] = [];
 
-		container.addSectionComponents(secc => secc
-			.addTextDisplayComponents(tdcs)
-			.setThumbnailAccessory(ta => ta.setURL(resolveUrl(options.thumbnailUrl!)))
-		);
-	}
-	else container.addTextDisplayComponents(tdcs);
+		if (section.title) tdcs.push(new TextDisplayBuilder().setContent(`## ${section.title}`));
+		
+		if (section.description) tdcs.push(new TextDisplayBuilder().setContent(section.description));
 
-	if (options.fields && options.fields.length > 0) for (const field of options.fields) container
-		.addSeparatorComponents(sepc => sepc.setDivider(false))
-		.addTextDisplayComponents(tdc => tdc.setContent(`**${field.name}**: ${field.value}`));
+		if (section.thumbnailUrl && section.thumbnailUrl.trim() !== '') {
+			container.addSectionComponents(secc => secc
+				.addTextDisplayComponents(tdcs)
+				.setThumbnailAccessory(ta => ta.setURL(resolveUrl(section.thumbnailUrl!)))
+			)
+		} else container.addTextDisplayComponents(tdcs);
 
-	if (options.bigImageUrl && options.bigImageUrl.trim() !== '')
-		container.addMediaGalleryComponents(mgc => mgc.addItems(mgi => mgi.setURL(resolveUrl(options.bigImageUrl!))));
+		if (section.fields && section.fields.length > 0) for (const field of section.fields) container
+			.addSeparatorComponents(sepc => sepc.setDivider(false))
+			.addTextDisplayComponents(tdc => tdc.setContent(`**${field.name}** ${field.value}`));
+		
+		if (section.bigImageUrl && section.bigImageUrl.trim() !== '')
+			container.addMediaGalleryComponents(mgc => mgc.addItems(mgi => mgi.setURL(resolveUrl(section.bigImageUrl!))))
+	});
 
 	return {
+		allowedMentions: options.allowedMentions ?? { parse: [] },
 		container: container.toJSON(),
 		files
 	}
@@ -65,11 +73,13 @@ export function createContainerPayload(bot: Bot, options: ContainerOptions) {
 export function createTemplateContainers(bot: Bot) {
 	const run = (config: { title: string; desc: string; color: ColorResolvable; logo: string }, options: Partial<ContainerOptions> = {}) => {
 		return bot.createContainerPayload({
-			title: options.title ?? config.title,
-			description: options.description ?? config.desc,
 			color: options.color ?? config.color,
-			thumbnailUrl: options.thumbnailUrl ?? config.logo,
-			fields: options.fields
+			sections: [{
+				title: config.title,
+				description: options.sections?.[0]?.description ?? config.desc,
+				thumbnailUrl: options.sections?.[0]?.thumbnailUrl ?? config.logo,
+				fields: options.sections?.[0]?.fields
+			}]
 		});
 	}
 

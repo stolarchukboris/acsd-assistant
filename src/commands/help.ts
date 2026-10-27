@@ -25,18 +25,6 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	cmds!.forEach(cmd => cmdIds[cmd.name] = cmd.id);
 
 	const topics = {
-		'reg': `**Registration-related commands**:
-- </registrations start:${cmdIds['registrations']}>
-  - **Options**:
-    - \`roblox_username\` (required, string).
-  - **Usage**: Use this command to register in the ACSD database.
-    1. Input the username of a Roblox account you are registering with.
-    2. Verify the bot has found a correct account.
-    3. Upon clicking "Confirm" the ACSD administration will be prompted to double-check your registration request.
-    4. If they confirm the request you will be registered in the ACSD database and the bot will DM you about that.
-- </registrations cancel:${cmdIds['registrations']}>
-  - **Usage**: Use this command to cancel the registration request you have submitted.`,
-
 		'pers': `**Personnel-related commands**:
 - </personnel stats:${cmdIds['personnel']}>
   - **Options**:
@@ -64,8 +52,10 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	} as const;
 
 	await bot.sendContainer(interaction, bot.createContainerPayload({
-		title: 'ACSD Assistant help.',
 		color: 'Blurple',
-		description: topics[selectedTopic as keyof typeof topics]
+		sections: [{
+			title: 'ACSD Assistant help.',
+			description: topics[selectedTopic as keyof typeof topics]
+		}]
 	}));
 }

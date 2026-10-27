@@ -10,9 +10,10 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	await interaction.deferReply();
 
 	await bot.sendContainer(interaction, bot.createContainerPayload({
-		title: 'ACSD Assistant information.',
 		color: 'Blurple',
-		description: `Below is plenty of miscellaneous information about this bot instance.
+		sections: [{
+			title: 'ACSD Assistant information.',
+			description: `Below is plenty of miscellaneous information about this bot instance.
 You can view the source code in the [repository](https://github.com/stolarchukboris/acsd-assistant).\n
 \`\`\`ini
 [
@@ -25,5 +26,6 @@ You can view the source code in the [repository](https://github.com/stolarchukbo
 \`\`\`yml
 Git commit: ${bot.commit ?? '-'}
 \`\`\``
+		}]
 	}));
 }

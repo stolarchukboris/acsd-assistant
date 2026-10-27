@@ -22,27 +22,16 @@ export const highRank = true;
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
 	await interaction.deferReply();
 
-	function predicate(setting: botSettingInfo) {
-		return setting.settingName === settingNameForUpdate
-	}
-
 	const settingNameForUpdate = interaction.options.getString('setting', true);
 	const newValue = interaction.options.getString('new_value', true);
 	const existingSetting = bot.botSettings.get(settingNameForUpdate);
 
-	if (!existingSetting) return await interaction.editReply({
-		embeds: [
-			bot.embeds.notFound.setDescription(`Setting with name \`${settingNameForUpdate}\` does not exist.`)
-		]
-	});
+	if (!existingSetting) return await bot.sendContainer(interaction, 'notFound', `Setting with name \`${settingNameForUpdate}\` does not exist.`);
 
 	const oldValue = existingSetting.settingValue;
 
-	if (oldValue === newValue) return await interaction.editReply({
-		embeds: [
-			bot.embeds.warning.setDescription('The value you have provided is already set. No changes have been made.')
-		]
-	});
+	if (oldValue === newValue) return await bot.sendContainer(interaction, 'warning',
+		'The value you have provided is already set. No changes have been made.');
 
 	await bot.knex<botSettingInfo>('botSettings')
 		.update({
@@ -58,15 +47,14 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		lastUpdatedAt: new Date()
 	});
 
-	await interaction.editReply({
-		embeds: [
-			bot.embeds.success
-				.setDescription(`Successfully updated \`${settingNameForUpdate}\`.`)
-				.setFields(
-					{ name: 'Old value:', value: oldValue ?? '-', inline: true },
-					{ name: 'New value:', value: newValue, inline: true }
-				)
-		]
+	await bot.sendContainer(interaction, 'success', {
+		sections: [{
+			description: `Successfully updated \`${settingNameForUpdate}\`.`,
+			fields: [
+				{ name: 'Old value:', value: oldValue ?? '-' },
+				{ name: 'New value:', value: newValue }
+			]
+		}]
 	});
 }
 

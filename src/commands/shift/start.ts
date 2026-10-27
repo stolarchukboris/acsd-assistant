@@ -22,8 +22,10 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		.first() as { label: string; id: string } | undefined;
 
 	if (existingEntry) return await bot.sendContainer(interaction, 'error', {
-		description: 'You already have a running shift log.',
-		fields: [{ name: `${existingEntry.label} ID:`, value: existingEntry.id }]
+		sections: [{
+			description: 'You already have a running shift log.',
+			fields: [{ name: `${existingEntry.label} ID:`, value: existingEntry.id }]
+		}]
 	});
 
 	const id = crypto.randomUUID();
@@ -37,7 +39,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		});
 
 	await bot.sendContainer(interaction, 'success', {
-		description: 'Successfully started your shift.',
-		fields: [{ name: 'Shift ID:', value: id }]
+		sections: [{
+			description: 'Successfully started your shift.',
+			fields: [{ name: 'Shift ID:', value: id }]
+		}]
 	});
 }
