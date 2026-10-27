@@ -33,7 +33,9 @@ CREATE TABLE `activemshifts` (
   PRIMARY KEY (`shiftId`),
   UNIQUE KEY `robloxId` (`robloxId`),
   UNIQUE KEY `robloxUsername` (`robloxUsername`),
-  UNIQUE KEY `discordId` (`discordId`)
+  UNIQUE KEY `discordId` (`discordId`),
+  KEY `idx_started_timestamp` (`startedTimestamp`),
+  CONSTRAINT `activemshifts_ibfk_1` FOREIGN KEY (`robloxId`) REFERENCES `personnel` (`robloxId`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -52,7 +54,9 @@ CREATE TABLE `activeshifts` (
   `startedTimestamp` int unsigned NOT NULL,
   UNIQUE KEY `whMessageId` (`whMessageId`),
   UNIQUE KEY `fwMessageId` (`fwMessageId`),
-  UNIQUE KEY `robloxId` (`robloxId`)
+  UNIQUE KEY `robloxId` (`robloxId`),
+  KEY `idx_started_timestamp` (`startedTimestamp`),
+  CONSTRAINT `activeshifts_ibfk_1` FOREIGN KEY (`robloxId`) REFERENCES `personnel` (`robloxId`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -69,8 +73,7 @@ CREATE TABLE `botsettings` (
   `settingValue` varchar(20) NOT NULL,
   `lastUpdatedAt` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `lastUpdatedBy` varchar(20) DEFAULT '597084523338924063',
-  PRIMARY KEY (`settingName`),
-  UNIQUE KEY `settingValue` (`settingValue`)
+  PRIMARY KEY (`settingName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -84,7 +87,8 @@ DROP TABLE IF EXISTS `credits`;
 CREATE TABLE `credits` (
   `robloxId` varchar(20) NOT NULL,
   `amount` smallint NOT NULL,
-  PRIMARY KEY (`robloxId`)
+  PRIMARY KEY (`robloxId`),
+  CONSTRAINT `credits_ibfk_1` FOREIGN KEY (`robloxId`) REFERENCES `personnel` (`robloxId`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -103,7 +107,10 @@ CREATE TABLE `credittransactions` (
   `balanceAfter` smallint NOT NULL,
   `reason` text NOT NULL,
   `createdAt` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`transactionId`)
+  PRIMARY KEY (`transactionId`),
+  KEY `idx_exec_rbx_id` (`execRbxId`),
+  KEY `idx_target_rbx_id` (`targetRbxId`),
+  KEY `idx_created_at` (`createdAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -151,7 +158,10 @@ CREATE TABLE `loggedshifts` (
   `endedTimestamp` int unsigned NOT NULL,
   `lenMinutes` smallint unsigned NOT NULL,
   `proof` text NOT NULL,
-  PRIMARY KEY (`shiftId`)
+  PRIMARY KEY (`shiftId`),
+  KEY `robloxId` (`robloxId`),
+  KEY `idx_ended_timestamp` (`endedTimestamp`),
+  CONSTRAINT `loggedshifts_ibfk_1` FOREIGN KEY (`robloxId`) REFERENCES `personnel` (`robloxId`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -171,7 +181,8 @@ CREATE TABLE `pendingregs` (
   PRIMARY KEY (`robloxId`),
   UNIQUE KEY `discordId` (`discordId`),
   UNIQUE KEY `robloxUsername` (`robloxUsername`),
-  UNIQUE KEY `challenge` (`challenge`)
+  UNIQUE KEY `challenge` (`challenge`),
+  KEY `idx_entry_created` (`entryCreated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -191,7 +202,9 @@ CREATE TABLE `pendingshiftlogs` (
   `endedTimestamp` int unsigned NOT NULL,
   `lenMinutes` smallint unsigned NOT NULL,
   UNIQUE KEY `whMessageId` (`whMessageId`),
-  UNIQUE KEY `fwMessageId` (`fwMessageId`)
+  UNIQUE KEY `fwMessageId` (`fwMessageId`),
+  KEY `robloxId` (`robloxId`),
+  CONSTRAINT `pendingshiftlogs_ibfk_1` FOREIGN KEY (`robloxId`) REFERENCES `personnel` (`robloxId`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -212,23 +225,8 @@ CREATE TABLE `personnel` (
   `toBeDeletedAt` int unsigned DEFAULT NULL,
   PRIMARY KEY (`robloxId`),
   UNIQUE KEY `robloxUsername` (`robloxUsername`),
-  UNIQUE KEY `discordId` (`discordId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `personnelpartial`
---
-
-DROP TABLE IF EXISTS `personnelpartial`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `personnelpartial` (
-  `robloxId` varchar(20) NOT NULL,
-  `robloxUsername` varchar(22) NOT NULL,
-  `entryCreated` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`robloxId`),
-  UNIQUE KEY `robloxUsername` (`robloxUsername`)
+  UNIQUE KEY `discordId` (`discordId`),
+  KEY `idx_personnel_deletion` (`toBeDeletedAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -246,7 +244,10 @@ CREATE TABLE `punishments` (
   `punishmentType` enum('warn','strike') NOT NULL,
   `reason` text NOT NULL,
   `createdAt` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`punishmentId`)
+  PRIMARY KEY (`punishmentId`),
+  KEY `idx_target_rbx_id` (`targetRbxId`),
+  KEY `idx_exec_rbx_id` (`execRbxId`),
+  KEY `idx_created_at` (`createdAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -260,6 +261,7 @@ DROP TABLE IF EXISTS `trainings`;
 CREATE TABLE `trainings` (
   `trainingId` char(36) NOT NULL,
   `hostDiscordId` varchar(20) NOT NULL,
+  `hostRobloxId` varchar(20) NOT NULL,
   `hostRobloxUsername` varchar(22) NOT NULL,
   `messageId` varchar(20) DEFAULT NULL,
   `startingTimestamp` int unsigned NOT NULL,
@@ -267,7 +269,13 @@ CREATE TABLE `trainings` (
   `isStarted` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`trainingId`),
   UNIQUE KEY `startingTimestamp` (`startingTimestamp`),
-  UNIQUE KEY `messageId` (`messageId`)
+  UNIQUE KEY `messageId` (`messageId`),
+  KEY `hostRobloxId` (`hostRobloxId`),
+  KEY `hostDiscordId` (`hostDiscordId`),
+  KEY `hostRobloxUsername` (`hostRobloxUsername`),
+  CONSTRAINT `trainings_ibfk_1` FOREIGN KEY (`hostRobloxId`) REFERENCES `personnel` (`robloxId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `trainings_ibfk_2` FOREIGN KEY (`hostDiscordId`) REFERENCES `personnel` (`discordId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `trainings_ibfk_3` FOREIGN KEY (`hostRobloxUsername`) REFERENCES `personnel` (`robloxUsername`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -280,4 +288,4 @@ CREATE TABLE `trainings` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-27 15:49:34
+-- Dump completed on 2026-10-27 19:43:18
