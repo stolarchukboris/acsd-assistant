@@ -37,4 +37,3 @@ In order to restart or stop the bot you have to send a request to the daemon:
 
 *In order to deploy commands when starting the application for the first time, run the executable with the `--deploy` flag.*  
 *Example: `acsd-assistant-win.exe --deploy`*
-test
