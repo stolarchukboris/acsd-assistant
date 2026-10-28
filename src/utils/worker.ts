@@ -48,7 +48,7 @@ export async function managePendingLogs() {
 			try {
 				const message = log.whMessageId.includes('d')
 					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(log.whMessageId.slice(0, -1))
-					: await (bot.channels.cache.get(bot.getSetting('shiftLogsChannelId')!) as TextChannel).messages.fetch(log.whMessageId);
+					: await (bot.channels.cache.get(bot.getSetting('shift_logs_ch_id')!) as TextChannel).messages.fetch(log.whMessageId);
 
 				await message.react(emoji);
 			} catch (error) {
@@ -84,7 +84,7 @@ export async function trainingReminder() {
 
 	if (!trainingSoon) return;
 
-	await bot.sendContainer(bot.channels.cache.get(bot.getSetting('trainingRemindChannelId')!) as TextChannel, bot.createContainerPayload({
+	await bot.sendContainer(bot.channels.cache.get(bot.getSetting('training_reminder_ch_id')!) as TextChannel, bot.createContainerPayload({
 		color: 'Orange',
 		allowedMentions: { parse: ['users'] },
 		sections: [{
@@ -103,13 +103,13 @@ If you are not ready to host the training or if there are insufficient reactions
 
 export async function manageOnDutyChats() {
 	const pages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
-		placeId: Number(bot.getSetting('gamePlaceId')),
+		placeId: Number(bot.getSetting('game_place_id')),
 		serverType: 0,
 		limit: 100
 	});
 
-	const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === bot.getSetting('commsChannelCatId') && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
-	const chatForum = bot.channels.cache.get(bot.getSetting('gameChatsChannelId')!) as ForumChannel;
+	const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === bot.getSetting('security_comms_ch_cat_id') && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
+	const chatForum = bot.channels.cache.get(bot.getSetting('game_chats_ch_id')!) as ForumChannel;
 	const existingThreads = chatForum.threads.cache;
 	const partialIds: string[] = [];
 
@@ -136,7 +136,7 @@ export async function manageOnDutyChats() {
 			if (!vc) {
 				vc = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
 					name: partialId,
-					parent: bot.getSetting('commsChannelCatId'),
+					parent: bot.getSetting('security_comms_ch_cat_id'),
 					type: ChannelType.GuildVoice
 				}) as VoiceChannel;
 

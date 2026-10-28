@@ -1,7 +1,12 @@
 node_modules
 dist
-
+.git
 .gitignore
+.gitattributes
+.github
+*.md
+LICENSE
+.env.example
 
 Dockerfile
 .dockerignore

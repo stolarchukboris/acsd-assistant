@@ -18,7 +18,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply({ flags: 'Ephemeral' });
 
-	const roleId = bot.getSetting('verifRoleId');
+	const roleId = bot.getSetting('verification_role_id');
 	const role = roleId ? interaction.guild.roles.cache.get(roleId) : undefined;
 
 	if (!role) return await bot.sendContainer(interaction, 'error',

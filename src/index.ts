@@ -10,6 +10,7 @@ import { join } from 'path';
 import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud';
 import logger from './utils/logger.ts';
 import { createTemplateContainers, createContainerPayload, type ContainerOptions, type ContainerPayload } from './utils/containers.ts';
+import config from '../knexfile.ts';
 
 class Bot extends Discord.Client {
 	public name = 'ACSD Assistant';
@@ -261,21 +262,7 @@ class Bot extends Discord.Client {
 		if (!(Bun.env.DB_HOST && Bun.env.DB_NAME && Bun.env.DB_PASS && Bun.env.DB_PORT && Bun.env.DB_USER))
 			throw new Error('Database connection credentials missing in env.');
 
-		this.knex = knex({
-			client: 'mysql2',
-			connection: {
-				host: Bun.env.DB_HOST,
-				port: Bun.env.DB_PORT,
-				user: Bun.env.DB_USER,
-				password: Bun.env.DB_PASS,
-				database: Bun.env.DB_NAME
-			},
-			migrations: {
-				extension: 'ts',
-				directory: './database/migrations',
-				loadExtensions: ['.ts']
-			}
-		});
+		this.knex = knex(config['development'] as any);
 
 		this.logger.log('Starting database migrations...');
 

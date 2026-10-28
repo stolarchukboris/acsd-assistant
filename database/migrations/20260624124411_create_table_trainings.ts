@@ -1,8 +1,8 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	return knex.schema.createTable('trainings', table => {
-		table.specificType('trainingId', 'char(36)').primary();
+	await knex.schema.createTable('trainings', table => {
+		table.uuid('trainingId').primary();
 		table.string('hostDiscordId', 20).notNullable();
 		table.foreign('hostDiscordId')
 			.references('discordId')
@@ -22,12 +22,12 @@ export async function up(knex: Knex): Promise<void> {
 			.onDelete('CASCADE')
 			.onUpdate('CASCADE');
 		table.string('messageId', 20).defaultTo(null).unique();
-		table.integer('startingTimestamp').unsigned().notNullable().unique();
+		table.bigInteger('startingTimestamp').notNullable().unique();
 		table.boolean('isReminded').defaultTo(false);
 		table.boolean('isStarted').defaultTo(false);
 	});
 }
 
 export async function down(knex: Knex): Promise<void> {
-	return knex.schema.dropTableIfExists('trainings');
+	await knex.schema.dropTableIfExists('trainings');
 }

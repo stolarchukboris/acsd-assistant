@@ -7,7 +7,7 @@ import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
 
 export async function execute(message: Message) {
 	try {
-		const messageFromProd = (message.channelId === bot.getSetting('shiftLogsChannelId')) && (message.webhookId === bot.getSetting('shiftLogWebhookId'));
+		const messageFromProd = (message.channelId === bot.getSetting('shift_logs_ch_id')) && (message.webhookId === bot.getSetting('shift_logger_wh_id'));
 		const messageFromDev = (message.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (message.webhookId === Bun.env.DEV_WEBHOOK_ID);
 		const embedIncludesStarted = message.embeds[0]?.title?.includes('started');
 
@@ -71,7 +71,7 @@ export async function execute(message: Message) {
 			}
 
 		const pages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
-			placeId: Number(messageFromDev ? Bun.env.DEV_TEST_PLACE_ID : bot.getSetting('gamePlaceId')),
+			placeId: Number(messageFromDev ? Bun.env.DEV_TEST_PLACE_ID : bot.getSetting('game_place_id')),
 			serverType: 0,
 			limit: 100
 		});

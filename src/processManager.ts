@@ -79,39 +79,6 @@ else {
 			logger.log("Restarting the bot in 3 seconds...");
 
 			await Bun.sleep(3000);
-
-			try {
-				const logFile = Bun.file("logs.txt");
-
-				if (await logFile.exists()) {
-					const envSize = Number(Bun.env.MAX_LOG_FILE_SIZE_MEGABYTES);
-					const maxLogSizeMB = (envSize && !isNaN(envSize)) ? envSize : 10;
-
-					if (logFile.size > maxLogSizeMB * 1024 * 1024) {
-						const { mkdir } = await import("fs/promises");
-						const { join } = await import("path");
-
-						await mkdir(join(process.cwd(), "logs"), { recursive: true });
-
-						const d = new Date();
-						const pad = (n: number) => n.toString().padStart(2, '0');
-						const dateString = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
-
-						const archivePath = join(process.cwd(), "logs", `archive_${dateString}.txt`);
-
-						await Bun.write(archivePath, logFile);
-
-						await Bun.write(
-							"logs.txt",
-							`Logs rotated. Previous logs saved to: logs/archive_${dateString}.txt\n`
-						);
-
-						logger.log(`Logs successfully archived to ${archivePath}`);
-					}
-				}
-			} catch (e) {
-				logger.error(`An error has occurred while managing the log file: ${e}`);
-			}
 		}
 	}
 

@@ -36,7 +36,7 @@ export async function execute(interaction: Interaction<'cached'>) {
 		if (command.training) {
 			await interaction.deferReply();
 
-			const channel = bot.channels.cache.get(bot.getSetting('trainingAnnsChannelId')!) as TextChannel;
+			const channel = bot.channels.cache.get(bot.getSetting('training_anns_ch_id')!) as TextChannel;
 
 			if (command.data.name !== 'schedule') {
 				const id = interaction.options.getString('training_id', true);
@@ -53,7 +53,7 @@ export async function execute(interaction: Interaction<'cached'>) {
 				args.push(training, message);
 			} else args.push(channel);
 
-			args.push(bot.getSetting('trainingPingRoleId'));
+			args.push(bot.getSetting('training_ping_role_id'));
 		}
 
 		try {

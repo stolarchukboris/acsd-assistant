@@ -1,8 +1,8 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	return knex.schema.createTable('pendingShiftlogs', table => {
-		table.specificType('jobId', 'char(36)').notNullable();
+	await knex.schema.createTable('pendingShiftlogs', table => {
+		table.uuid('jobId').notNullable();
 		table.string('whMessageId', 20).primary();
 		table.string('fwMessageId', 20).notNullable().unique();
 		table.string('robloxId', 20).notNullable();
@@ -11,12 +11,12 @@ export async function up(knex: Knex): Promise<void> {
 			.inTable('personnel')
 			.onDelete('CASCADE')
 			.onUpdate('CASCADE');
-		table.integer('startedTimestamp').unsigned().notNullable();
-		table.integer('endedTimestamp').unsigned().notNullable();
-		table.smallint('lenMinutes').unsigned().notNullable();
+		table.bigInteger('startedTimestamp').notNullable();
+		table.bigInteger('endedTimestamp').notNullable();
+		table.smallint('lenMinutes').notNullable();
 	});
 }
 
 export async function down(knex: Knex): Promise<void> {
-	return knex.schema.dropTableIfExists('pendingshiftlogs');
+	await knex.schema.dropTableIfExists('pendingShiftlogs');
 }
