@@ -3,7 +3,7 @@ Features shift, credit, punishment and training management commands.
 
 # How to use
 ### From source code
-**Requirements**: Bun, MySQL Server & MySQL Workbench
+**Requirements**: Bun, PostgreSQL
 
 1. Clone the repository:
    ```
@@ -24,7 +24,7 @@ Features shift, credit, punishment and training management commands.
    ```
 
 ### From releases
-**Requirements**: MySQL Server & MySQL Workbench
+**Requirements**: PostgreSQL
 1. Download the latest [release](https://github.com/stolarchukboris/acsd-assistant/releases) for your OS and unpack it into the desired location.
 2. Fill out the .env file.
 3. Run the executable.
