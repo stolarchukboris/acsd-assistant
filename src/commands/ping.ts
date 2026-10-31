@@ -17,7 +17,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	await bot.sendContainer(interaction, bot.createContainerPayload({
 		color: 'Green',
 		sections: [{
-			title: 'Pong!',
+			title: 'pong!',
 			description:
 				`**Latency**: ${Math.floor(response.createdTimestamp - interaction.createdTimestamp)} ms | **API latency**: ${Math.round(interaction.client.ws.ping)} ms`,
 			thumbnailUrl: bot.logos.heart
