@@ -1,4 +1,5 @@
 import './utils/globals.ts';
+import './webhookReceiver.ts';
 import * as Discord from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
