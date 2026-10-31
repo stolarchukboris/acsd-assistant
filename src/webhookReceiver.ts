@@ -33,4 +33,4 @@ const server = Bun.serve({
     }
 });
 
-logger.log(`Webhook receiver listening on port ${server.port}`);
+logger.log(`Webhook receiver listening on port ${server.port}.`);
