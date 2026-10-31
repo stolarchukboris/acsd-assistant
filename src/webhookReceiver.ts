@@ -3,10 +3,6 @@ import logger from './utils/logger';
 
 const server = Bun.serve({
     port: 9876,
-    tls: {
-        key: Bun.file(`${Bun.env.HOME}/key.pem`),
-        cert: Bun.file(`${Bun.env.HOME}/cert.pem`),
-    },
 
     async fetch(req) {
         const url = new URL(req.url);
