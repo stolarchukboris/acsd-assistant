@@ -2,7 +2,7 @@ import { $ } from 'bun';
 import logger from './utils/logger';
 
 const server = Bun.serve({
-    port: 8080,
+    port: 9876,
 
     async fetch(req) {
         const url = new URL(req.url);
