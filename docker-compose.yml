@@ -5,9 +5,6 @@ services:
       dockerfile: Dockerfile
     container_name: acsd-assistant
     restart: always
-    ports:
-      - "3322:3322"
+    network_mode: "host"
     env_file:
       - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
