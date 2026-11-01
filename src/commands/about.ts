@@ -16,15 +16,19 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			title: 'ACSD Assistant information.',
 			description: `Below is plenty of miscellaneous information about this bot instance.
 You can view the source code in the [repository](https://github.com/stolarchukboris/acsd-assistant).\n
-\`\`\`ini
-[
-    Instance username: ${interaction.client.user.username}#${interaction.client.user.discriminator}
-    Instance ID: ${interaction.client.user.id}
-    Instance guilds: ${interaction.client.guilds.cache.size}
-    Instance OS: ${os.type()} ${os.release()} ${os.arch()}
-    Instance uptime: ${ms(interaction.client.uptime, { long: true })}
-    Instance RAM usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} Megabytes
-]\`\`\`
+\`\`\`yml
+Instance:
+  - Username: ${interaction.client.user.username}#${interaction.client.user.discriminator}
+    ID: ${interaction.client.user.id}
+    Guilds: ${interaction.client.guilds.cache.size}
+    Uptime: ${ms(interaction.client.uptime, { long: true })}
+    RAM usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} Megabytes
+
+
+OS:
+  - Name: ${os.type()} ${os.release()} ${os.arch()}
+    Uptime: ${ms(os.uptime(), { long: true })}
+\`\`\`
 \`\`\`yml
 Git commit: ${bot.commit ?? '-'}
 \`\`\``
