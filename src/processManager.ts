@@ -7,7 +7,7 @@ else {
 
 	Bun.serve({
 		port: 3322,
-		hostname: "127.0.0.1",
+		hostname: "0.0.0.0",
 		reusePort: true,
 
 		async fetch(req) {
