@@ -27,7 +27,7 @@ Instance:
 
 OS:
   - Name: ${os.type()} ${os.release()} ${os.arch()}
-    Uptime: ${ms(os.uptime(), { long: true })}
+    Uptime: ${ms(os.uptime() * 1000, { long: true })}
 \`\`\`
 \`\`\`yml
 Git commit: ${bot.commit ?? '-'}
