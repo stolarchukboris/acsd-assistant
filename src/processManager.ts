@@ -5,7 +5,7 @@ else {
 	let childProcess: ReturnType<typeof Bun.spawn> | null = null;
 	let [shouldRestart, shouldDeploy] = [true, false];
 
-	Bun.serve({
+	const server = Bun.serve({
 		port: 3322,
 		hostname: "0.0.0.0",
 		reusePort: true,
@@ -47,6 +47,8 @@ else {
 			return new Response("Unknown request.", { status: 404 });
 		}
 	});
+
+    console.log(`Process manager listening on port ${server.port}.`);
 
 	async function runBot() {
 		let isFirstStart = true;
