@@ -205,16 +205,19 @@ export async function manageOnDutyChats() {
 
 			existingThreads.set(thread.id, thread);
 		} else if (lastStatusByPartialId.get(partialId) !== statusText) {
+			const containerData = bot.createContainerPayload({
+				color: 'Blurple',
+				sections: [{
+					title: `Chat port for server ${partialId}.`,
+					description: 'Use this thread as an alternative to chat with other ACSD members playing in this server.',
+					fields: [{ name: 'Player count:', value: statusText }]
+				}]
+			});
+
 			await thread.fetchStarterMessage().then(async message => await message?.edit({
 				flags: 'IsComponentsV2',
-				...bot.createContainerPayload({
-					color: 'Blurple',
-					sections: [{
-						title: `Chat port for server ${partialId}.`,
-						description: 'Use this thread as an alternative to chat with other ACSD members playing in this server.',
-						fields: [{ name: 'Player count:', value: statusText }]
-					}]
-				})
+				components: [containerData.container],
+				files: containerData.files
 			}));
 
 			await bot.rest.put(`/channels/${vc.id}/voice-status`, {
