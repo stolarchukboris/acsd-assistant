@@ -12,6 +12,7 @@ import { getCloudV2UsersUserIdGenerateThumbnail } from 'rozod/opencloud/v2/cloud
 import logger from './utils/logger.ts';
 import { createTemplateContainers, createContainerPayload, type ContainerOptions, type ContainerPayload } from './utils/containers.ts';
 import config from '../knexfile.ts';
+import type { SettingTypeMap } from './types/misc.ts'
 
 class Bot extends Discord.Client {
 	public name = 'ACSD Assistant';
@@ -43,11 +44,11 @@ class Bot extends Discord.Client {
 
 	public createContainerPayload = (options: ContainerOptions) => createContainerPayload(this, options);
 
-	public async sendContainer(
-		target: Discord.CommandInteraction<'cached'>,
+	public async sendContainer<withResponse extends boolean | undefined = undefined>(
+		target: Discord.RepliableInteraction<'cached'>,
 		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | (Partial<ContainerOptions> & { withResponse?: boolean })
-	): Promise<Discord.Message<true> | Discord.InteractionResponse<true>>
+	): Promise<withResponse extends true ? Discord.InteractionResponse<true> : Discord.Message<true>>
 
 	public async sendContainer(
 		target: Discord.Message,
@@ -62,7 +63,7 @@ class Bot extends Discord.Client {
 	): Promise<Discord.Message<true>>
 
 	public async sendContainer(
-		target: Discord.CommandInteraction<'cached'> | Discord.Message | Discord.BaseGuildTextChannel,
+		target: Discord.RepliableInteraction<'cached'> | Discord.Message | Discord.BaseGuildTextChannel,
 		type: keyof ReturnType<typeof createTemplateContainers> | ContainerPayload,
 		options?: string | Partial<ContainerOptions> | (Partial<ContainerOptions> & { withResponse?: boolean })
 	): Promise<Discord.Message<true> | Discord.InteractionResponse<true>> {
@@ -77,7 +78,7 @@ class Bot extends Discord.Client {
 			allowedMentions: containerData.allowedMentions
 		}
 
-		if (target instanceof Discord.CommandInteraction) {
+		if (target instanceof Discord.BaseInteraction) {
 			const hasWithResponse = typeof options !== 'string'
 				&& (options as (Partial<ContainerOptions> & { withResponse?: boolean }) | undefined)?.withResponse === true;
 
@@ -126,8 +127,34 @@ class Bot extends Discord.Client {
 		} as const;
 	}
 
-	public getSetting(name: string) {
-		return this.botSettings.get(name)?.settingValue;
+	public getSetting<K extends keyof SettingTypeMap>(name: string, type: K): SettingTypeMap[K];
+
+	public getSetting<K extends keyof SettingTypeMap>(name: string, type: K, interaction: Discord.RepliableInteraction<'cached'>): SettingTypeMap[K] | Promise<SettingTypeMap[K] | Discord.Message<true>>;
+
+	public getSetting<K extends keyof SettingTypeMap>(name: string, type: K, interaction?: Discord.RepliableInteraction<'cached'>): SettingTypeMap[K] | Promise<SettingTypeMap[K] | Discord.Message<true>> {
+		const setting = this.botSettings.get(name);
+
+		if (!setting || setting.settingValue.trim() === '') {
+			const message = `Setting ${name} is not configured.`;
+
+			if (interaction) return this.sendContainer(interaction, 'error', message);
+			else throw new Error(message);
+		}
+
+		if (type === 'number') {
+			const num = Number(setting.settingValue);
+
+			if (Number.isNaN(num)) {
+				const message = `Setting ${name} must be a valid number.`;
+
+				if (interaction) return this.sendContainer(interaction, 'error', message) as Promise<Discord.Message<true>>;
+				throw new Error(message);
+			}
+
+			return num as SettingTypeMap[K];
+		}
+
+		return setting.settingValue as SettingTypeMap[K];
 	}
 
 	public async getRobloxPfp(robloxId: string) {

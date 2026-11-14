@@ -1,4 +1,4 @@
-import { ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
+import { CategoryChannel, ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
 import bot from '../index.ts';
 import type { pendingRegs, activeShift, loggedShift, pendingShift, personnelInfo, trainingInfo, activeMShift } from '../types/knex.ts';
 import { fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
@@ -48,7 +48,7 @@ export async function managePendingLogs() {
 			try {
 				const message = log.whMessageId.includes('d')
 					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(log.whMessageId.slice(0, -1))
-					: await (bot.channels.cache.get(bot.getSetting('shift_logs_ch_id')!) as TextChannel).messages.fetch(log.whMessageId);
+					: await (bot.channels.cache.get(bot.getSetting<'string'>('shift_logs_ch_id', 'string')) as TextChannel).messages.fetch(log.whMessageId);
 
 				await message.react(emoji);
 			} catch (error) {
@@ -84,7 +84,7 @@ export async function trainingReminder() {
 
 	if (!trainingSoon) return;
 
-	await bot.sendContainer(bot.channels.cache.get(bot.getSetting('training_reminder_ch_id')!) as TextChannel, bot.createContainerPayload({
+	await bot.sendContainer(bot.channels.cache.get(bot.getSetting<'string'>('training_reminder_ch_id', 'string')) as TextChannel, bot.createContainerPayload({
 		color: 'Orange',
 		allowedMentions: { parse: ['users'] },
 		sections: [{
@@ -101,69 +101,111 @@ If you are not ready to host the training or if there are insufficient reactions
 		.where('trainingId', trainingSoon.trainingId);
 }
 
-export async function manageOnDutyChats() {
-	const pages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
-		placeId: Number(bot.getSetting('game_place_id')),
+export let serverCache: typeof getGamesPlaceidServersServertype.response.data = [];
+
+let timesHitZero = 0;
+
+export async function manageGameServerCache() {
+	if (timesHitZero > 1) {
+		serverCache = [];
+
+		timesHitZero = 0;
+	}
+
+	const serverPages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
+		placeId: bot.getSetting<'number'>('game_place_id', 'number'),
 		serverType: 0,
 		limit: 100
 	});
 
-	const existingVcs = bot.channels.cache.filter(channel => channel.isVoiceBased() && channel.parentId === bot.getSetting('security_comms_ch_cat_id') && channel.name !== 'security-communications') as Collection<string, VoiceChannel>;
-	const chatForum = bot.channels.cache.get(bot.getSetting('game_chats_ch_id')!) as ForumChannel;
+	let isFirstPage = true;
+
+	const newCache: typeof getGamesPlaceidServersServertype.response.data = [];
+
+	let shouldUpdateCache = false;
+
+	for await (const page of serverPages) {
+		if (isAnyErrorResponse(page)) {
+			bot.logger.error(`An error has occured while retrieving server page data: ${page.message}`);
+
+			isFirstPage = false;
+
+			continue;
+		}
+
+		if (isFirstPage && page.data.length === 0) {
+			timesHitZero++; break;
+		}
+
+		for (const server of page.data) newCache.push(server);
+
+		shouldUpdateCache = true;
+
+		timesHitZero = 0;
+
+		isFirstPage = false;
+	}
+
+	if (shouldUpdateCache) serverCache = newCache;
+}
+
+const lastStatusByPartialId = new Collection<string, string>();
+
+export async function manageOnDutyChats() {
+	const chatForum = bot.channels.cache.get(bot.getSetting<'string'>('game_chats_ch_id', 'string'));
+	if (chatForum?.type !== ChannelType.GuildForum) return bot.logger.warn('Game chat forum setting is not configured correctly.');
+
+	const securityCommsChannelCategory = bot.channels.cache.get(bot.getSetting<'string'>('security_comms_ch_cat_id', 'string'));
+	if (securityCommsChannelCategory?.type !== ChannelType.GuildCategory)
+		return bot.logger.warn('Security comms channel category ID is not configured correctly.');
+
+	const existingVcs = securityCommsChannelCategory.children.cache.filter(channel => channel.type == ChannelType.GuildVoice);
 	const existingThreads = chatForum.threads.cache;
 	const partialIds: string[] = [];
 
-	for await (const page of pages) {
-		if (isAnyErrorResponse(page)) throw new Error(page.message);
+	for (const server of serverCache) {
+		const splitId = server.id.split('-');
+		const partialId = `${splitId[1]}-${splitId[2]}`;
 
-		if (page.data.length === 0) {
-			existingVcs.forEach(async vc => await vc.delete());
+		partialIds.push(partialId);
 
-			return existingThreads.forEach(async thread => await thread.delete());
+		const statusText = `${server.playing}/${server.maxPlayers} players.`;
+
+		let vc = existingVcs.find(vc => vc.name === partialId);
+		let thread = existingThreads.find(thread => thread.name === partialId);
+
+		if (!vc) {
+			vc = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
+				name: partialId,
+				parent: securityCommsChannelCategory.id,
+				type: ChannelType.GuildVoice
+			}) as VoiceChannel;
+
+			existingVcs.set(vc.id, vc);
 		}
 
-		for (const server of page.data) {
-			const splitId = server.id.split('-');
-			const partialId = `${splitId[1]}-${splitId[2]}`;
+		if (!thread) {
+			const containerData = bot.createContainerPayload({
+				color: 'Blurple',
+				sections: [{
+					title: `Chat port for server ${partialId}.`,
+					description: 'Use this thread as an alternative to chat with other ACSD members playing in this server.',
+					fields: [{ name: 'Player count:', value: statusText }]
+				}]
+			});
 
-			partialIds.push(partialId);
+			thread = await chatForum.threads.create({
+				name: partialId,
+				message: {
+					flags: 'IsComponentsV2',
+					components: [containerData.container],
+					files: containerData.files
+				}
+			});
 
-			const statusText = `${server.playing}/${server.maxPlayers} players.`;
-
-			let vc = existingVcs.find(vc => vc.name === partialId);
-			let thread = existingThreads.find(thread => thread.name === partialId);
-
-			if (!vc) {
-				vc = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.channels.create<ChannelType.GuildVoice>({
-					name: partialId,
-					parent: bot.getSetting('security_comms_ch_cat_id'),
-					type: ChannelType.GuildVoice
-				}) as VoiceChannel;
-
-				existingVcs.set(vc.id, vc);
-			}
-
-			if (!thread) {
-				const containerData = bot.createContainerPayload({
-					color: 'Blurple',
-					sections: [{
-						title: `Chat port for server ${partialId}.`,
-						description: 'Use this thread as an alternative to chat with other ACSD members playing in this server.',
-						fields: [{ name: 'Player count:', value: statusText }]
-					}]
-				});
-
-				thread = await chatForum.threads.create({
-					name: partialId,
-					message: {
-						flags: 'IsComponentsV2',
-						components: [containerData.container],
-						files: containerData.files
-					}
-				});
-
-				existingThreads.set(thread.id, thread);
-			} else await thread.fetchStarterMessage().then(async message => await message?.edit(bot.createContainerPayload({
+			existingThreads.set(thread.id, thread);
+		} else if (lastStatusByPartialId.get(partialId) !== statusText) {
+			await thread.fetchStarterMessage().then(async message => await message?.edit(bot.createContainerPayload({
 				color: 'Blurple',
 				sections: [{
 					title: `Chat port for server ${partialId}.`,
@@ -176,8 +218,15 @@ export async function manageOnDutyChats() {
 				body: { status: statusText }
 			});
 		}
+
+		lastStatusByPartialId.set(partialId, statusText);
 	}
 
-	existingVcs.filter(vc => !partialIds.includes(vc.name)).forEach(async vc => await vc.delete());
-	existingThreads.filter(thread => !partialIds.includes(thread.name)).forEach(async thread => await thread.delete());
+	for (const [, vc] of existingVcs.filter(vc => !partialIds.includes(vc.name))) if (vc.name !== 'security-communications') {
+		lastStatusByPartialId.delete(vc.name);
+
+		await vc.delete();
+	}
+
+	for (const [, thread] of existingThreads.filter(thread => !partialIds.includes(thread.name))) await thread.delete();
 }

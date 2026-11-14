@@ -18,11 +18,13 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply({ flags: 'Ephemeral' });
 
-	const roleId = bot.getSetting('verification_role_id');
-	const role = roleId ? interaction.guild.roles.cache.get(roleId) : undefined;
+	const roleId = await bot.getSetting<'string'>('verification_role_id', 'string', interaction);
+	if (typeof roleId !== 'string') return;
+
+	const role = interaction.guild.roles.cache.get(roleId);
 
 	if (!role) return await bot.sendContainer(interaction, 'error',
-		'Verification role setting is not configured. Please contact the ACSD administration about this.');
+		'Verification role setting is not configured correctly. Please contact the ACSD administration about this.');
 
 	const username = interaction.options.getString('roblox_username', true);
 

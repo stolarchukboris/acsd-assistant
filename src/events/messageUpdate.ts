@@ -6,16 +6,14 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 	try {
 		if (oldMessage.partial) await oldMessage.fetch();
 
-		const messageFromProd = (newMessage.channelId === bot.getSetting('shift_logs_ch_id')) && (newMessage.webhookId === bot.getSetting('shift_logger_wh_id'));
-		const messageFromDev = (newMessage.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (newMessage.webhookId === Bun.env.DEV_WEBHOOK_ID);
+		const messageFromProd = (newMessage.channelId === bot.getSetting<'string'>('shift_logs_ch_id', 'string')) && (newMessage.webhookId === bot.getSetting<'string'>('shift_logger_wh_id', 'string'));
 		const wordsIncluded = oldMessage.embeds[0]?.title?.includes('started') && newMessage.embeds[0]?.title?.includes('ended');
 
-		if (!((messageFromProd || messageFromDev) && wordsIncluded)) return;
+		if (!(messageFromProd && wordsIncluded)) return;
 
-		const messageId = messageFromDev ? `${newMessage.id}d` : newMessage.id;
 		const activeShiftEntry = await bot.knex<activeShift>('activeShifts')
 			.select('*')
-			.where('whMessageId', messageId)
+			.where('whMessageId', newMessage.id)
 			.first();
 
 		if (!activeShiftEntry) return;
@@ -34,7 +32,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 			for (const shift of unfinishedShifts) {
 				const message = shift.whMessageId.includes('d')
 					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(shift.whMessageId.slice(0, -1))
-					: await (bot.channels.cache.get(bot.getSetting('shift_logs_ch_id')!) as TextChannel).messages.fetch(shift.whMessageId);
+					: await (bot.channels.cache.get(bot.getSetting<'string'>('shift_logs_ch_id', 'string')) as TextChannel).messages.fetch(shift.whMessageId);
 				const [started, ended] = [Math.floor(message.createdTimestamp / 1000), unixNow()];
 				const lengthMins = Math.round((ended - started) / 60);
 

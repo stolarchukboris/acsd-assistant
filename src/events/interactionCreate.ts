@@ -36,7 +36,13 @@ export async function execute(interaction: Interaction<'cached'>) {
 		if (command.training) {
 			await interaction.deferReply();
 
-			const channel = bot.channels.cache.get(bot.getSetting('training_anns_ch_id')!) as TextChannel;
+			const trainingAnnsChannelId = await bot.getSetting<'string'>('training_anns_ch_id', 'string', interaction);
+			if (typeof trainingAnnsChannelId !== 'string') return;
+
+			const channel = bot.channels.cache.get(trainingAnnsChannelId) as TextChannel;
+
+			if (!channel) return await bot.sendContainer(interaction, 'error',
+				'Training announcements channel setting is not configured correctly. Please contact the ACSD administration about this.')
 
 			if (command.data.name !== 'schedule') {
 				const id = interaction.options.getString('training_id', true);
@@ -53,7 +59,10 @@ export async function execute(interaction: Interaction<'cached'>) {
 				args.push(training, message);
 			} else args.push(channel);
 
-			args.push(bot.getSetting('training_ping_role_id'));
+			const trainingPingRoleId = await bot.getSetting<'string'>('training_ping_role_id', 'string', interaction);
+			if (typeof trainingPingRoleId !== 'string') return;
+
+			args.push(trainingPingRoleId);
 		}
 
 		try {

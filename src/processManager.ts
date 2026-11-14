@@ -48,7 +48,7 @@ else {
 		}
 	});
 
-    console.log(`Process manager listening on port ${server.port}.`);
+    logger.log(`Process manager listening on port ${server.port}.`);
 
 	async function runBot() {
 		let isFirstStart = true;

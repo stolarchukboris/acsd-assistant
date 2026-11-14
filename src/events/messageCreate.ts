@@ -4,14 +4,14 @@ import type { personnelInfo, activeMShift, activeShift } from '../types/knex.ts'
 import { fetchApi, fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
 import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
 import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
+import { serverCache } from '../utils/worker.ts';
 
 export async function execute(message: Message) {
 	try {
-		const messageFromProd = (message.channelId === bot.getSetting('shift_logs_ch_id')) && (message.webhookId === bot.getSetting('shift_logger_wh_id'));
-		const messageFromDev = (message.channelId === Bun.env.DEV_SHIFT_LOGS_CH_ID) && (message.webhookId === Bun.env.DEV_WEBHOOK_ID);
+		const messageFromProd = (message.channelId === bot.getSetting<'string'>('shift_logs_ch_id', 'string')) && (message.webhookId === bot.getSetting<'string'>('shift_logger_wh_id', 'string'));
 		const embedIncludesStarted = message.embeds[0]?.title?.includes('started');
 
-		if (!((messageFromProd || messageFromDev) && embedIncludesStarted)) return;
+		if (!(messageFromProd && embedIncludesStarted)) return;
 
 		const backupChannel = bot.channels.cache.get(Bun.env.BACKUP_SHIFT_LOGS_CH_ID) as TextChannel;
 		const forwarded = await backupChannel.send(message.embeds.length > 0 ? { embeds: message.embeds } : { content: message.content });
@@ -42,13 +42,11 @@ export async function execute(message: Message) {
 	
 		if (!jobId) throw new Error('⚠️ Could not retrieve Roblox Job ID from the embed.');
 
-		const messageId = messageFromDev ? `${message.id}d` : message.id;
-
 		if (existingShift) {
 			await bot.knex<activeShift>('activeShifts')
 				.update({
 					jobId: jobId,
-					whMessageId: messageId,
+					whMessageId: message.id,
 					fwMessageId: forwarded.id
 				})
 				.where('robloxId', userId);
@@ -70,23 +68,9 @@ export async function execute(message: Message) {
 				throw new Error(responsePlayer.message);
 			}
 
-		const pages = fetchApiPagesGenerator(getGamesPlaceidServersServertype, {
-			placeId: Number(messageFromDev ? Bun.env.DEV_TEST_PLACE_ID : bot.getSetting('game_place_id')),
-			serverType: 0,
-			limit: 100
-		});
-
 		let serverFound = false;
 
-		for await (const pageResponse of pages) {
-			if (isAnyErrorResponse(pageResponse)) throw new Error(pageResponse.message);
-
-			if (pageResponse.data.some(server => server.id === jobId)) {
-				serverFound = true;
-
-				break;
-			}
-		}
+		if (serverCache.some(server => server.id === jobId)) serverFound = true;
 
 		if (!serverFound) return await message.react('🟥');
 
@@ -100,7 +84,7 @@ export async function execute(message: Message) {
 		await bot.knex<activeShift>('activeShifts')
 			.insert({
 				jobId: jobId,
-				whMessageId: messageId,
+				whMessageId: message.id,
 				fwMessageId: forwarded.id,
 				robloxId: userId,
 				startedTimestamp: startTime ?? Math.floor(message.createdTimestamp / 1000)

@@ -15,6 +15,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	if (manualShifts.length === 0 && autoShifts.length === 0) return await bot.sendContainer(interaction, 'notFound',
 		'There are no active shifts right now.');
 
+	const shiftLogsChannelId = await bot.getSetting<'string'>('shift_logs_ch_id', 'string', interaction);
+	if (typeof shiftLogsChannelId !== 'string') return;
+
 	await bot.sendContainer(interaction, bot.createContainerPayload({
 		color: 'Blurple',
 		sections: [{
@@ -25,7 +28,7 @@ ${manualShifts.map(shift => `- ${shift.shiftId}\n  - Started by ${shift.robloxUs
 				: ''}
 ${autoShifts.length > 0
 					? `**Active automatic shifts**:
-${autoShifts.map(shift => `- ${shift.jobId}\n  - Started <t:${shift.startedTimestamp}:R> ([log message](https://discord.com/channels/${Bun.env.GUILD_ID}/${bot.getSetting('shift_logs_ch_id')}/${shift.whMessageId}))`).join('\n')}`
+${autoShifts.map(shift => `- ${shift.jobId}\n  - Started <t:${shift.startedTimestamp}:R> ([log message](https://discord.com/channels/${Bun.env.GUILD_ID}/${shiftLogsChannelId}/${shift.whMessageId}))`).join('\n')}`
 					: ''}`
 		}]
 	}));

@@ -1,4 +1,4 @@
-import { managePendingLogs, manageOnDutyChats, trainingReminder, databaseCleanup } from '../utils/worker.ts';
+import { managePendingLogs, manageOnDutyChats, trainingReminder, databaseCleanup, manageGameServerCache } from '../utils/worker.ts';
 import bot from '../index.ts';
 import { ActivityType, Client } from 'discord.js';
 
@@ -28,6 +28,7 @@ export async function execute(client: Client<true>) {
 	async function vcLoop() {
 		while (true) {
 			try {
+				await manageGameServerCache();
 				await manageOnDutyChats();
 			} catch (error) {
 				bot.logger.error(error);
