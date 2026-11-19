@@ -1,7 +1,11 @@
+import { $ } from "bun";
 import logger from "./utils/logger.ts";
+import path from "path";
 
 if (Bun.argv.includes("--worker-mode") || process.argv.includes('--worker-mode')) await import('./index.ts');
 else {
+	$.cwd(path.join(import.meta.dir, '..'));
+
 	let childProcess: ReturnType<typeof Bun.spawn> | null = null;
 	let [shouldRestart, shouldDeploy] = [true, false];
 
@@ -13,7 +17,7 @@ else {
 		async fetch(req) {
 			const url = new URL(req.url);
 
-			if (url.pathname === "/stop") {
+			if (url.pathname === "/s") {
 				shouldRestart = false;
 				shouldDeploy = false;
 
@@ -28,27 +32,45 @@ else {
 				}, 500);
 
 				return new Response("Successfully sent the full shutdown request.");
-			} else if (url.pathname === "/restart") {
+			} else if (url.pathname === "/r") {
 				shouldRestart = true;
 				shouldDeploy = false;
 
 				if (childProcess) childProcess.kill();
 
 				return new Response("Successfully sent the bot restart request.");
-			} else if (url.pathname === '/deploy-restart') {
+			} else if (url.pathname === '/dr') {
 				shouldRestart = true;
 				shouldDeploy = true;
 
-				if (childProcess) childProcess.kill();
+				await $`bun restart`;
 
-				return new Response('Successfully sent the deploy and restart request.')
+				return new Response('Successfully sent the deploy and restart request.');
+			} else if (url.pathname === '/pr') {
+				shouldRestart = true;
+				shouldDeploy = false;
+
+				await $`git pull`;
+				await $`bun i`;
+				await $`bun restart`;
+
+				return new Response('Successfully sent the pull and restart request.');
+			} else if (url.pathname === '/pdr') {
+				shouldRestart = true;
+				shouldDeploy = true;
+
+				await $`git pull`;
+				await $`bun i`;
+				await $`bun deploy-restart`;
+
+				return new Response('Successfully sent the pull, deploy and restart request.');
 			}
 
 			return new Response("Unknown request.", { status: 404 });
 		}
 	});
 
-    logger.log(`Process manager listening on port ${server.port}.`);
+	logger.log(`Process manager listening on port ${server.port}.`);
 
 	async function runBot() {
 		let isFirstStart = true;
