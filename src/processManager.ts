@@ -17,6 +17,8 @@ else {
 		async fetch(req) {
 			const url = new URL(req.url);
 
+			await $`bun manifest`;
+
 			if (url.pathname === "/s") {
 				shouldRestart = false;
 				shouldDeploy = false;
