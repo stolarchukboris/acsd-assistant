@@ -38,14 +38,12 @@ else {
 
 				if (childProcess) childProcess.kill();
 
-				await $`bun manifest`;
-
 				return new Response("Successfully sent the bot restart request.");
 			} else if (url.pathname === '/dr') {
 				shouldRestart = true;
 				shouldDeploy = true;
 
-				await $`bun restart`;
+				if (childProcess) childProcess.kill();
 
 				return new Response('Successfully sent the deploy and restart request.');
 			} else if (url.pathname === '/pr') {
@@ -54,7 +52,8 @@ else {
 
 				await $`git pull`;
 				await $`bun i`;
-				await $`bun restart`;
+
+				if (childProcess) childProcess.kill();
 
 				return new Response('Successfully sent the pull and restart request.');
 			} else if (url.pathname === '/pdr') {
@@ -63,7 +62,8 @@ else {
 
 				await $`git pull`;
 				await $`bun i`;
-				await $`bun deploy-restart`;
+
+				if (childProcess) childProcess.kill();
 
 				return new Response('Successfully sent the pull, deploy and restart request.');
 			}
@@ -77,6 +77,8 @@ else {
 	async function runBot() {
 		let isFirstStart = true;
 		while (shouldRestart) {
+			await $`bun manifest`;
+
 			const isCompiled = !Bun.argv[1] || !(Bun.argv[1].endsWith(".ts") || Bun.argv[1].endsWith(".js"));
 
 			const args: string[] = [];
