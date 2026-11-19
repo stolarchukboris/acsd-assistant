@@ -17,8 +17,6 @@ else {
 		async fetch(req) {
 			const url = new URL(req.url);
 
-			await $`bun manifest`;
-
 			if (url.pathname === "/s") {
 				shouldRestart = false;
 				shouldDeploy = false;
@@ -39,6 +37,8 @@ else {
 				shouldDeploy = false;
 
 				if (childProcess) childProcess.kill();
+
+				await $`bun manifest`;
 
 				return new Response("Successfully sent the bot restart request.");
 			} else if (url.pathname === '/dr') {
