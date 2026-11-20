@@ -21,14 +21,14 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	if (!(file.name.toLowerCase().endsWith('.json') && file.contentType?.includes('application/json') && file.size < 512 * 1024))
 		return await bot.sendContainer(interaction, 'error', 'Expected a JSON file with size < 512 KB.');
 
-	let data;
+	let data: botSettingInfo[];
 
 	try {
 		const res = await fetch(file.url);
 
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-		data = await res.json();
+		data = await res.json() as botSettingInfo[];
 	} catch (error) {
 		return await bot.sendContainer(interaction, 'error', `${error}. File is corrupted or contains invalid JSON.`)
 	}
@@ -36,8 +36,10 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	await bot.knex.transaction(async trx => {
 		await trx<botSettingInfo>('botSettings').delete();
 
-		await trx<botSettingInfo>('botSettings').insert(data as botSettingInfo);
+		await trx<botSettingInfo>('botSettings').insert(data);
 	});
+
+	for (const setting of data) bot.botSettings.set(setting.settingName, setting);
 
 	await bot.sendContainer(interaction, 'success', 'Successfully imported the bot settings.');
 }
