@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'disc
 import bot from '../../index.ts';
 import type { BotSetting } from '../../types/knex.ts';
 import { safeParse } from 'zod';
-import { settingsSchema } from '../../utils/schemas.ts';
+import { settingGroupSchema } from '../../utils/schemas.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('import')
@@ -35,7 +35,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		return await bot.sendContainer(interaction, 'error', `${error}. The provided file might be corrupted or containing invalid JSON.`)
 	}
 
-	const verifiedData = safeParse(settingsSchema, data);
+	const verifiedData = safeParse(settingGroupSchema, data);
 
 	if (!verifiedData.success) return await bot.sendContainer(interaction, 'error', 'The provided JSON has invalid structure.')
 
