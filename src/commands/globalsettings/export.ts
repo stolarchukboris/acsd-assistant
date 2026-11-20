@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, FileBuilder, SlashCommandSubcommandBuilder } from 'discord.js';
+import { AttachmentBuilder, ChatInputCommandInteraction, FileBuilder, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
 import type { botSettingInfo } from '../../types/knex.ts';
 
@@ -18,6 +18,6 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	await interaction.editReply({
 		flags: 'IsComponentsV2',
 		components: [new FileBuilder().setURL('attachment://settings_backup.json')],
-		files: [buffer]
+		files: [new AttachmentBuilder(buffer)]
 	});
 }
