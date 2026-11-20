@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.ts';
-import type { loggedShift, personnelCredits, personnelInfo, punishmentInfo } from '../../types/knex.ts';
+import type { LoggedShift, Credits, Personnel, Punishment } from '../../types/knex.ts';
 import type { ContainerOptions } from '../../utils/containers.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
@@ -23,7 +23,7 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const auth = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
 	const hidden = interaction.options.getBoolean('hidden') ?? true;
 
 	await interaction.deferReply(hidden ? { flags: 'Ephemeral' } : undefined);
@@ -31,65 +31,65 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const member = interaction.options.getMember('server_member');
 	const playerUsername = interaction.options.getString('roblox_username');
 
-	const stats = (member || playerUsername) ? await bot.knex<personnelInfo>('personnel')
+	const stats = (member || playerUsername) ? await bot.knex<Personnel>('personnel')
 		.select('*')
 		.where(builder => {
-			if (member) builder.where('discordId', member.id);
-			else if (playerUsername) builder.where('robloxUsername', playerUsername);
+			if (member) builder.where('discord_id', member.id);
+			else if (playerUsername) builder.where('roblox_username', playerUsername);
 		})
 		.first() : cmdUser;
 
 	if (!stats) return await bot.sendContainer(interaction, 'notFound', 'No stats found in the database.');
 
-	const shifts = await bot.knex<loggedShift>('loggedShifts')
+	const shifts = await bot.knex<LoggedShift>('logged_shifts')
 		.select('*')
-		.where('robloxId', stats.robloxId)
-		.orderBy('endedTimestamp', 'desc');
-	const totalTime = shifts.map(shift => shift.lenMinutes).reduce((a, b) => a + b, 0);
-	const credits = await bot.knex<personnelCredits>('credits')
+		.where('roblox_id', stats.roblox_id)
+		.orderBy('ended_timestamp', 'desc');
+	const totalTime = shifts.map(shift => shift.len_minutes).reduce((a, b) => a + b, 0);
+	const credits = await bot.knex<Credits>('credits')
 		.select('*')
-		.where('robloxId', stats.robloxId)
+		.where('roblox_id', stats.roblox_id)
 		.first();
 
 	let punishments, desc = ``;
 
-	if (bot.highRanks.includes(cmdUser.acsdRank) || stats === cmdUser) {
-		punishments = await bot.knex<punishmentInfo>('punishments')
+	if (bot.highRanks.includes(cmdUser.acsd_rank) || stats === cmdUser) {
+		punishments = await bot.knex<Punishment>('punishments')
 			.select('*')
-			.where('targetRbxId', stats.robloxId)
+			.where('targetRbxId', stats.roblox_id)
 			.orderBy('createdAt', 'desc');
 
 		if (punishments.length > 0) for (const punishment of punishments) desc = desc.concat(
-			`**__${punishment.punishmentType === 'warn' ? 'Warning' : 'Strike'}__ ${punishment.punishmentId}:**
-- **Issued**: <t:${Math.floor(Date.parse(punishment.createdAt) / 1000)}>
+			`**__${punishment.punishment_type === 'warn' ? 'Warning' : 'Strike'}__ ${punishment.punishment_id}:**
+- **Issued**: <t:${Math.floor(Date.parse(punishment.created_at) / 1000)}>
 - **Reason**: ${punishment.reason}\n\n`
 		);
 	}
 
-	const pfpURL = await bot.getRobloxPfp(stats.robloxId);
+	const pfpURL = await bot.getRobloxPfp(stats.roblox_id);
 
 	const sections: ContainerOptions['sections'] = [{
-		title: `${stats.robloxUsername}'s statistics.`,
-		description: `Here are ${stats.robloxUsername}'s Security Division statistics.
+		title: `${stats.roblox_username}'s statistics.`,
+		description: `Here are ${stats.roblox_username}'s Security Division statistics.
 Depending on your rank, some information may not be available to you.`,
 		thumbnailUrl: pfpURL,
 		fields: [
-			{ name: 'Linked Discord:', value: `<@${stats.discordId}>` },
-			{ name: 'Linked Roblox:', value: `[${stats.robloxUsername}](https://www.roblox.com/users/${stats.robloxId}/profile)` },
-			{ name: 'Register date:', value: `<t:${Math.floor(Date.parse(stats.entryCreated) / 1000)}>` },
+			{ name: 'Linked Discord:', value: `<@${stats.discord_id}>` },
+			{ name: 'Linked Roblox:', value: `[${stats.roblox_username}](https://www.roblox.com/users/${stats.roblox_id}/profile)` },
+			{ name: 'Register date:', value: `<t:${Math.floor(Date.parse(stats.entry_created) / 1000)}>` },
 			{ name: 'Total time on-duty:', value: `${totalTime} minutes.` },
 			{ name: 'Total credits:', value: credits?.amount.toString() ?? '0' },
-			{ name: 'Rank:', value: stats.acsdRank }
+			{ name: 'Rank:', value: stats.acsd_rank }
 		]
 	}];
 
 	if (shifts[0]) sections.push({
 		title: 'Latest shift.',
 		fields: [
-			{ name: 'Shift ID:', value: shifts[0].shiftId },
-			{ name: 'Started:', value: `<t:${shifts[0].startedTimestamp}>` },
-			{ name: 'Ended:', value: `<t:${shifts[0].endedTimestamp}>` },
-			{ name: 'Length:', value: `${shifts[0].lenMinutes} minutes.` }
+			{ name: 'Shift ID:', value: shifts[0].shift_id },
+			{ name: 'Started:', value: `<t:${shifts[0].started_timestamp}>` },
+			{ name: 'Ended:', value: `<t:${shifts[0].ended_timestamp}>` },
+			{ name: 'Length:', value: `${shifts[0].len_minutes} minutes.` }
 		]
 	});
 
@@ -103,8 +103,8 @@ Depending on your rank, some information may not be available to you.`,
 
 export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
 	const focusedValue = interaction.options.getFocused();
-	const choices = await bot.knex<personnelInfo>('personnel').select('*');
-	const filtered = choices.map(guard => guard.robloxUsername).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
+	const choices = await bot.knex<Personnel>('personnel').select('*');
+	const filtered = choices.map(guard => guard.roblox_username).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
 
 	await interaction.respond(filtered.map(choice => ({ name: choice, value: choice })).slice(0, 25));
 }

@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { activeMShift, personnelInfo } from '../../types/knex.ts';
+import type { ActiveMShift, Personnel } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('start')
@@ -8,16 +8,16 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const auth = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
 	await interaction.deferReply();
 
-	const existingEntry = await bot.knex('activeMShifts')
-		.select('shiftId as id', bot.knex.raw("'Shift' as label"))
-		.where('robloxId', cmdUser.robloxId)
+	const existingEntry = await bot.knex('active_m_shifts')
+		.select('shift_id as id', bot.knex.raw("'Shift' as label"))
+		.where('roblox_id', cmdUser.roblox_id)
 		.union(function () {
-			this.select('jobId as id', bot.knex.raw("'Job' as label"))
-				.from('activeShifts')
-				.where('robloxId', cmdUser.robloxId);
+			this.select('job_id as id', bot.knex.raw("'Job' as label"))
+				.from('active_shifts')
+				.where('roblox_id', cmdUser.roblox_id);
 		})
 		.first() as { label: string; id: string } | undefined;
 
@@ -30,12 +30,12 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const id = crypto.randomUUID();
 
-	await bot.knex<activeMShift>('activeMShifts')
+	await bot.knex<ActiveMShift>('active_m_shifts')
 		.insert({
-			shiftId: id,
-			discordId: cmdUser.discordId,
-			robloxId: cmdUser.robloxId,
-			robloxUsername: cmdUser.robloxUsername
+			shift_id: id,
+			discord_id: cmdUser.discord_id,
+			roblox_id: cmdUser.roblox_id,
+			roblox_username: cmdUser.roblox_username
 		});
 
 	await bot.sendContainer(interaction, 'success', {

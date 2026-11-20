@@ -1,85 +1,85 @@
 import { CategoryChannel, ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { pendingRegs, activeShift, loggedShift, pendingShift, personnelInfo, trainingInfo, activeMShift } from '../types/knex.ts';
+import type { PendingReg, ActiveShift, LoggedShift, PendingShift, Personnel, Training, ActiveMShift } from '../types/knex.ts';
 import { fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
 import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
 
 export async function databaseCleanup() {
-	await bot.knex<pendingRegs>('pendingRegs').del().where('entryCreated', '<', unixNow() - 300);
+	await bot.knex<PendingReg>('pending_regs').del().where('entry_created', '<', unixNow() - 300);
 
-	await bot.knex<personnelInfo>('personnel').del().where('toBeDeletedAt', '<', unixNow());
+	await bot.knex<Personnel>('personnel').del().where('to_be_deleted_at', '<', unixNow());
 
-	await bot.knex<activeShift>('activeShifts').del().where('startedTimestamp', '<', unixNow() - 4800);
-	await bot.knex<activeMShift>('activeMShifts').del().where('startedTimestamp', '<', unixNow() - 4800);
+	await bot.knex<ActiveShift>('activeShifts').del().where('started_timestamp', '<', unixNow() - 4800);
+	await bot.knex<ActiveMShift>('activeMShifts').del().where('started_timestamp', '<', unixNow() - 4800);
 }
 
 export async function managePendingLogs() {
-	const pendingLogs = await bot.knex<pendingShift>('pendingShiftLogs').select('*');
+	const pendingLogs = await bot.knex<PendingShift>('pending_shift_logs').select('*');
 
 	if (pendingLogs.length === 0) return;
 
-	const logsGroupedById = new Map<string, pendingShift[]>();
+	const logsGroupedById = new Map<string, PendingShift[]>();
 
 	for (const log of pendingLogs) {
-		const group = logsGroupedById.get(log.robloxId) ?? [];
+		const group = logsGroupedById.get(log.roblox_id) ?? [];
 
 		group.push(log);
 
-		logsGroupedById.set(log.robloxId, group);
+		logsGroupedById.set(log.roblox_id, group);
 	}
 
 	for (const [robloxId, logGroup] of logsGroupedById) {
-		const userLogs = logGroup.sort((a, b) => a.endedTimestamp - b.endedTimestamp);
+		const userLogs = logGroup.sort((a, b) => a.ended_timestamp - b.ended_timestamp);
 		const latestLog = userLogs[userLogs.length - 1];
-		const associatedActiveShift = await bot.knex<activeShift>('activeShifts')
+		const associatedActiveShift = await bot.knex<ActiveShift>('active_shifts')
 			.select('*')
-			.where('robloxId', robloxId)
+			.where('roblox_id', robloxId)
 			.first();
 
 		if (associatedActiveShift) continue;
 
-		if (unixNow() - latestLog!.endedTimestamp < 60) continue;
+		if (unixNow() - latestLog!.ended_timestamp < 60) continue;
 
-		const totalMinutes = userLogs.map(log => log.lenMinutes).reduce((a, b) => a + b, 0);
+		const totalMinutes = userLogs.map(log => log.len_minutes).reduce((a, b) => a + b, 0);
 		const success = totalMinutes >= 5;
 		const emoji = success ? '🟩' : '🟥';
 
 		for (const log of userLogs) {
 			try {
-				const message = log.whMessageId.includes('d')
-					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID!) as TextChannel).messages.fetch(log.whMessageId.slice(0, -1))
-					: await (bot.channels.cache.get(bot.getSetting<'string'>('shift_logs_ch_id', 'string')) as TextChannel).messages.fetch(log.whMessageId);
+				const message = log.wh_message_id.includes('d')
+					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID!) as TextChannel).messages.fetch(log.wh_message_id.slice(0, -1))
+					: await (bot.channels.cache.get(bot.getSetting<'string'>('shift_logs_ch_id', 'string')) as TextChannel).messages.fetch(log.wh_message_id);
 
 				await message.react(emoji);
 			} catch (error) {
-				bot.logger.warn(`Failed to fetch or react to message ${log.whMessageId}.\n${error}`);
+				bot.logger.warn(`Failed to fetch or react to message ${log.wh_message_id}.\n${error}`);
 			}
 		}
 
 		await bot.knex.transaction(async trx => {
-			if (success) await trx<loggedShift>('loggedShifts')
+			if (success) await trx<LoggedShift>('logged_shifts')
 				.insert({
-					shiftId: crypto.randomUUID(),
-					robloxId: robloxId,
-					startedTimestamp: userLogs[0]?.startedTimestamp,
-					endedTimestamp: latestLog?.endedTimestamp,
-					lenMinutes: totalMinutes,
-					proof: `Job ID: ${latestLog?.jobId}`
+					shift_id: crypto.randomUUID(),
+					roblox_id: robloxId,
+					started_timestamp: userLogs[0]?.started_timestamp,
+					ended_timestamp: latestLog?.ended_timestamp,
+					len_minutes: totalMinutes,
+					proof: `Job ID: ${latestLog?.job_id}`
 				});
 
-			await trx<pendingShift>('pendingShiftLogs')
+			await trx<PendingShift>('pending_shift_logs')
 				.del()
-				.whereIn('whMessageId', userLogs.map(log => log.whMessageId));
+				.whereIn('whMessageId', userLogs.map(log => log.wh_message_id));
 		});
 	}
 }
 
 export async function trainingReminder() {
-	const trainingSoon = await bot.knex<trainingInfo>('trainings')
+	const trainingSoon = await bot.knex<Training>('trainings')
 		.select('*')
-		.where('startingTimestamp', '<=', unixNow() + 600)
-		.andWhere('isReminded', false)
-		.andWhere('isStarted', false)
+		.where('starting_timestamp', '<=', unixNow() + 600)
+		.andWhere('is_reminded', false)
+		.andWhere('is_started', false)
 		.first();
 
 	if (!trainingSoon) return;
@@ -89,16 +89,16 @@ export async function trainingReminder() {
 		allowedMentions: { parse: ['users'] },
 		sections: [{
 			title: 'Training reminder.',
-			description: `<@${trainingSoon.hostDiscordId}>
-Your training is going to start <t:${trainingSoon.startingTimestamp}:R>. Make sure you are ready to host it.
+			description: `<@${trainingSoon.host_discord_id}>
+Your training is going to start <t:${trainingSoon.starting_timestamp}:R>. Make sure you are ready to host it.
 
 If you are not ready to host the training or if there are insufficient reactions, you can cancel the training with the \`/trainings cancel\` command.`
 		}]
 	}));
 
-	await bot.knex<trainingInfo>('trainings')
+	await bot.knex<Training>('trainings')
 		.update('isReminded', true)
-		.where('trainingId', trainingSoon.trainingId);
+		.where('trainingId', trainingSoon.training_id);
 }
 
 export let serverCache: typeof getGamesPlaceidServersServertype.response.data = [];

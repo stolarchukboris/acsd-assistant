@@ -21,7 +21,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		color: 'DarkOrange',
 		sections: [{
 			title: 'Global settings.',
-			description: bot.botSettings.map(setting => `- ${setting.settingDesc}: \`${setting.settingValue}\``).join('\n')
+			description: bot.botSettings.map(setting => `- ${setting.setting_desc}: \`${setting.setting_value}\``).join('\n')
 		}]
 	}));
 
@@ -33,17 +33,17 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		color: 'DarkOrange',
 		sections: [{
 			title: 'Setting information.',
-			description: `**Name**: \`${setting.settingName}\` (${setting.settingDesc})
-**Value:** \`${setting.settingValue}\`
+			description: `**Name**: \`${setting.setting_name}\` (${setting.setting_desc})
+**Value:** \`${setting.setting_value}\`
 
-**Last updated** by <@${setting.lastUpdatedBy}> <t:${Math.floor(Date.parse(setting.lastUpdatedAt as string) / 1000)}:R>.`
+**Last updated** by <@${setting.last_updated_by}> <t:${Math.floor(Date.parse(setting.last_updated_at as string) / 1000)}:R>.`
 		}]
 	}));
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
 	const focusedValue = interaction.options.getFocused();
-	const choices = bot.botSettings.map(setting => ({ name: setting.settingDesc, value: setting.settingName }));
+	const choices = bot.botSettings.map(setting => ({ name: setting.setting_desc, value: setting.setting_name }));
 	const filtered = choices.filter(choice => choice.name.toLowerCase().includes(focusedValue.toLowerCase()));
 
 	await interaction.respond(filtered);

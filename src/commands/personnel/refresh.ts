@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { personnelInfo } from '../../types/knex.ts';
+import type { Personnel } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('refresh')
@@ -11,16 +11,10 @@ export const highRank = true;
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	const personnel = await bot.knex<personnelInfo>('personnel').select('*');
+	const personnel = await bot.knex<Personnel>('personnel').select('*');
 	const errors: string[] = [];
 	const deletionLogs: string[] = [];
-	const updates: {
-		discordId: string;
-		robloxId: string;
-		robloxUsername: string;
-		oldRank: string;
-		acsdRank: string;
-	}[] = [];
+	const updates: (Omit<Personnel, 'reg_approved_by' | 'entry_created' | 'entry_updated' | 'to_be_deleted_at'> & { old_rank: string })[] = [];
 
 	await bot.sendContainer(interaction, bot.createContainerPayload({
 		color: 'Grey',
@@ -31,14 +25,14 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	}));
 
 	for (const guard of personnel) {
-		const serverMember = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.members.fetch(guard.discordId).catch(async e => {
-			if (e.code !== 10007) errors.push(`- Error fetching ${guard.robloxUsername} (<@${guard.discordId}>): ${e}`);
-			else if (!guard.toBeDeletedAt) {
-				await bot.knex<personnelInfo>('personnel')
-					.update('toBeDeletedAt', unixNow() + 7 * 24 * 3600)
-					.where('robloxId', guard.robloxId);
+		const serverMember = await bot.guilds.cache.get(Bun.env.GUILD_ID)?.members.fetch(guard.discord_id).catch(async e => {
+			if (e.code !== 10007) errors.push(`- Error fetching ${guard.roblox_username} (<@${guard.discord_id}>): ${e}`);
+			else if (!guard.to_be_deleted_at) {
+				await bot.knex<Personnel>('personnel')
+					.update('to_be_deleted_at', unixNow() + 7 * 24 * 3600)
+					.where('roblox_id', guard.roblox_id);
 				
-				deletionLogs.push(`${guard.robloxUsername} (<@${guard.discordId}>) has been marked for termination in 7 days.`)
+				deletionLogs.push(`${guard.roblox_username} (<@${guard.discord_id}>) has been marked for termination in 7 days.`)
 			}
 
 			return null;
@@ -63,29 +57,29 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			continue;
 		}
 
-		if (rankRoleName === guard.acsdRank) continue;
+		if (rankRoleName === guard.acsd_rank) continue;
 
 		updates.push({
-			discordId: guard.discordId,
-			robloxId: guard.robloxId,
-			robloxUsername: guard.robloxUsername,
-			oldRank: guard.acsdRank,
-			acsdRank: rankRoleName
+			discord_id: guard.discord_id,
+			roblox_id: guard.roblox_id,
+			roblox_username: guard.roblox_username,
+			old_rank: guard.acsd_rank,
+			acsd_rank: rankRoleName
 		});
 	}
 
 	if (updates.length > 0) {
-		const updatesForQuery = updates.map(({ oldRank, ...neededEntries }) => neededEntries);
+		const updatesForQuery = updates.map(({ old_rank, ...neededEntries }) => neededEntries);
 
 		await bot.knex('personnel')
 			.insert(updatesForQuery)
-			.onConflict('discordId')
-			.merge(['acsdRank']);
+			.onConflict('discord_id')
+			.merge(['acsd_rank']);
 	}
 
 	const updateLog = updates.length === 0
 		? 'No rank updates have been made.'
-		: updates.map(u => `- ${u.robloxUsername} (<@${u.discordId}>): ${u.oldRank} => ${u.acsdRank}`).join('\n');
+		: updates.map(u => `- ${u.roblox_username} (<@${u.discord_id}>): ${u.old_rank} => ${u.acsd_rank}`).join('\n');
 
 	await bot.sendContainer(interaction, errors.length === 0 ? 'success' : 'warning', {
 		sections: [{

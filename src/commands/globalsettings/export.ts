@@ -1,6 +1,6 @@
 import { AttachmentBuilder, ChatInputCommandInteraction, FileBuilder, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { botSettingInfo } from '../../types/knex.ts';
+import type { BotSetting } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('export')
@@ -11,7 +11,7 @@ export const highRank = true;
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	const settings = await bot.knex<botSettingInfo>('botSettings').select('*');
+	const settings = await bot.knex<BotSetting>('bot_settings').select('*');
 
 	const buffer = Buffer.from(JSON.stringify(settings, null, 2), 'utf-8');
 

@@ -1,6 +1,6 @@
 import { type Interaction, TextChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { personnelInfo, trainingInfo } from '../types/knex.ts';
+import type { Personnel, Training } from '../types/knex.ts';
 import type { botCommand } from '../types/discord.ts';
 
 export async function execute(interaction: Interaction<'cached'>) {
@@ -20,13 +20,13 @@ export async function execute(interaction: Interaction<'cached'>) {
 
 	if (interaction.isChatInputCommand()) {
 		const args = [];
-		const commandUser = await bot.knex<personnelInfo>('personnel')
+		const commandUser = await bot.knex<Personnel>('personnel')
 			.select('*')
-			.where('discordId', interaction.user.id)
+			.where('discord_id', interaction.user.id)
 			.first();
 
 		if ((command.dev && interaction.user.id !== Bun.env.OWNER_ID)
-			|| (command.highRank && !(commandUser && bot.highRanks.includes(commandUser.acsdRank))))
+			|| (command.highRank && !(commandUser && bot.highRanks.includes(commandUser.acsd_rank))))
 				return await bot.sendContainer(interaction, 'accessDenied', 'You are not authorized to run this command.');
 
 		if (command.auth && !commandUser) return await bot.sendContainer(interaction, 'accessDenied', 'You are not registered in the ACSD database.');
@@ -46,15 +46,15 @@ export async function execute(interaction: Interaction<'cached'>) {
 
 			if (command.data.name !== 'schedule') {
 				const id = interaction.options.getString('training_id', true);
-				const training = await bot.knex<trainingInfo>('trainings')
+				const training = await bot.knex<Training>('trainings')
 					.select('*')
-					.where('trainingId', id)
+					.where('training_id', id)
 					.first();
 
 				if (!training)
 					return await bot.sendContainer(interaction, 'notFound', `No scheduled training with ID \`${id}\` has been found in the databsae.`)
 
-				const message = await channel.messages.fetch(training.messageId);
+				const message = await channel.messages.fetch(training.message_id);
 
 				args.push(training, message);
 			} else args.push(channel);

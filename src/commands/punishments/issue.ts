@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.ts';
-import type { personnelInfo, punishmentInfo } from '../../types/knex.ts';
+import type { Personnel, Punishment } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('issue')
@@ -34,7 +34,7 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const highRank = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
 	await interaction.deferReply();
 
 	const type = interaction.options.getString('type', true) as 'warn' | 'strike';
@@ -42,13 +42,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const member = interaction.options.getMember('server_member');
 	const playerUsername = interaction.options.getString('roblox_username');
 
-	let target: personnelInfo | undefined = cmdUser;
+	let target: Personnel | undefined = cmdUser;
 
-	if (member || playerUsername) target = await bot.knex<personnelInfo>('personnel')
+	if (member || playerUsername) target = await bot.knex<Personnel>('personnel')
 		.select('*')
 		.where(builder => {
-			if (member) builder.where('discordId', member.id);
-			else if (playerUsername) builder.where('robloxUsername', playerUsername);
+			if (member) builder.where('discord_id', member.id);
+			else if (playerUsername) builder.where('roblox_username', playerUsername);
 		})
 		.first();
 
@@ -56,18 +56,18 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const punishmentId = crypto.randomUUID();
 
-	await bot.knex<punishmentInfo>('punishments')
+	await bot.knex<Punishment>('punishments')
 		.insert({
-			punishmentId: punishmentId,
-			targetRbxId: target.robloxId,
-			execRbxId: cmdUser.robloxId,
-			punishmentType: type,
+			punishment_id: punishmentId,
+			target_rbx_id: target.roblox_id,
+			exec_rbx_id: cmdUser.roblox_id,
+			punishment_type: type,
 			reason: reason
 		});
 
 	let extra = '';
 
-	if (interaction.user.id !== target.discordId) await bot.users.send(target.discordId, bot.createContainerPayload({
+	if (interaction.user.id !== target.discord_id) await bot.users.send(target.discord_id, bot.createContainerPayload({
 		color: type === 'warn' ? 'Orange' : 'Red',
 		sections: [{
 			title: 'Punishment issued.',
@@ -83,7 +83,7 @@ Please review the information below. For any questions about this, please contac
 
 	await bot.sendContainer(interaction, 'success', {
 		sections: [{
-			description: `Successfully issued a ${type === 'warn' ? 'warning' : 'strike'} to ${target.robloxUsername}${extra}.`,
+			description: `Successfully issued a ${type === 'warn' ? 'warning' : 'strike'} to ${target.roblox_username}${extra}.`,
 			fields: [
 				{ name: 'Reason:', value: reason },
 				{ name: 'Punishment ID:', value: punishmentId }
@@ -94,8 +94,8 @@ Please review the information below. For any questions about this, please contac
 
 export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
 	const focusedValue = interaction.options.getFocused();
-	const choices = await bot.knex<personnelInfo>('personnel').select('*');
-	const filtered = choices.map(guard => guard.robloxUsername).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
+	const choices = await bot.knex<Personnel>('personnel').select('*');
+	const filtered = choices.map(guard => guard.roblox_username).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
 
 	await interaction.respond(filtered.map(choice => ({ name: choice, value: choice })).slice(0, 25));
 }

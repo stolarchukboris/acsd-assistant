@@ -1,92 +1,92 @@
-type uuidv4 = `${string}-${string}-${string}-${string}-${string}`;
+type UUIDv4 = `${string}-${string}-${string}-${string}-${string}`;
 
-export type trainingInfo = Readonly<{
-	trainingId: uuidv4;
-	hostDiscordId: string;
-	hostRobloxUsername: string;
-	messageId: string;
-	startingTimestamp: number;
-	isReminded: boolean;
-	isStarted: boolean;
+export type Training = Readonly<{
+	training_id: UUIDv4;
+	host_discord_id: string;
+	host_roblox_username: string;
+	message_id: string;
+	starting_timestamp: number;
+	is_reminded: boolean;
+	is_started: boolean;
 }>;
 
-export type botSettingInfo = {
-	readonly settingName: string;
-	readonly settingDesc: string;
-	settingValue: string;
-	lastUpdatedAt: string | Date;
-	lastUpdatedBy: string;
+export type BotSetting = {
+	readonly setting_name: string;
+	readonly setting_desc: string;
+	setting_value: string;
+	last_updated_at: string | Date;
+	last_updated_by: string;
 };
 
-export type activeShift = Readonly<{
-	jobId: uuidv4;
-	whMessageId: string;
-	fwMessageId: string;
-	robloxId: string;
-	startedTimestamp: number;
+export type ActiveShift = Readonly<{
+	job_id: UUIDv4;
+	wh_message_id: string;
+	fw_message_id: string;
+	roblox_id: string;
+	started_timestamp: number;
 }>;
 
-export type activeMShift = Readonly<{
-	shiftId: uuidv4;
-	discordId: string;
-	robloxId: string;
-	robloxUsername: string;
-	startedTimestamp: string;
+export type ActiveMShift = Readonly<{
+	shift_id: UUIDv4;
+	discord_id: string;
+	roblox_id: string;
+	roblox_username: string;
+	started_timestamp: string;
 }>;
 
-export type pendingShift = Readonly<activeShift & {
-	endedTimestamp: number;
-	lenMinutes: number;
+export type PendingShift = Readonly<ActiveShift & {
+	ended_timestamp: number;
+	len_minutes: number;
 }>;
 
-export type loggedShift = Readonly<{
-	shiftId: uuidv4;
-	robloxId: string;
-	startedTimestamp: number;
-	endedTimestamp: number;
-	lenMinutes: number;
+export type LoggedShift = Readonly<{
+	shift_id: UUIDv4;
+	roblox_id: string;
+	started_timestamp: number;
+	ended_timestamp: number;
+	len_minutes: number;
 	proof: string;
 }>;
 
-export type personnelInfo = Readonly<{
-	discordId: string;
-	robloxId: string;
-	robloxUsername: string;
-	acsdRank: string;
-	regApprovedBy: string;
-	entryCreated: string;
-	entryUpdated: string;
-	toBeDeletedAt?: number;
+export type Personnel = Readonly<{
+	discord_id: string;
+	roblox_id: string;
+	roblox_username: string;
+	acsd_rank: string;
+	reg_approved_by: string;
+	entry_created: string;
+	entry_updated: string;
+	to_be_deleted_at?: number;
 }>;
 
-export type pendingRegs = Readonly<{
-	robloxId: string;
-	discordId: string;
-	robloxUsername: string;
+export type PendingReg = Readonly<{
+	roblox_id: string;
+	discord_id: string;
+	roblox_username: string;
 	challenge: string;
-	entryCreated: number;
+	entry_created: number;
 }>;
 
-export type personnelCredits = Readonly<{
-	robloxId: string;
+export type Credits = Readonly<{
+	roblox_id: string;
 	amount: number;
 }>;
 
-export type creditTransaction = Readonly<{
-	transactionId: uuidv4;
-	execRbxId: string;
-	targetRbxId: string;
-	balanceBefore: number;
-	balanceAfter: number;
+export type CreditTransaction = Readonly<{
+	transaction_id: UUIDv4;
+	exec_rbx_id: string;
+	target_rbx_id: string;
+	balance_before: number;
+	balance_after: number;
 	reason: string;
-	createdAt: string;
+	created_at: string;
 }>;
 
-export type punishmentInfo = Readonly<{
-	punishmentId: uuidv4;
-	execRbxId: string;
-	targetRbxId: string;
-	punishmentType: 'warn' | 'strike';
+export type Punishment = Readonly<{
+	punishment_id: UUIDv4;
+	exec_rbx_id: string;
+	target_rbx_id: string;
+	punishment_type: 'warn' | 'strike';
 	reason: string;
-	createdAt: string;
+	created_at: string;
 }>;

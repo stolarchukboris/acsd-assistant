@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, TextChannel } from 'discord.js';
 import bot from '../../index.ts';
-import type { personnelInfo, trainingInfo } from '../../types/knex.ts';
+import type { Personnel, Training } from '../../types/knex.ts';
 import { fetchApi } from 'rozod';
 import { getGamesMultigetPlaceDetails } from 'rozod/endpoints/gamesv1';
 
@@ -41,20 +41,20 @@ export const data = new SlashCommandSubcommandBuilder()
 export const highRank = true;
 export const training = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo, channel: TextChannel, role: string) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel, channel: TextChannel, role: string) {
 	const time = interaction.options.getInteger('time', true);
-	const trainingAroundThisTime = await bot.knex<trainingInfo>('trainings')
+	const trainingAroundThisTime = await bot.knex<Training>('trainings')
 		.select('*')
-		.where('startingTimestamp', '>=', time - 3600)
-		.andWhere('startingTimestamp', '<=', time + 3600)
+		.where('starting_timestamp', '>=', time - 3600)
+		.andWhere('starting_timestamp', '<=', time + 3600)
 		.first();
 
 	if (trainingAroundThisTime) return await bot.sendContainer(interaction, bot.containers.error({
 		sections: [{
 			description: 'There is another scheduled or concluded training within an hour from this one.',
 			fields: [
-				{ name: 'Training ID:', value: trainingAroundThisTime.trainingId },
-				{ name: 'Starting:', value: `<t:${trainingAroundThisTime.startingTimestamp}>` }
+				{ name: 'Training ID:', value: trainingAroundThisTime.training_id },
+				{ name: 'Starting:', value: `<t:${trainingAroundThisTime.starting_timestamp}>` }
 			]
 		}]
 	}));
@@ -76,12 +76,12 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const gameName: string = gameResponse[0]!.name;
 	const trainingId = crypto.randomUUID();
 
-	await bot.knex<trainingInfo>('trainings')
+	await bot.knex<Training>('trainings')
 		.insert({
-			trainingId: trainingId,
-			hostDiscordId: cmdUser.discordId,
-			hostRobloxUsername: cmdUser.robloxUsername,
-			startingTimestamp: time
+			training_id: trainingId,
+			host_discord_id: cmdUser.discord_id,
+			host_roblox_username: cmdUser.roblox_username,
+			starting_timestamp: time
 		});
 
 	const sentAnns = await bot.sendContainer(channel, bot.createContainerPayload({
@@ -100,7 +100,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 If you are ready to attend this training, please react with ✅ below to confirm your attendance.
 **You react you attend.**`,
-			fields: [{ name: 'Training host:', value: `${cmdUser.acsdRank} ${cmdUser.robloxUsername} (<@${cmdUser.discordId}>)` },
+			fields: [{ name: 'Training host:', value: `${cmdUser.acsd_rank} ${cmdUser.roblox_username} (<@${cmdUser.discord_id}>)` },
 			{ name: 'Details:', value: `\nAttendance minimum: ${minAttend}\n${maxAttend ? `Attendance maximum: ${maxAttend}\n` : ''}${duration ? `Training duration: ${duration}\n` : ''}` },
 			{ name: 'Training ID:', value: trainingId },
 			...(comment ? [{ name: 'Note from host:', value: comment }] : [])]
@@ -110,7 +110,7 @@ If you are ready to attend this training, please react with ✅ below to confirm
 	await sentAnns.react('✅');
 	await channel.send(gameUrl);
 
-	await bot.knex<trainingInfo>('trainings')
+	await bot.knex<Training>('trainings')
 		.update('messageId', sentAnns.id)
 		.where('trainingId', trainingId);
 

@@ -1,6 +1,6 @@
 import { Message, TextChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { personnelInfo, activeMShift, activeShift } from '../types/knex.ts';
+import type { Personnel, ActiveMShift, ActiveShift } from '../types/knex.ts';
 import { fetchApi, isAnyErrorResponse } from 'rozod';
 import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
 import { serverCache } from '../utils/worker.ts';
@@ -22,16 +22,16 @@ export async function execute(message: Message) {
 		let existingShift; let existingMShift;
 
 		await bot.knex.transaction(async trx => {
-			existingMShift = await trx<activeMShift>('activeMShifts')
+			existingMShift = await trx<ActiveMShift>('active_m_shifts')
 				.select('*')
-				.where('robloxId', userId)
+				.where('roblox_id', userId)
 				.first();
 
 			if (existingMShift) return await message.react('🟥');
 
-			existingShift = await trx<activeShift>('activeShifts')
+			existingShift = await trx<ActiveShift>('active_shifts')
 				.select('*')
-				.where('robloxId', userId)
+				.where('roblox_id', userId)
 				.first();
 		})
 
@@ -42,11 +42,11 @@ export async function execute(message: Message) {
 		if (!jobId) throw new Error('⚠️ Could not retrieve Roblox Job ID from the embed.');
 
 		if (existingShift) {
-			await bot.knex<activeShift>('activeShifts')
+			await bot.knex<ActiveShift>('active_shifts')
 				.update({
-					jobId: jobId,
-					whMessageId: message.id,
-					fwMessageId: forwarded.id
+					job_id: jobId,
+					wh_message_id: message.id,
+					fw_message_id: forwarded.id
 				})
 				.where('robloxId', userId);
 
@@ -73,20 +73,20 @@ export async function execute(message: Message) {
 
 		if (!serverFound) return await message.react('🟥');
 
-		const existingPlayer = await bot.knex<personnelInfo>('personnel')
+		const existingPlayer = await bot.knex<Personnel>('personnel')
 			.select('*')
-			.where('robloxId', userId)
+			.where('roblox_id', userId)
 			.first();
 
 		if (!existingPlayer) return await message.react('🟥');
 
-		await bot.knex<activeShift>('activeShifts')
+		await bot.knex<ActiveShift>('active_shifts')
 			.insert({
-				jobId: jobId,
-				whMessageId: message.id,
-				fwMessageId: forwarded.id,
-				robloxId: userId,
-				startedTimestamp: startTime ?? Math.floor(message.createdTimestamp / 1000)
+				job_id: jobId,
+				wh_message_id: message.id,
+				fw_message_id: forwarded.id,
+				roblox_id: userId,
+				started_timestamp: startTime ?? Math.floor(message.createdTimestamp / 1000)
 			});
 
 		await message.react('🟦');

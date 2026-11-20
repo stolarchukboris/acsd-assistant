@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, Message, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { personnelInfo, trainingInfo } from '../../types/knex.ts';
+import type { Personnel, Training } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('cancel')
@@ -22,18 +22,18 @@ export const data = new SlashCommandSubcommandBuilder()
 export const highRank = true;
 export const training = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo, training: trainingInfo, annsMessage: Message, role: string) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, _cmdUser: Personnel, training: Training, annsMessage: Message, role: string) {
 	const reason = interaction.options.getString('reason', true);
 
-	await bot.knex<trainingInfo>('trainings')
+	await bot.knex<Training>('trainings')
 		.del()
-		.where('trainingId', training.trainingId);
+		.where('trainingId', training.training_id);
 
 	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Red',
 		allowedMentions: { parse: ['roles'] },
 		sections: [{
-			title: `${training.hostRobloxUsername}'s scheduled training has been cancelled.`,
+			title: `${training.host_roblox_username}'s scheduled training has been cancelled.`,
 			description: `<@&${role}>\nThe training session is cancelled. Sorry for the inconvenience!`,
 			thumbnailUrl: bot.logos.cross,
 			fields: [{ name: 'Reason:', value: reason }]

@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import bot from '../index.ts';
-import type { pendingRegs, personnelInfo } from '../types/knex.ts';
+import type { PendingReg, Personnel } from '../types/knex.ts';
 import { fetchApi } from 'rozod';
 import { postUsernamesUsers } from 'rozod/endpoints/usersv1';
 import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
@@ -28,28 +28,28 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const username = interaction.options.getString('roblox_username', true);
 
-	const existingRequest = await bot.knex<pendingRegs>('pendingRegs')
+	const existingRequest = await bot.knex<PendingReg>('pending_regs')
 		.select('*')
-		.where('discordId', interaction.user.id)
+		.where('discord_id', interaction.user.id)
 		.first();
 
 	if (existingRequest) {
 		const user = await fetchApi(getCloudV2UsersUserId, {
-			user_id: existingRequest.robloxId
+			user_id: existingRequest.roblox_id
 		}, { throwOnError: true });
 
-		await bot.knex<pendingRegs>('pendingRegs').del().where('discordId', interaction.user.id);
+		await bot.knex<PendingReg>('pending_regs').del().where('discord_id', interaction.user.id);
 
 		if (!user.about?.includes(existingRequest.challenge)) return await bot.sendContainer(interaction, 'error',
 			'Incorrect code in profile bio. Verification aborted, please try again.'
 		)
 
-		await bot.knex<personnelInfo>('personnel')
+		await bot.knex<Personnel>('personnel')
 			.insert({
-				robloxId: user.id,
-				discordId: interaction.user.id,
-				robloxUsername: user.name,
-				acsdRank: 'Recruit'
+				roblox_id: user.id,
+				discord_id: interaction.user.id,
+				roblox_username: user.name,
+				acsd_rank: 'Recruit'
 			});
 
 		await interaction.member.roles.add(role);
@@ -58,18 +58,18 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 You may now remove the code from your bio.`);
 	}
 
-	const existingDiscord = await bot.knex<personnelInfo>('personnel')
+	const existingDiscord = await bot.knex<Personnel>('personnel')
 		.select('*')
-		.where('discordId', interaction.user.id)
+		.where('discord_id', interaction.user.id)
 		.first();
-	const existingRoblox = await bot.knex<personnelInfo>('personnel')
+	const existingRoblox = await bot.knex<Personnel>('personnel')
 		.select('*')
-		.where('robloxUsername', username)
+		.where('roblox_username', username)
 		.first();
 
 	if (existingRoblox || existingDiscord) return await bot.sendContainer(interaction, 'error', existingRoblox
-		? `<@${existingRoblox.discordId}> is already registered as ${existingRoblox.robloxUsername} (${existingRoblox.robloxId}).`
-		: `You are already registered as ${existingDiscord?.robloxUsername} (${existingDiscord?.robloxId}).`);
+		? `<@${existingRoblox.discord_id}> is already registered as ${existingRoblox.roblox_id} (${existingRoblox.roblox_id}).`
+		: `You are already registered as ${existingDiscord?.roblox_username} (${existingDiscord?.roblox_id}).`);
 
 	const responseUsernamesData = await fetchApi(postUsernamesUsers, {
 		body: {
@@ -83,8 +83,6 @@ You may now remove the code from your bio.`);
 
 	if (!userId) return await bot.sendContainer(interaction, 'error', `A user named \`${username}\` is banned or does not exist.`);
 
-	const responseUser = await fetchApi(getCloudV2UsersUserId, { user_id: `${userId}` }, { throwOnError: true });
-
 	const challengeWords = ['bright', 'rusty', 'quantum', 'shadow', 'breeze', 'pixel', 'forge', 'anchor', 'cyber', 'cloud'] as const;
 	const selectedWords: string[] = [];
 
@@ -92,13 +90,13 @@ You may now remove the code from your bio.`);
 
 	const challengeString = `${selectedWords.join('-')}-${randomUUID().split('-')[2]}`;
 
-	await bot.knex<pendingRegs>('pendingRegs')
+	await bot.knex<PendingReg>('pending_regs')
 		.insert({
-			robloxId: `${userId}`,
-			discordId: interaction.user.id,
-			robloxUsername: normalizedUsername,
+			roblox_id: `${userId}`,
+			discord_id: interaction.user.id,
+			roblox_username: normalizedUsername,
 			challenge: challengeString,
-			entryCreated: unixNow()
+			entry_created: unixNow()
 		});
 
 	await bot.sendContainer(interaction, bot.createContainerPayload({

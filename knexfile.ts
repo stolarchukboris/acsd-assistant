@@ -1,20 +1,4 @@
 import type { Knex } from "knex";
-import camelCase from "lodash.camelcase";
-import snakeCase from "lodash.snakecase";
-
-function convertKeysToCamel(obj: any): any {
-	if (obj === null || typeof obj !== 'object' || obj instanceof Date) {
-		return obj;
-	}
-	if (Array.isArray(obj)) {
-		return obj.map(convertKeysToCamel);
-	}
-	return Object.keys(obj).reduce((acc, key) => {
-		acc[camelCase(key)] = convertKeysToCamel(obj[key]);
-		return acc;
-	}, {} as any);
-}
-
 
 const config: { [key: string]: Knex.Config } = {
 	development: {
@@ -36,15 +20,6 @@ const config: { [key: string]: Knex.Config } = {
 			directory: "./database/migrations",
 			extension: "ts",
 			loadExtensions: ['.ts']
-		},
-
-		wrapIdentifier: (value, origImpl) => {
-			if (value === "*") return origImpl(value);
-			return origImpl(snakeCase(value));
-		},
-
-		postProcessResponse: result => {
-			return convertKeysToCamel(result);
 		}
 	}
 };

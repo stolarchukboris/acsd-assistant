@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, Message, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { personnelInfo, trainingInfo } from '../../types/knex.ts';
+import type { Personnel, Training } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('start')
@@ -20,31 +20,31 @@ export const data = new SlashCommandSubcommandBuilder()
 export const highRank = true;
 export const training = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, __cmdUser: personnelInfo, training: trainingInfo, annsMessage: Message, role: string) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, _cmdUser: Personnel, training: Training, annsMessage: Message, role: string) {
 	const join = interaction.options.getString('join');
 
-	await bot.knex<trainingInfo>('trainings')
-		.update('isStarted', true)
-		.where('trainingId', training.trainingId);
+	await bot.knex<Training>('trainings')
+		.update('is_started', true)
+		.where('training_id', training.training_id);
 
 	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Green',
 		allowedMentions: { parse: ['roles'] },
 		sections: [{
-			title: `${training.hostRobloxUsername}'s scheduled training is starting now!`,
+			title: `${training.host_roblox_username}'s scheduled training is starting now!`,
 			description: `<@&${role}>\nThe training is commencing, attendees can join the training server.
 Remember to follow the training rules and show your best!
 
 **You have a few minutes to join the server before it gets locked.**
 ${join ? `## Join the training: ${join}` : ''}`,
-			fields: [{ name: 'Training ID:', value: training.trainingId }]
+			fields: [{ name: 'Training ID:', value: training.training_id }]
 		}]
 	}));
 
 	await bot.sendContainer(interaction, 'success', {
 		sections: [{
 			description: 'Successfully started the training.',
-			fields: [{ name: 'Training ID:', value: training.trainingId }]
+			fields: [{ name: 'Training ID:', value: training.training_id }]
 		}]
 	});
 }

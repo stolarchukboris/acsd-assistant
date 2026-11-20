@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, Message, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { personnelInfo, trainingInfo } from '../../types/knex.ts';
+import type { Personnel, Training } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('conclude')
@@ -21,24 +21,24 @@ export const data = new SlashCommandSubcommandBuilder()
 export const highRank = true;
 export const training = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, __cmdUser: personnelInfo, training: trainingInfo, annsMessage: Message) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, _cmdUser: Personnel, training: Training, annsMessage: Message) {
 	const comment = interaction.options.getString('comment');
 
-	if (!training.isStarted) return await bot.sendContainer(interaction, 'error', {
+	if (!training.is_started) return await bot.sendContainer(interaction, 'error', {
 		sections: [{
 			description: 'This training has not been started yet.',
-			fields: [{ name: 'Training ID:', value: training.trainingId }]
+			fields: [{ name: 'Training ID:', value: training.training_id }]
 		}]
 	});
 
-	await bot.knex<trainingInfo>('trainings')
+	await bot.knex<Training>('trainings')
 		.del()
-		.where('trainingId', training.trainingId);
+		.where('trainingId', training.training_id);
 
 	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Grey',
 		sections: [{
-			title: `${training.hostRobloxUsername}'s training has been concluded.`,
+			title: `${training.host_roblox_username}'s training has been concluded.`,
 			description: 'The training is over. Thanks to those who have attended!',
 			fields: comment ? [{ name: 'Comment from host:', value: comment }] : []
 		}]

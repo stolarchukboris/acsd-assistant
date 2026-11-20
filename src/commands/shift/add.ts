@@ -1,6 +1,6 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { loggedShift, personnelInfo } from '../../types/knex.ts';
+import type { LoggedShift, Personnel } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('add')
@@ -33,7 +33,7 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const highRank = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
 	await interaction.deferReply();
 
 	const minutes = interaction.options.getInteger('minutes', true);
@@ -42,13 +42,13 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const member = interaction.options.getMember('server_member');
 	const playerUsername = interaction.options.getString('roblox_username');
 
-	let target: personnelInfo | undefined = cmdUser;
+	let target: Personnel | undefined = cmdUser;
 
-	if (member || playerUsername) target = await bot.knex<personnelInfo>('personnel')
+	if (member || playerUsername) target = await bot.knex<Personnel>('personnel')
 		.select('*')
 		.where(builder => {
-			if (member) builder.where('discordId', member.id);
-			else if (playerUsername) builder.where('robloxUsername', playerUsername);
+			if (member) builder.where('discord_id', member.id);
+			else if (playerUsername) builder.where('roblox_username', playerUsername);
 		})
 		.first();
 
@@ -56,19 +56,19 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const id = crypto.randomUUID();
 
-	await bot.knex<loggedShift>('loggedShifts')
+	await bot.knex<LoggedShift>('loggedShifts')
 		.insert({
-			shiftId: id,
-			robloxId: target.robloxId,
-			startedTimestamp: startTime,
-			endedTimestamp: startTime + minutes * 60,
-			lenMinutes: minutes,
+			shift_id: id,
+			roblox_id: target.roblox_id,
+			started_timestamp: startTime,
+			ended_timestamp: startTime + minutes * 60,
+			len_minutes: minutes,
 			proof: reason
 		});
 
 	await bot.sendContainer(interaction, 'success', {
 		sections: [{
-			description: `Successfully added ${minutes} minutes to ${target.robloxUsername}'s stats.`,
+			description: `Successfully added ${minutes} minutes to ${target.roblox_username}'s stats.`,
 			fields: [
 				{ name: 'Shift ID:', value: id },
 				{ name: 'Reason:', value: reason }
@@ -79,8 +79,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
 	const focusedValue = interaction.options.getFocused();
-	const choices = await bot.knex<personnelInfo>('personnel').select('*');
-	const filtered = choices.map(guard => guard.robloxUsername).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
+	const choices = await bot.knex<Personnel>('personnel').select('*');
+	const filtered = choices.map(guard => guard.roblox_username).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
 
 	await interaction.respond(filtered.map(choice => ({ name: choice, value: choice })).slice(0, 25));
 }

@@ -1,6 +1,6 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { botSettingInfo, personnelInfo } from '../../types/knex.ts';
+import type { BotSetting, Personnel } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('update')
@@ -19,7 +19,7 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const highRank = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
 	await interaction.deferReply();
 
 	const settingNameForUpdate = interaction.options.getString('setting', true);
@@ -28,23 +28,23 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (!existingSetting) return await bot.sendContainer(interaction, 'notFound', `Setting with name \`${settingNameForUpdate}\` does not exist.`);
 
-	const oldValue = existingSetting.settingValue;
+	const oldValue = existingSetting.setting_value;
 
 	if (oldValue === newValue) return await bot.sendContainer(interaction, 'warning',
 		'The value you have provided is already set. No changes have been made.');
 
-	await bot.knex<botSettingInfo>('botSettings')
+	await bot.knex<BotSetting>('bot_settings')
 		.update({
-			settingValue: newValue,
-			lastUpdatedBy: cmdUser.discordId
+			setting_value: newValue,
+			last_updated_by: cmdUser.discord_id
 		})
 		.where('settingName', settingNameForUpdate);
 
 	bot.botSettings.set(settingNameForUpdate, {
 		...existingSetting,
-		settingValue: newValue,
-		lastUpdatedBy: cmdUser.discordId,
-		lastUpdatedAt: new Date()
+		setting_value: newValue,
+		last_updated_by: cmdUser.discord_id,
+		last_updated_at: new Date()
 	});
 
 	await bot.sendContainer(interaction, 'success', {
@@ -60,7 +60,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
 	const focusedValue = interaction.options.getFocused();
-	const choices = bot.botSettings.map(setting => ({ name: setting.settingDesc, value: setting.settingName }));
+	const choices = bot.botSettings.map(setting => ({ name: setting.setting_desc, value: setting.setting_name }));
 	const filtered = choices.filter(choice => choice.name.toLowerCase().includes(focusedValue.toLowerCase()));
 
 	await interaction.respond(filtered);

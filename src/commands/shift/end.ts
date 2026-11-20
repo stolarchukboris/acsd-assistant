@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { activeMShift, activeShift, loggedShift, personnelInfo } from '../../types/knex.ts';
+import type { ActiveMShift, ActiveShift, LoggedShift, Personnel } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('end')
@@ -16,25 +16,25 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const auth = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
 	await interaction.deferReply();
 
 	const now = unixNow();
 	const existingShift =
-		await bot.knex<activeShift>('activeShifts')
+		await bot.knex<ActiveShift>('active_shifts')
 			.select('*')
-			.where('robloxId', cmdUser.robloxId)
+			.where('roblox_id', cmdUser.roblox_id)
 			.first()
-		?? await bot.knex<activeMShift>('activeMShifts')
+		?? await bot.knex<ActiveMShift>('active_m_shifts')
 			.select('*')
-			.where('robloxId', cmdUser.robloxId)
+			.where('roblox_id', cmdUser.roblox_id)
 			.first();
 
 	if (!existingShift) return await bot.sendContainer(interaction, 'notFound', `You don't have an active shift.`);
 
-	const startedTimestamp = 'shiftId' in existingShift
-		? Math.floor(Date.parse(existingShift.startedTimestamp) / 1000)
-		: Number(existingShift.startedTimestamp);
+	const startedTimestamp = 'shift_id' in existingShift
+		? Math.floor(Date.parse(existingShift.started_timestamp) / 1000)
+		: Number(existingShift.started_timestamp);
 
 	if (now - startedTimestamp < 300) return await bot.sendContainer(interaction, 'error',
 		'Your shift is less than 5 minutes in length. If you would like to cancel it, use the `/shift cancel` command.');
@@ -48,17 +48,17 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const length = Math.round((now - startedTimestamp) / 60);
 
 	await bot.knex.transaction(async trx => {
-		await trx<activeMShift | activeShift>('shiftId' in existingShift ? 'activeMShifts' : 'activeShifts')
+		await trx<ActiveMShift | ActiveShift>('shift_id' in existingShift ? 'active_m_shifts' : 'active_shifts')
 			.del()
-			.where('robloxId', cmdUser.robloxId);
+			.where('roblox_id', cmdUser.roblox_id);
 
-		await trx<loggedShift>('loggedShifts')
+		await trx<LoggedShift>('loggedShifts')
 			.insert({
-				shiftId: 'shiftId' in existingShift ? existingShift.shiftId : crypto.randomUUID(),
-				robloxId: cmdUser.robloxId,
-				startedTimestamp: startedTimestamp,
-				endedTimestamp: now,
-				lenMinutes: length,
+				shift_id: 'shift_id' in existingShift ? existingShift.shift_id : crypto.randomUUID(),
+				roblox_id: cmdUser.roblox_id,
+				started_timestamp: startedTimestamp,
+				ended_timestamp: now,
+				len_minutes: length,
 				proof: (attach?.url ?? url)!
 			});
 	});

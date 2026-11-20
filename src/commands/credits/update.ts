@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder, AutocompleteInteraction } from 'discord.js';
 import bot from '../../index.ts';
-import type { creditTransaction, personnelCredits, personnelInfo } from '../../types/knex.ts';
+import type { CreditTransaction, Credits, Personnel } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('update')
@@ -40,7 +40,7 @@ export const data = new SlashCommandSubcommandBuilder()
 
 export const highRank = true;
 
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: personnelInfo) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
 	await interaction.deferReply();
 
 	const action = interaction.options.getString('action', true);
@@ -51,21 +51,21 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const playerUsername = interaction.options.getString('roblox_username');
 	const reason = interaction.options.getString('reason', true);
 
-	let target: personnelInfo | undefined = cmdUser;
+	let target: Personnel | undefined = cmdUser;
 
-	if (member || playerUsername) target = await bot.knex<personnelInfo>('personnel')
+	if (member || playerUsername) target = await bot.knex<Personnel>('personnel')
 		.select('*')
 		.where(builder => {
-			if (member) builder.where('discordId', member.id);
-			else if (playerUsername) builder.where('robloxUsername', playerUsername);
+			if (member) builder.where('discord_id', member.id);
+			else if (playerUsername) builder.where('roblox_username', playerUsername);
 		})
 		.first();
 
 	if (!target) return await bot.sendContainer(interaction, 'notFound', `${member ?? playerUsername} is not registered in the ACSD database.`);
 
-	const credits = await bot.knex<personnelCredits>('credits')
+	const credits = await bot.knex<Credits>('credits')
 		.select('*')
-		.where('robloxId', target.robloxId)
+		.where('robloxId', target.roblox_id)
 		.first();
 	const newCredits = action === 'set'
 		? amount
@@ -86,33 +86,33 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const transactionId = crypto.randomUUID();
 
 	await bot.knex.transaction(async trx => {
-		await trx<creditTransaction>('creditTransactions')
+		await trx<CreditTransaction>('credit_transactions')
 			.insert({
-				transactionId: transactionId,
-				execRbxId: cmdUser.robloxId,
-				targetRbxId: target.robloxId,
-				balanceBefore: credits?.amount ?? 0,
-				balanceAfter: newCredits,
+				transaction_id: transactionId,
+				exec_rbx_id: cmdUser.roblox_id,
+				target_rbx_id: target.roblox_id,
+				balance_before: credits?.amount ?? 0,
+				balance_after: newCredits,
 				reason: reason
 			});
 
-		await trx<personnelCredits>('credits')
+		await trx<Credits>('credits')
 			.insert({
-				robloxId: target.robloxId,
+				roblox_id: target.roblox_id,
 				amount: newCredits
 			})
-			.onConflict('robloxId')
+			.onConflict('roblox_id')
 			.merge({ amount: action === 'set' ? amount : bot.knex.raw('credits.amount + ?', [amount]) });
 
-		await trx<personnelCredits>('credits')
+		await trx<Credits>('credits')
 			.del()
-			.where('robloxId', target.robloxId)
+			.where('roblox_id', target.roblox_id)
 			.andWhere('amount', 0);
 	});
 
 	let extra = '';
 
-	if (interaction.user.id !== target.discordId) await bot.users.send(target.discordId, bot.createContainerPayload({
+	if (interaction.user.id !== target.discord_id) await bot.users.send(target.discord_id, bot.createContainerPayload({
 		color: delta > 0 ? 'Green' : 'Red',
 		sections: [{
 			title: `Credits ${delta > 0 ? 'added' : 'subtracted'}.`,
@@ -129,7 +129,7 @@ For any questions about this, please contact the ACSD administration.`,
 
 	await bot.sendContainer(interaction, 'success', {
 		sections: [{
-			description: `Successfully updated ${target.robloxUsername}'s balance${extra}.`,
+			description: `Successfully updated ${target.roblox_username}'s balance${extra}.`,
 			fields: [
 				{ name: 'Before:', value: `${credits?.amount ?? 0}` },
 				{ name: 'After:', value: `${newCredits}` },
@@ -142,8 +142,8 @@ For any questions about this, please contact the ACSD administration.`,
 
 export async function autocomplete(interaction: AutocompleteInteraction<'cached'>) {
 	const focusedValue = interaction.options.getFocused();
-	const choices = await bot.knex<personnelInfo>('personnel').select('*');
-	const filtered = choices.map(guard => guard.robloxUsername).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
+	const choices = await bot.knex<Personnel>('personnel').select('*');
+	const filtered = choices.map(guard => guard.roblox_username).filter(choice => choice.toLowerCase().includes(focusedValue.toLowerCase()));
 
 	await interaction.respond(filtered.map(choice => ({ name: choice, value: choice })).slice(0, 25));
 }

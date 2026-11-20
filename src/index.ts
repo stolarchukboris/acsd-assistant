@@ -3,7 +3,7 @@ import * as Discord from 'discord.js';
 import { bundledCommands, bundledEvents } from './regManifest.ts';
 import knex, { Knex } from 'knex';
 import type { botCommand, botEvent } from './types/discord.ts';
-import type { botSettingInfo } from './types/knex.ts';
+import type { BotSetting } from './types/knex.ts';
 import { configureServer, fetchApi, fetchApiOperation } from 'rozod';
 import { getUsersAuthenticated } from 'rozod/endpoints/usersv1';
 import { join } from 'path';
@@ -16,7 +16,7 @@ import type { SettingTypeMap } from './types/misc.ts'
 class Bot extends Discord.Client {
 	public name = 'ACSD Assistant';
 
-	public botSettings = new Discord.Collection<string, botSettingInfo>();
+	public botSettings = new Discord.Collection<string, BotSetting>();
 	public commands = new Discord.Collection<string, botCommand<Discord.SlashCommandBuilder>>();
 	public subcommands = new Discord.Collection<string, botCommand<Discord.SlashCommandSubcommandBuilder>>();
 	public apiCommands: Discord.RESTPostAPIApplicationCommandsJSONBody[] = [];
@@ -133,7 +133,7 @@ class Bot extends Discord.Client {
 	public getSetting<K extends keyof SettingTypeMap>(name: string, type: K, interaction?: Discord.RepliableInteraction<'cached'>): SettingTypeMap[K] | Promise<SettingTypeMap[K] | Discord.Message<true>> {
 		const setting = this.botSettings.get(name);
 
-		if (!setting || setting.settingValue.trim() === '') {
+		if (!setting || setting.setting_value.trim() === '') {
 			const message = `Setting ${name} is not configured.`;
 
 			if (interaction) return this.sendContainer(interaction, 'error', message);
@@ -141,7 +141,7 @@ class Bot extends Discord.Client {
 		}
 
 		if (type === 'number') {
-			const num = Number(setting.settingValue);
+			const num = Number(setting.setting_value);
 
 			if (Number.isNaN(num)) {
 				const message = `Setting ${name} must be a valid number.`;
@@ -153,7 +153,7 @@ class Bot extends Discord.Client {
 			return num as SettingTypeMap[K];
 		}
 
-		return setting.settingValue as SettingTypeMap[K];
+		return setting.setting_value as SettingTypeMap[K];
 	}
 
 	public async getRobloxPfp(robloxId: string) {
@@ -326,10 +326,10 @@ class Bot extends Discord.Client {
 
 		this.logger.log(`Connected to database successfully.`);
 
-		const settings = await this.knex<botSettingInfo>('botSettings')
+		const settings = await this.knex<BotSetting>('bot_settings')
 			.select('*');
 
-		settings.forEach(setting => this.botSettings.set(setting.settingName, setting));
+		settings.forEach(setting => this.botSettings.set(setting.setting_name, setting));
 	}
 
 	private async initRoblox() {

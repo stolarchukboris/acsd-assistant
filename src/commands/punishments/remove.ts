@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
-import type { personnelInfo, punishmentInfo } from '../../types/knex.ts';
+import type { Personnel, Punishment } from '../../types/knex.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('remove')
@@ -25,25 +25,25 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const id = interaction.options.getString('punishment_id', true);
 	const reason = interaction.options.getString('reason');
-	const existingPunishment = await bot.knex<punishmentInfo>('punishments')
+	const existingPunishment = await bot.knex<Punishment>('punishments')
 		.select('*')
-		.where('punishmentId', id)
+		.where('punishment_id', id)
 		.first();
 
 	if (!existingPunishment) return await bot.sendContainer(interaction, 'notFound', `No punishment with ID \`${id}\` has been found in the database.`);
 
-	const target = await bot.knex<personnelInfo>('personnel')
+	const target = await bot.knex<Personnel>('personnel')
 		.select('*')
-		.where('robloxId', existingPunishment.targetRbxId)
+		.where('roblox_id', existingPunishment.target_rbx_id)
 		.first();
 
-	await bot.knex<punishmentInfo>('punishments')
+	await bot.knex<Punishment>('punishments')
 		.del()
-		.where('punishmentId', id);
+		.where('punishment_id', id);
 
 	let extra = '';
 
-	if (target && (interaction.user.id !== target.discordId)) await bot.users.send(target.discordId, bot.createContainerPayload({
+	if (target && (interaction.user.id !== target.discord_id)) await bot.users.send(target.discord_id, bot.createContainerPayload({
 		color: 'Green',
 		sections: [{
 			title: 'Punishment removed.',
@@ -60,7 +60,7 @@ Please review the information below. For any questions about this, please contac
 
 	await bot.sendContainer(interaction, 'success', {
 		sections: [{
-			description: `Successfully removed ${target ? `${target.robloxUsername}'s` : 'the'} punishment${extra}.`,
+			description: `Successfully removed ${target ? `${target.roblox_username}'s` : 'the'} punishment${extra}.`,
 			fields: [
 				{ name: 'Original punishment reason:', value: existingPunishment.reason },
 				...(reason ? [{ name: 'Punishment removal reason:', value: reason }] : []),
