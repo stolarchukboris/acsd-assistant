@@ -24,7 +24,7 @@ const config: { [key: string]: Knex.Config } = {
 			port: Bun.env.DB_PORT,
 			user: Bun.env.DB_USER,
 			password: Bun.env.DB_PASS,
-			database: Bun.env.DB_NAME,
+			database: Bun.env.DB_NAME
 		},
 
 		pool: {

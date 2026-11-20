@@ -289,6 +289,26 @@ class Bot extends Discord.Client {
 		if (!(Bun.env.DB_HOST && Bun.env.DB_NAME && Bun.env.DB_PASS && Bun.env.DB_PORT && Bun.env.DB_USER))
 			throw new Error('Database connection credentials missing in env.');
 
+		const adminKnex = knex({
+			client: 'pg',
+			connection: {
+				host: Bun.env.DB_HOST,
+				port: Bun.env.DB_PORT,
+				user: Bun.env.DB_USER,
+				password: Bun.env.DB_PASS,
+				database: 'postgres'
+			}
+		});
+
+		const { rows } = await adminKnex.raw(
+			"SELECT 1 FROM pg_database WHERE datname = ?",
+			[process.env.DB_NAME]
+		);
+
+		if (rows.length === 0) await adminKnex.raw(`CREATE DATABASE ??`, [process.env.DB_NAME]);
+
+		await adminKnex.destroy();
+
 		this.knex = knex(config['development'] as any);
 
 		this.logger.log('Starting database migrations...');
