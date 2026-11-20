@@ -293,7 +293,7 @@ class Bot extends Discord.Client {
 			client: 'pg',
 			connection: {
 				host: Bun.env.DB_HOST,
-				port: Bun.env.DB_PORT,
+				port: parseInt(Bun.env.DB_PORT),
 				user: Bun.env.DB_USER,
 				password: Bun.env.DB_PASS,
 				database: 'postgres'

@@ -93,6 +93,8 @@ export async function execute(message: Message) {
 	} catch (error) {
 		bot.logger.error(error);
 
+		if (error instanceof Error && error.message.toLowerCase().includes('setting')) return;
+
 		await message.react('❌');
 	}
 }

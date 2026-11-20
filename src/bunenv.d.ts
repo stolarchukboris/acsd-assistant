@@ -14,16 +14,17 @@ declare module "bun" {
 		DB_HOST: string;
 		DB_PASS: string;
 		DB_USER: string;
-		DB_PORT: number;
+		DB_PORT: string;
 		DB_NAME: string;
 
-		MODE: string;
+		MODE: string?;
+		ENABLE_BACKGROUND_WORKERS: string?;
 
-		MAX_LOG_FILE_SIZE_MEGABYTES: number;
+		MAX_LOG_FILE_SIZE_MEGABYTES: string?;
 
-		DEV_SHIFT_LOGS_CH_ID: string;
-		DEV_WEBHOOK_ID: string;
-		DEV_GUILD_ID: string;
-		DEV_TEST_PLACE_ID: string;
+		DEV_SHIFT_LOGS_CH_ID: string?;
+		DEV_WEBHOOK_ID: string?;
+		DEV_GUILD_ID: string?;
+		DEV_TEST_PLACE_ID: string?;
 	}
 }

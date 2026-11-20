@@ -31,7 +31,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 
 			for (const shift of unfinishedShifts) {
 				const message = shift.whMessageId.includes('d')
-					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(shift.whMessageId.slice(0, -1))
+					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID!) as TextChannel).messages.fetch(shift.whMessageId.slice(0, -1))
 					: await (bot.channels.cache.get(bot.getSetting<'string'>('shift_logs_ch_id', 'string')) as TextChannel).messages.fetch(shift.whMessageId);
 				const [started, ended] = [Math.floor(message.createdTimestamp / 1000), unixNow()];
 				const lengthMins = Math.round((ended - started) / 60);
@@ -79,6 +79,8 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 		await newMessage.react('🟨');
 	} catch (error) {
 		bot.logger.error(error);
+
+		if (error instanceof Error && error.message.toLowerCase().includes('setting')) return;
 
 		await newMessage.react('❌');
 	}

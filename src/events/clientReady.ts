@@ -9,6 +9,10 @@ export async function execute(client: Client<true>) {
 
 	client.user.setPresence({ activities: [{ name: Bun.env.MODE === 'DEV' ? '⚠️ development mode, beware of bugs and crashes' : '<-- stupid clanker', type: ActivityType.Custom }] });
 
+	const enabled = Bun.env.ENABLE_BACKGROUND_WORKERS === '1';
+
+	if (!enabled) return;
+
 	async function mainLoop() {
 		while (true) {
 			try {

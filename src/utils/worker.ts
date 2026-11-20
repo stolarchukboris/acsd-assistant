@@ -47,7 +47,7 @@ export async function managePendingLogs() {
 		for (const log of userLogs) {
 			try {
 				const message = log.whMessageId.includes('d')
-					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID) as TextChannel).messages.fetch(log.whMessageId.slice(0, -1))
+					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID!) as TextChannel).messages.fetch(log.whMessageId.slice(0, -1))
 					: await (bot.channels.cache.get(bot.getSetting<'string'>('shift_logs_ch_id', 'string')) as TextChannel).messages.fetch(log.whMessageId);
 
 				await message.react(emoji);
