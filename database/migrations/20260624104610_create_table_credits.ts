@@ -2,9 +2,9 @@ import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
 	await knex.schema.createTable('credits', table => {
-		table.string('robloxId', 20).primary();
-		table.foreign('robloxId')
-			.references('robloxId')
+		table.string('roblox_id', 20).primary();
+		table.foreign('roblox_id')
+			.references('roblox_id')
 			.inTable('personnel')
 			.onDelete('CASCADE')
 			.onUpdate('CASCADE');

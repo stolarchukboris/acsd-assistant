@@ -2,16 +2,16 @@ import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
 	await knex.schema.createTable('personnel', table => {
-		table.string('robloxId', 20).primary();
-		table.string('discordId', 20).notNullable().unique();
-		table.string('robloxUsername', 22).notNullable().unique();
-		table.string('acsdRank', 50).notNullable();
+		table.string('roblox_id', 20).primary();
+		table.string('discord_id', 20).notNullable().unique();
+		table.string('roblox_username', 22).notNullable().unique();
+		table.string('acsd_rank', 50).notNullable();
 
-		table.timestamp('entryCreated').defaultTo(knex.fn.now());
-		table.timestamp('entryUpdated').defaultTo(knex.fn.now());
+		table.timestamp('entry_created').defaultTo(knex.fn.now());
+		table.timestamp('entry_updated').defaultTo(knex.fn.now());
 
-		table.integer('toBeDeletedAt');
-		table.index('toBeDeletedAt', 'idx_personnel_deletion');
+		table.integer('to_be_deleted_at');
+		table.index('to_be_deleted_at', 'idx_personnel_deletion');
 	});
 
 	await knex.raw(`

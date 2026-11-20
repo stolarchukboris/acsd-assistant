@@ -1,22 +1,22 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	await knex.schema.createTable('activeShifts', table => {
-		table.uuid('jobId').notNullable();
+	await knex.schema.createTable('active_shifts', table => {
+		table.uuid('job_id').notNullable();
 
-		table.string('whMessageId', 20).primary();
-		table.string('fwMessageId', 20).notNullable().unique();
-		table.string('robloxId', 20).notNullable().unique();
+		table.string('wh_message_id', 20).primary();
+		table.string('fw_message_id', 20).notNullable().unique();
+		table.string('roblox_id', 20).notNullable().unique();
 
-		table.foreign('robloxId')
-			.references('robloxId')
+		table.foreign('roblox_id')
+			.references('roblox_id')
 			.inTable('personnel')
 			.onDelete('CASCADE')
 			.onUpdate('CASCADE');
 
-		table.bigInteger('startedTimestamp').notNullable();
+		table.bigInteger('started_timestamp').notNullable();
 
-		table.index('startedTimestamp', 'idx_activeshifts_started_timestamp');
+		table.index('started_timestamp', 'idx_activeshifts_started_timestamp');
 	});
 }
 

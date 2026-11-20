@@ -1,13 +1,13 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	await knex.schema.createTable('pendingRegs', table => {
-		table.string('robloxId', 20).primary();
-		table.string('discordId', 20).notNullable().unique();
-		table.string('robloxUsername', 22).notNullable().unique();
+	await knex.schema.createTable('pending_regs', table => {
+		table.string('roblox_id', 20).primary();
+		table.string('discord_id', 20).notNullable().unique();
+		table.string('roblox_username', 22).notNullable().unique();
 		table.string('challenge', 100).notNullable().unique();
-		table.bigInteger('entryCreated').notNullable();
-		table.index('entryCreated', 'idx_pendingregs_entry_created');
+		table.bigInteger('entry_created').notNullable();
+		table.index('entry_created', 'idx_pendingregs_entry_created');
 	});
 }
 

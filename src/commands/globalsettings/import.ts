@@ -1,6 +1,8 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
 import type { BotSetting } from '../../types/knex.ts';
+import { safeParse } from 'zod';
+import { settingsSchema } from '../../utils/schemas.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
 	.setName('import')
@@ -14,7 +16,7 @@ export const data = new SlashCommandSubcommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
 
-	if (!interaction.member.permissions.has('Administrator')) return;
+	if (!interaction.member.permissions.has('Administrator')) return await bot.sendContainer(interaction, 'accessDenied');
 
 	const file = interaction.options.getAttachment('file', true);
 
@@ -30,13 +32,17 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 		data = await res.json() as BotSetting[];
 	} catch (error) {
-		return await bot.sendContainer(interaction, 'error', `${error}. File is corrupted or contains invalid JSON.`)
+		return await bot.sendContainer(interaction, 'error', `${error}. The provided file might be corrupted or containing invalid JSON.`)
 	}
+
+	const verifiedData = safeParse(settingsSchema, data);
+
+	if (!verifiedData.success) return await bot.sendContainer(interaction, 'error', 'The provided JSON has invalid structure.')
 
 	await bot.knex.transaction(async trx => {
 		await trx<BotSetting>('bot_settings').delete();
 
-		await trx<BotSetting>('bot_settings').insert(data);
+		await trx<BotSetting>('bot_settings').insert(verifiedData.data);
 	});
 
 	for (const setting of data) bot.botSettings.set(setting.setting_name, setting);

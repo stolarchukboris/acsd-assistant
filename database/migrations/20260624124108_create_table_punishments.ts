@@ -2,15 +2,15 @@ import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
 	await knex.schema.createTable('punishments', table => {
-		table.uuid('punishmentId').primary();
-		table.string('targetRbxId', 20).notNullable();
-		table.index('targetRbxId', 'idx_punishments_target_rbx_id');
-		table.string('execRbxId', 20).notNullable();
-		table.index('execRbxId', 'idx_punishments_exec_rbx_id');
-		table.enum('punishmentType', ['warn', 'strike']).notNullable();
+		table.uuid('punishment_id').primary();
+		table.string('target_rbx_id', 20).notNullable();
+		table.index('target_rbx_id', 'idx_punishments_target_rbx_id');
+		table.string('exec_rbx_id', 20).notNullable();
+		table.index('exec_rbx_id', 'idx_punishments_exec_rbx_id');
+		table.enum('punishment_type', ['warn', 'strike']).notNullable();
 		table.text('reason').notNullable();
-		table.timestamp('createdAt').defaultTo(knex.fn.now());
-		table.index('createdAt', 'idx_punishments_created_at');
+		table.timestamp('created_at').defaultTo(knex.fn.now());
+		table.index('created_at', 'idx_punishments_created_at');
 	});
 }
 

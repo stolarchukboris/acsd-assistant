@@ -1,25 +1,25 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-	await knex.schema.createTable('activeMShifts', table => {
-		table.uuid('shiftId').primary();
+	await knex.schema.createTable('active_m_shifts', table => {
+		table.uuid('shift_id').primary();
 
-		table.string('discordId', 20).notNullable().unique();
-		table.string('robloxId', 20).notNullable().unique();
+		table.string('discord_id', 20).notNullable().unique();
+		table.string('roblox_id', 20).notNullable().unique();
 
-		table.foreign('robloxId')
-			.references('robloxId')
+		table.foreign('roblox_id')
+			.references('roblox_id')
 			.inTable('personnel')
 			.onUpdate('CASCADE')
 			.onDelete('CASCADE');
 
-		table.string('robloxUsername', 22).notNullable().unique();
+		table.string('roblox_username', 22).notNullable().unique();
 
-		table.timestamp('startedTimestamp').defaultTo(knex.fn.now());
-		table.index('startedTimestamp', 'idx_activemshifts_started_timestamp');
+		table.timestamp('started_timestamp').defaultTo(knex.fn.now());
+		table.index('started_timestamp', 'idx_activemshifts_started_timestamp');
 	});
 }
 
 export async function down(knex: Knex): Promise<void> {
-	await knex.schema.dropTableIfExists('activeMShifts');
+	await knex.schema.dropTableIfExists('active_m_shifts');
 }
