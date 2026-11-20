@@ -1,9 +1,8 @@
 import { Message, TextChannel } from 'discord.js';
 import bot from '../index.ts';
 import type { personnelInfo, activeMShift, activeShift } from '../types/knex.ts';
-import { fetchApi, fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
+import { fetchApi, isAnyErrorResponse } from 'rozod';
 import { getCloudV2UsersUserId } from 'rozod/opencloud/v2/cloud';
-import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
 import { serverCache } from '../utils/worker.ts';
 
 export async function execute(message: Message) {

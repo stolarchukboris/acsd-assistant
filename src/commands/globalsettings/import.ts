@@ -18,7 +18,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const file = interaction.options.getAttachment('file', true);
 
-	if (!(file.name.toLowerCase().endsWith('.json') && file.contentType?.includes('application/json') && file.size > 512 * 1024))
+	if (!(file.name.toLowerCase().endsWith('.json') && file.contentType?.includes('application/json') && file.size < 512 * 1024))
 		return await bot.sendContainer(interaction, 'error', 'Expected a JSON file with size < 512 KB.');
 
 	let data;
