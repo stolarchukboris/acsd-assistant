@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandSubcommandBuilder } from 'discord.js';
 import bot from '../../index.ts';
 import type { BotSetting } from '../../types/knex.ts';
-import { safeParse } from 'zod';
+import z, { safeParse } from 'zod';
 import { settingGroupSchema } from '../../utils/schemas.ts';
 
 export const data = new SlashCommandSubcommandBuilder()
@@ -37,7 +37,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const verifiedData = safeParse(settingGroupSchema, data);
 
-	if (!verifiedData.success) return await bot.sendContainer(interaction, 'error', 'The provided JSON has invalid structure.')
+	if (!verifiedData.success)
+		return await bot.sendContainer(interaction, 'error', `The provided JSON has invalid structure.\n${z.prettifyError(verifiedData.error)}`);
 
 	await bot.knex.transaction(async trx => {
 		await trx<BotSetting>('bot_settings').delete();
