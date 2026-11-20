@@ -18,6 +18,6 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	await interaction.editReply({
 		flags: 'IsComponentsV2',
 		components: [new FileBuilder().setURL('attachment://settings_backup.json')],
-		files: [new AttachmentBuilder(buffer)]
+		files: [new AttachmentBuilder(buffer, { name: 'settings_backup.json' })]
 	});
 }
