@@ -11,10 +11,10 @@ export const data = new SlashCommandSubcommandBuilder()
 		.setRequired(true)
 	);
 
-export const highRank = true;
-
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
+
+	if (!interaction.member.permissions.has('Administrator')) return;
 
 	const file = interaction.options.getAttachment('file', true);
 
