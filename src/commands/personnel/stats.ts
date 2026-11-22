@@ -61,7 +61,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 		if (punishments.length > 0) for (const punishment of punishments) desc = desc.concat(
 			`**__${punishment.punishment_type === 'warn' ? 'Warning' : 'Strike'}__ ${punishment.punishment_id}:**
-- **Issued**: <t:${Math.floor(punishment.created_at.getTime() / 1000)}>
+- **Issued**: <t:${dateToUnix(punishment.created_at)}>
 - **Reason**: ${punishment.reason}\n\n`
 		);
 	}
@@ -76,7 +76,7 @@ Depending on your rank, some information may not be available to you.`,
 		fields: [
 			{ name: 'Linked Discord:', value: `<@${stats.discord_id}>` },
 			{ name: 'Linked Roblox:', value: `[${stats.roblox_username}](https://www.roblox.com/users/${stats.roblox_id}/profile)` },
-			{ name: 'Register date:', value: `<t:${Math.floor(stats.created_at.getTime() / 1000)}>` },
+			{ name: 'Register date:', value: `<t:${dateToUnix(stats.created_at)}>` },
 			{ name: 'Total time on-duty:', value: `${totalTime} minutes.` },
 			{ name: 'Total credits:', value: credits?.amount.toString() ?? '0' },
 			{ name: 'Rank:', value: stats.acsd_rank }
@@ -87,8 +87,8 @@ Depending on your rank, some information may not be available to you.`,
 		title: 'Latest shift.',
 		fields: [
 			{ name: 'Shift ID:', value: shifts[0].shift_id },
-			{ name: 'Started:', value: `<t:${shifts[0].started_at}>` },
-			{ name: 'Ended:', value: `<t:${shifts[0].ended_at}>` },
+			{ name: 'Started:', value: `<t:${dateToUnix(shifts[0].started_at)}>` },
+			{ name: 'Ended:', value: `<t:${dateToUnix(shifts[0].ended_at)}>` },
 			{ name: 'Length:', value: `${shifts[0].len_minutes} minutes.` }
 		]
 	});

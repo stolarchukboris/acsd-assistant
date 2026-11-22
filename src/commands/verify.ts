@@ -43,12 +43,19 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			'Incorrect code in profile bio. Verification aborted, please try again.'
 		)
 
+		const memberRoleNames = interaction.member.roles.cache.map(role => role.name);
+		const roleSearchRegex = /Security - L\d \|([^|]+)\|/;
+
+		let rankRoleName = memberRoleNames.find(role => role.match(roleSearchRegex))?.match(roleSearchRegex)?.[1]?.trim();
+
+		for (const highRank of bot.highRanks) if (memberRoleNames.some(role => role === highRank)) rankRoleName = highRank;
+
 		await bot.knex<Personnel>('personnel')
 			.insert({
 				roblox_id: user.id,
 				discord_id: interaction.user.id,
 				roblox_username: user.name,
-				acsd_rank: 'Recruit'
+				acsd_rank: rankRoleName ?? 'Recruit'
 			});
 
 		await interaction.member.roles.add(role);

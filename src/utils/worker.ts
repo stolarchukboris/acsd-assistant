@@ -77,7 +77,7 @@ export async function managePendingLogs() {
 export async function trainingReminder() {
 	const trainingSoon = await bot.knex<Training>('trainings')
 		.select('*')
-		.where('starting_at', '<=', unixNow() + 600)
+		.where('starting_at', '<=', new Date(Date.now() + 600_000))
 		.andWhere('is_reminded', false)
 		.andWhere('is_started', false)
 		.first();
@@ -90,9 +90,10 @@ export async function trainingReminder() {
 		sections: [{
 			title: 'Training reminder.',
 			description: `<@${trainingSoon.host_discord_id}>
-Your training is going to start <t:${trainingSoon.starting_at}:R>. Make sure you are ready to host it.
+Your training is going to start <t:${dateToUnix(trainingSoon.starting_at)}:R>. Make sure you are ready to host it.
 
-If you are not ready to host the training or if there are insufficient reactions, you can cancel the training with the \`/trainings cancel\` command.`
+If you are not ready to host the training or if there are insufficient reactions, you can cancel the training with the \`/trainings cancel\` command.`,
+			fields: [{ name: 'Training ID:', value: trainingSoon.training_id }]
 		}]
 	}));
 

@@ -31,7 +31,7 @@ export type BotSetting = {
 	readonly setting_name: string;
 	readonly setting_desc: string;
 	setting_value: string;
-	updated_at: Date;
+	updated_at: Date | null;
 	updated_by: string;
 };
 

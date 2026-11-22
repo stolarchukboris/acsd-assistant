@@ -24,7 +24,10 @@ export interface ContainerPayload {
 
 export function createContainerPayload(bot: Bot, options: ContainerOptions) {
 	function resolveUrl(url: string) {
-		if (url.trim().startsWith('http')) return url;
+		if (url.trim().startsWith('http')) {
+			console.log(url);
+			return url;
+		}
 
 		files.push(new AttachmentBuilder(join(process.cwd(), url)));
 
@@ -45,7 +48,7 @@ export function createContainerPayload(bot: Bot, options: ContainerOptions) {
 		const tdcs: TextDisplayBuilder[] = [];
 
 		if (section.title) tdcs.push(new TextDisplayBuilder().setContent(`## ${section.title}`));
-		
+
 		if (section.description) tdcs.push(new TextDisplayBuilder().setContent(section.description));
 
 		if (section.thumbnailUrl && section.thumbnailUrl.trim() !== '') {
@@ -58,9 +61,9 @@ export function createContainerPayload(bot: Bot, options: ContainerOptions) {
 		if (section.fields && section.fields.length > 0) for (const field of section.fields) container
 			.addSeparatorComponents(sepc => sepc.setDivider(false))
 			.addTextDisplayComponents(tdc => tdc.setContent(`**${field.name}** ${field.value}`));
-		
+
 		if (section.bigImageUrl && section.bigImageUrl.trim() !== '')
-			container.addMediaGalleryComponents(mgc => mgc.addItems(mgi => mgi.setURL(resolveUrl(section.bigImageUrl!))))
+			container.addMediaGalleryComponents(mgc => mgc.addItems(mgi => mgi.setURL(resolveUrl(section.bigImageUrl!))));
 	});
 
 	return {
@@ -78,7 +81,8 @@ export function createTemplateContainers(bot: Bot) {
 				title: config.title,
 				description: options.sections?.[0]?.description ?? config.desc,
 				thumbnailUrl: options.sections?.[0]?.thumbnailUrl ?? config.logo,
-				fields: options.sections?.[0]?.fields
+				fields: options.sections?.[0]?.fields,
+				bigImageUrl: options.sections?.[0]?.bigImageUrl
 			}]
 		});
 	}

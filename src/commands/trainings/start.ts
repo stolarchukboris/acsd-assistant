@@ -23,6 +23,8 @@ export const training = true;
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>, _cmdUser: Personnel, training: Training, annsMessage: Message, role: string) {
 	const join = interaction.options.getString('join');
 
+	if (training.is_started) return await bot.sendContainer(interaction, 'error', 'This training is already in progress.');
+
 	await bot.knex<Training>('trainings')
 		.update('is_started', true)
 		.where('training_id', training.training_id);

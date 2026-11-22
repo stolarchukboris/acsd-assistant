@@ -1,0 +1,65 @@
+[
+	{
+		"setting_name": "verification_role_id",
+		"setting_desc": "Verification role ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "shift_logs_ch_id",
+		"setting_desc": "Shift logs channel ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "training_anns_ch_id",
+		"setting_desc": "Training anns channel ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "training_ping_role_id",
+		"setting_desc": "Training ping role ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "shift_logger_wh_id",
+		"setting_desc": "Shift logger webhook ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "training_reminder_ch_id",
+		"setting_desc": "Training reminder channel ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "game_place_id",
+		"setting_desc": "Game place ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "game_chats_ch_id",
+		"setting_desc": "Game chats channel ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	},
+	{
+		"setting_name": "security_comms_ch_cat_id",
+		"setting_desc": "Security comms channel category ID",
+		"setting_value": "0",
+		"updated_at": null,
+		"updated_by": "0"
+	}
+]

@@ -17,10 +17,10 @@ export const data = new SlashCommandSubcommandBuilder()
 		.setRequired(true)
 	);
 
-export const highRank = true;
-
-export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel) {
+export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
+
+	if (!interaction.member.permissions.has('Administrator')) return await bot.sendContainer(interaction, 'accessDenied');
 
 	const settingNameForUpdate = interaction.options.getString('setting', true);
 	const newValue = interaction.options.getString('new_value', true);
@@ -37,14 +37,14 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		await trx<BotSetting>('bot_settings')
 			.update({
 				setting_value: newValue,
-				updated_by: cmdUser.discord_id
+				updated_by: interaction.user.id
 			})
 			.where('setting_name', settingNameForUpdate);
 
 		bot.botSettings.set(settingNameForUpdate, {
 			...existingSetting,
 			setting_value: newValue,
-			updated_by: cmdUser.discord_id,
+			updated_by: interaction.user.id,
 			updated_at: new Date()
 		});
 	});

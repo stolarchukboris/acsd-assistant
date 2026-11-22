@@ -33,8 +33,8 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 				const message = shift.wh_message_id.includes('d')
 					? await (bot.channels.cache.get(Bun.env.DEV_SHIFT_LOGS_CH_ID!) as TextChannel).messages.fetch(shift.wh_message_id.slice(0, -1))
 					: await (bot.channels.cache.get(bot.getSetting<'string'>('shift_logs_ch_id', 'string')) as TextChannel).messages.fetch(shift.wh_message_id);
-				const [started, ended] = [Math.floor(message.createdTimestamp / 1000), unixNow()];
-				const lengthMins = Math.round((ended - started) / 60);
+				const [started, ended] = [new Date(message.createdTimestamp), new Date()];
+				const lengthMins = Math.trunc((ended.getTime() - started.getTime()) / 60_000);
 
 				await bot.knex.transaction(async trx => {
 					await trx<ActiveShift>('activeShifts')
@@ -47,8 +47,8 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 							roblox_id: shift.roblox_id,
 							wh_message_id: shift.wh_message_id,
 							fw_message_id: shift.fw_message_id,
-							started_at: new Date(started),
-							ended_at: new Date(ended),
+							started_at: started,
+							ended_at: ended,
 							len_minutes: lengthMins
 						});
 				});
@@ -56,7 +56,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 		} else {
 			const fields = newMessage.embeds[0]?.fields;
 			const [started, ended] = [Number(fields?.[0]?.value.match(timestampRegex)?.[1]), Number(fields?.[1]?.value.match(timestampRegex)?.[1])];
-			const lengthMins = Math.round((ended - started) / 60);
+			const lengthMins = Math.trunc((ended - started) / 60);
 
 			await bot.knex.transaction(async trx => {
 				await trx<ActiveShift>('active_shifts')

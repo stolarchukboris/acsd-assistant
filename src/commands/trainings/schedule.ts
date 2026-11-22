@@ -44,6 +44,8 @@ export const training = true;
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel, channel: TextChannel, role: string) {
 	const time = interaction.options.getInteger('time', true);
 
+	if (new Date(time * 1000) < new Date()) return await bot.sendContainer(interaction, 'error', 'Cannot schedule a training in the past.');
+
 	const minDate = new Date((time - 3600) * 1000);
 	const maxDate = new Date((time + 3600) * 1000);
 
@@ -54,7 +56,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (trainingAroundThisTime) return await bot.sendContainer(interaction, bot.containers.error({
 		sections: [{
-			description: 'There is another scheduled or concluded training within an hour from this one.',
+			description: 'Another training already exists within an hour of this time.',
 			fields: [
 				{ name: 'Training ID:', value: trainingAroundThisTime.training_id },
 				{ name: 'Starting:', value: `<t:${dateToUnix(trainingAroundThisTime.starting_at)}>` }
@@ -76,22 +78,23 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const duration = interaction.options.getString('duration');
 	const comment = interaction.options.getString('comment');
 
-	const gameName: string = gameResponse[0]!.name;
+	const gameName = gameResponse[0]!.name;
 	const trainingId = crypto.randomUUID();
 
-	await bot.knex<Training>('trainings')
-		.insert({
-			training_id: trainingId,
-			host_discord_id: cmdUser.discord_id,
-			host_roblox_username: cmdUser.roblox_username,
-			starting_at: new Date(time)
-		});
+	await bot.knex.transaction(async trx => {
+		await trx<Training>('trainings')
+			.insert({
+				training_id: trainingId,
+				host_discord_id: cmdUser.discord_id,
+				host_roblox_username: cmdUser.roblox_username,
+				starting_at: new Date(time * 1000)
+			});
 
-	const sentAnns = await bot.sendContainer(channel, bot.createContainerPayload({
-		allowedMentions: { parse: ['roles'] },
-		sections: [{
-			title: `A training has been scheduled on <t:${time}:F>.`,
-			description: `<@&${role}>\nThis training will take place in ${gameName}. The time is pre-converted to your local timezone.
+		const sentAnns = await bot.sendContainer(channel, bot.createContainerPayload({
+			allowedMentions: { parse: ['roles'] },
+			sections: [{
+				title: `A training has been scheduled on <t:${time}:F>.`,
+				description: `<@&${role}>\nThis training will take place in ${gameName}. The time is pre-converted to your local timezone.
 
 ## General training rules:
 - Listen to the host's instructions;
@@ -103,19 +106,20 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 If you are ready to attend this training, please react with ✅ below to confirm your attendance.
 **You react you attend.**`,
-			fields: [{ name: 'Training host:', value: `${cmdUser.acsd_rank} ${cmdUser.roblox_username} (<@${cmdUser.discord_id}>)` },
-			{ name: 'Details:', value: `\nAttendance minimum: ${minAttend}\n${maxAttend ? `Attendance maximum: ${maxAttend}\n` : ''}${duration ? `Training duration: ${duration}\n` : ''}` },
-			{ name: 'Training ID:', value: trainingId },
-			...(comment ? [{ name: 'Note from host:', value: comment }] : [])]
-		}]
-	}));
+				fields: [{ name: 'Training host:', value: `${cmdUser.acsd_rank} ${cmdUser.roblox_username} (<@${cmdUser.discord_id}>)` },
+				{ name: 'Details:', value: `\nAttendance minimum: ${minAttend}\n${maxAttend ? `Attendance maximum: ${maxAttend}\n` : ''}${duration ? `Training duration: ${duration}\n` : ''}` },
+				{ name: 'Training ID:', value: trainingId },
+				...(comment ? [{ name: 'Note from host:', value: comment }] : [])]
+			}]
+		}));
 
-	await sentAnns.react('✅');
-	await channel.send(gameUrl);
+		await sentAnns.react('✅');
+		await channel.send(gameUrl);
 
-	await bot.knex<Training>('trainings')
-		.update('message_id', sentAnns.id)
-		.where('training_id', trainingId);
+		await trx<Training>('trainings')
+			.update('message_id', sentAnns.id)
+			.where('training_id', trainingId);
+	})
 
 	await bot.sendContainer(interaction, 'success', {
 		sections: [{

@@ -10,10 +10,10 @@ export const data = new SlashCommandSubcommandBuilder()
 		.setAutocomplete(true)
 	);
 
-export const highRank = true;
-
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
+
+	if (!interaction.member.permissions.has('Administrator')) return await bot.sendContainer(interaction, 'accessDenied');
 
 	const settingToView = interaction.options.getString('setting');
 
@@ -36,7 +36,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			description: `**Name**: \`${setting.setting_name}\` (${setting.setting_desc})
 **Value:** \`${setting.setting_value}\`
 
-**Last updated** by <@${setting.updated_by}> <t:${Math.floor(Date.parse(String(setting.updated_at)) / 1000)}:R>.`
+${setting.updated_at ? `**Last updated** by <@${setting.updated_by}> <t:${dateToUnix(setting.updated_at)}:R>` : `**Never updated.**`}`
 		}]
 	}));
 }

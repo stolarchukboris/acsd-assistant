@@ -4,7 +4,7 @@ export async function up(knex: Knex): Promise<void> {
 	await knex.schema.createTable('bot_settings', table => {
 		table.string('setting_name', 30).primary();
 		table.text('setting_desc').notNullable();
-		table.string('setting_value', 20).notNullable().unique();
+		table.string('setting_value', 20).notNullable();
 
 		table.timestamp('updated_at').defaultTo(knex.fn.now());
 

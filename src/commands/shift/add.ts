@@ -56,12 +56,12 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const id = crypto.randomUUID();
 
-	await bot.knex<LoggedShift>('loggedShifts')
+	await bot.knex<LoggedShift>('logged_shifts')
 		.insert({
 			shift_id: id,
 			roblox_id: target.roblox_id,
-			started_at: new Date(startTime),
-			ended_at: new Date(startTime + minutes * 60),
+			started_at: new Date(startTime * 1000),
+			ended_at: new Date(1000 * (startTime + minutes * 60)),
 			len_minutes: minutes,
 			proof: reason
 		});

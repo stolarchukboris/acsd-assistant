@@ -12,6 +12,7 @@ export const data = new SlashCommandSubcommandBuilder()
 	.addAttachmentOption(o => o
 		.setName('proof_image')
 		.setDescription('Screenshot of you playing as security.')
+		.setFileTypes('image')
 	);
 
 export const auth = true;
@@ -32,32 +33,30 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	if (!existingShift) return await bot.sendContainer(interaction, 'notFound', `You don't have an active shift.`);
 
-	const startedUnix = dateToUnix(existingShift.started_at);
-
-	if (now - startedUnix < 300) return await bot.sendContainer(interaction, 'error',
+	if (Date.now() - existingShift.started_at.getTime() < 300_000) return await bot.sendContainer(interaction, 'error',
 		'Your shift is less than 5 minutes in length. If you would like to cancel it, use the `/shift cancel` command.');
 
 	const attach = interaction.options.getAttachment('proof_image');
 	const url = interaction.options.getString('proof_url');
 
-	if (!(url || (attach && attach.contentType?.includes('image')))) return await bot.sendContainer(interaction, 'error',
+	if (!(url || attach)) return await bot.sendContainer(interaction, 'error',
 		'Please provide a screenshot (or a URL to it) of you playing as security.');
 
-	const length = Math.round((now - startedUnix) / 60);
+	const length = Math.trunc((Date.now() - existingShift.started_at.getTime()) / 60_000);
 
 	await bot.knex.transaction(async trx => {
 		await trx<ActiveMShift | ActiveShift>('shift_id' in existingShift ? 'active_m_shifts' : 'active_shifts')
 			.del()
 			.where('roblox_id', cmdUser.roblox_id);
 
-		await trx<LoggedShift>('loggedShifts')
+		await trx<LoggedShift>('logged_shifts')
 			.insert({
 				shift_id: 'shift_id' in existingShift ? existingShift.shift_id : crypto.randomUUID(),
 				roblox_id: cmdUser.roblox_id,
 				started_at: existingShift.started_at,
 				ended_at: new Date(),
 				len_minutes: length,
-				proof: (attach?.url ?? url)!
+				proof: attach?.url ?? url!
 			});
 	});
 
@@ -65,7 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		sections: [{
 			description: 'Successfully ended your shift.',
 			fields: [{ name: 'Length:', value: `${length} minutes.` }],
-			bigImageUrl: (attach?.url ?? url)!
+			bigImageUrl: attach?.url ?? url!
 		}]
 	});
 }

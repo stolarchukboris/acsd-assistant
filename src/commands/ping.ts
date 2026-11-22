@@ -19,7 +19,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		sections: [{
 			title: 'Pong!',
 			description:
-				`**Latency**: ${Math.floor(response.createdTimestamp - interaction.createdTimestamp)} ms | **API latency**: ${Math.round(interaction.client.ws.ping)} ms`,
+				`**Latency**: ${Math.trunc(response.createdTimestamp - interaction.createdTimestamp)} ms | **API latency**: ${Math.trunc(interaction.client.ws.ping)} ms`,
 			thumbnailUrl: bot.logos.heart
 		}]
 	}));

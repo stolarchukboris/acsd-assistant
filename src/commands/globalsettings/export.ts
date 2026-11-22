@@ -6,10 +6,10 @@ export const data = new SlashCommandSubcommandBuilder()
 	.setName('export')
 	.setDescription('Export the global bot settings into a JSON file.');
 
-export const highRank = true;
-
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
 	await interaction.deferReply();
+
+	if (!interaction.member.permissions.has('Administrator')) return await bot.sendContainer(interaction, 'accessDenied');
 
 	const settings = await bot.knex<BotSetting>('bot_settings').select('*');
 

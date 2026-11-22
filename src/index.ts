@@ -12,6 +12,7 @@ import logger from './utils/logger.ts';
 import { createTemplateContainers, createContainerPayload, type ContainerOptions, type ContainerPayload } from './utils/containers.ts';
 import config from '../knexfile.ts';
 import type { SettingTypeMap } from './types/misc.ts'
+import settingsTemplate from '../settings_template.json'
 
 class Bot extends Discord.Client {
 	public name = 'ACSD Assistant';
@@ -325,6 +326,11 @@ class Bot extends Discord.Client {
 		await this.knex.raw('select 1');
 
 		this.logger.log(`Connected to database successfully.`);
+
+		await this.knex<BotSetting>('bot_settings')
+			.insert(settingsTemplate)
+			.onConflict('setting_name')
+			.ignore();
 
 		const settings = await this.knex<BotSetting>('bot_settings')
 			.select('*');
