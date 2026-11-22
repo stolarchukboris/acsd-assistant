@@ -15,9 +15,21 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const buffer = Buffer.from(JSON.stringify(settings, null, 2), 'utf-8');
 
+	const containerData = bot.containers.success({
+		sections: [{
+			description: 'Successfully exported the bot settings.'
+		}]
+	});
+
 	await interaction.editReply({
 		flags: 'IsComponentsV2',
-		components: [new FileBuilder().setURL('attachment://settings_backup.json')],
-		files: [new AttachmentBuilder(buffer, { name: 'settings_backup.json' })]
+		components: [
+			containerData.container,
+			new FileBuilder().setURL('attachment://settings_backup.json')
+		],
+		files: [
+			...containerData.files,
+			new AttachmentBuilder(buffer, { name: 'settings_backup.json' })
+		]
 	});
 }
