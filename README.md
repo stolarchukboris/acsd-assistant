@@ -40,10 +40,10 @@ Tech stack:
 
 ### Post-startup
 1. You will now have to **set up** the bot so it functions fully.  
-  - If you happen to have a `settings_backup.json` file exactly with this bot's settings, you can use the `/globalsettings import` command and get going immediately.
-  - Otherwise there are `/globalsettings view` and `/globalsettings update` commands you can use to view the list of available settings and assign values to them.
+    - If you happen to have a `settings_backup.json` file exactly with this bot's settings, you can use the `/globalsettings import` command and get going immediately.
+    - Otherwise there are `/globalsettings view` and `/globalsettings update` commands you can use to view the list of available settings and assign values to them.
 2. **Verify** to get access to most of the systems. Run `/verify` and complete the flow.  
-  - Rank will be issued automatically based on your roles.
+    - Rank will be issued automatically based on your roles.
 
 
 #### How to control
