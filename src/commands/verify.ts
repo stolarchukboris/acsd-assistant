@@ -12,7 +12,6 @@ export const data = new SlashCommandBuilder()
 	.addStringOption(o => o
 		.setName('roblox_username')
 		.setDescription('Your Roblox username.')
-		.setRequired(true)
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>) {
@@ -26,7 +25,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	if (!role) return await bot.sendContainer(interaction, 'error',
 		'Verification role setting is not configured correctly. Please contact the ACSD administration about this.');
 
-	const username = interaction.options.getString('roblox_username', true);
+	const username = interaction.options.getString('roblox_username');
 
 	const existingRequest = await bot.knex<PendingReg>('pending_regs')
 		.select('*')
@@ -57,6 +56,8 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		return await bot.sendContainer(interaction, 'success', `Successfully verified. Welcome to APOLLO Corporation Security Division!
 You may now remove the code from your bio.`);
 	}
+
+	if (!username) return await bot.sendContainer(interaction, 'error', 'Roblox username option is required when starting verification.');
 
 	const existingDiscord = await bot.knex<Personnel>('personnel')
 		.select('*')
