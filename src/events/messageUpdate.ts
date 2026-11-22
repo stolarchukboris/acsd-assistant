@@ -1,6 +1,6 @@
 import { Message, TextChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { ActiveShift, PendingShift } from '../types/knex.ts';
+import type { ActiveShift, PendingShiftlog } from '../types/knex.ts';
 
 export async function execute(oldMessage: Message, newMessage: Message) {
 	try {
@@ -13,7 +13,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 
 		const activeShiftEntry = await bot.knex<ActiveShift>('active_shifts')
 			.select('*')
-			.where('whMessageId', newMessage.id)
+			.where('wh_message_id', newMessage.id)
 			.first();
 
 		if (!activeShiftEntry) return;
@@ -27,7 +27,7 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 		if (newMessage.embeds[0]?.title?.includes('(server shutdown)')) {
 			const unfinishedShifts = await bot.knex<ActiveShift>('active_shifts')
 				.select('*')
-				.where('jobId', activeShiftEntry.job_id);
+				.where('job_id', activeShiftEntry.job_id);
 
 			for (const shift of unfinishedShifts) {
 				const message = shift.wh_message_id.includes('d')
@@ -39,16 +39,16 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 				await bot.knex.transaction(async trx => {
 					await trx<ActiveShift>('activeShifts')
 						.del()
-						.where('robloxId', shift.roblox_id);
+						.where('roblox_id', shift.roblox_id);
 
-					await trx<PendingShift>('pendingShiftLogs')
+					await trx<PendingShiftlog>('pendingShiftLogs')
 						.insert({
 							job_id: shift.job_id,
 							roblox_id: shift.roblox_id,
 							wh_message_id: shift.wh_message_id,
 							fw_message_id: shift.fw_message_id,
-							started_timestamp: started,
-							ended_timestamp: ended,
+							started_at: new Date(started),
+							ended_at: new Date(ended),
 							len_minutes: lengthMins
 						});
 				});
@@ -61,16 +61,16 @@ export async function execute(oldMessage: Message, newMessage: Message) {
 			await bot.knex.transaction(async trx => {
 				await trx<ActiveShift>('active_shifts')
 					.del()
-					.where('robloxId', activeShiftEntry.roblox_id);
+					.where('roblox_id', activeShiftEntry.roblox_id);
 
-				await trx<PendingShift>('pending_shift_logs')
+				await trx<PendingShiftlog>('pending_shift_logs')
 					.insert({
 						job_id: activeShiftEntry.job_id,
 						roblox_id: activeShiftEntry.roblox_id,
 						wh_message_id: activeShiftEntry.wh_message_id,
 						fw_message_id: activeShiftEntry.fw_message_id,
-						started_timestamp: started,
-						ended_timestamp: ended,
+						started_at: new Date(started),
+						ended_at: new Date(ended),
 						len_minutes: lengthMins
 					});
 			});

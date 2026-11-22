@@ -48,7 +48,7 @@ export async function execute(message: Message) {
 					wh_message_id: message.id,
 					fw_message_id: forwarded.id
 				})
-				.where('robloxId', userId);
+				.where('roblox_id', userId);
 
 			return await message.react('🟦');
 		}
@@ -86,7 +86,7 @@ export async function execute(message: Message) {
 				wh_message_id: message.id,
 				fw_message_id: forwarded.id,
 				roblox_id: userId,
-				started_timestamp: startTime ?? Math.floor(message.createdTimestamp / 1000)
+				started_at: new Date(startTime ?? Math.floor(message.createdTimestamp / 1000))
 			});
 
 		await message.react('🟦');

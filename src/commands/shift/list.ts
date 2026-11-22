@@ -24,11 +24,11 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			title: 'Active shifts.',
 			description: `${manualShifts.length > 0
 				? `**Active manual shifts**:
-${manualShifts.map(shift => `- ${shift.shift_id}\n  - Started by ${shift.roblox_username} (<@${shift.discord_id}>) <t:${Math.floor(Date.parse(shift.started_timestamp) / 1000)}:R>`).join('\n')}\n`
+${manualShifts.map(shift => `- ${shift.shift_id}\n  - Started by ${shift.roblox_username} (<@${shift.discord_id}>) <t:${dateToUnix(shift.started_at)}:R>`).join('\n')}\n`
 				: ''}
 ${autoShifts.length > 0
 					? `**Active automatic shifts**:
-${autoShifts.map(shift => `- ${shift.job_id}\n  - Started <t:${shift.started_timestamp}:R> ([log message](https://discord.com/channels/${Bun.env.GUILD_ID}/${shiftLogsChannelId}/${shift.wh_message_id}))`).join('\n')}`
+${autoShifts.map(shift => `- ${shift.job_id}\n  - Started <t:${dateToUnix(shift.started_at)}:R> ([log message](https://discord.com/channels/${Bun.env.GUILD_ID}/${shiftLogsChannelId}/${shift.wh_message_id}))`).join('\n')}`
 					: ''}`
 		}]
 	}));

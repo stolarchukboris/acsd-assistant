@@ -5,16 +5,15 @@ export async function up(knex: Knex): Promise<void> {
 		table.uuid('shift_id').primary();
 
 		table.string('roblox_id', 20).notNullable();
-
 		table.foreign('roblox_id')
 			.references('roblox_id')
 			.inTable('personnel')
 			.onDelete('CASCADE')
 			.onUpdate('CASCADE');
 
-		table.bigInteger('started_timestamp').notNullable();
-		table.bigInteger('ended_timestamp').notNullable();
-		table.index('ended_timestamp', 'idx_loggedshifts_ended_timestamp');
+		table.timestamp('started_at').notNullable();
+		table.timestamp('ended_at').notNullable();
+		table.index('ended_at', 'idx_loggedshifts_ended_at');
 
 		table.smallint('len_minutes').notNullable();
 

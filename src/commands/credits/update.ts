@@ -65,7 +65,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const credits = await bot.knex<Credits>('credits')
 		.select('*')
-		.where('robloxId', target.roblox_id)
+		.where('roblox_id', target.roblox_id)
 		.first();
 	const newCredits = action === 'set'
 		? amount

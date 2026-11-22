@@ -43,10 +43,13 @@ export const training = true;
 
 export async function execute(interaction: ChatInputCommandInteraction<'cached'>, cmdUser: Personnel, channel: TextChannel, role: string) {
 	const time = interaction.options.getInteger('time', true);
+
+	const minDate = new Date((time - 3600) * 1000);
+	const maxDate = new Date((time + 3600) * 1000);
+
 	const trainingAroundThisTime = await bot.knex<Training>('trainings')
 		.select('*')
-		.where('starting_timestamp', '>=', time - 3600)
-		.andWhere('starting_timestamp', '<=', time + 3600)
+		.whereBetween('starting_at', [minDate, maxDate])
 		.first();
 
 	if (trainingAroundThisTime) return await bot.sendContainer(interaction, bot.containers.error({
@@ -54,7 +57,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			description: 'There is another scheduled or concluded training within an hour from this one.',
 			fields: [
 				{ name: 'Training ID:', value: trainingAroundThisTime.training_id },
-				{ name: 'Starting:', value: `<t:${trainingAroundThisTime.starting_timestamp}>` }
+				{ name: 'Starting:', value: `<t:${dateToUnix(trainingAroundThisTime.starting_at)}>` }
 			]
 		}]
 	}));
@@ -81,7 +84,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			training_id: trainingId,
 			host_discord_id: cmdUser.discord_id,
 			host_roblox_username: cmdUser.roblox_username,
-			starting_timestamp: time
+			starting_at: new Date(time)
 		});
 
 	const sentAnns = await bot.sendContainer(channel, bot.createContainerPayload({
@@ -111,8 +114,8 @@ If you are ready to attend this training, please react with ✅ below to confirm
 	await channel.send(gameUrl);
 
 	await bot.knex<Training>('trainings')
-		.update('messageId', sentAnns.id)
-		.where('trainingId', trainingId);
+		.update('message_id', sentAnns.id)
+		.where('training_id', trainingId);
 
 	await bot.sendContainer(interaction, 'success', {
 		sections: [{

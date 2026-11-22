@@ -96,8 +96,7 @@ You may now remove the code from your bio.`);
 			roblox_id: `${userId}`,
 			discord_id: interaction.user.id,
 			roblox_username: normalizedUsername,
-			challenge: challengeString,
-			entry_created: unixNow()
+			challenge: challengeString
 		});
 
 	await bot.sendContainer(interaction, bot.createContainerPayload({

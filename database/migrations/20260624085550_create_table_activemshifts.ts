@@ -6,7 +6,6 @@ export async function up(knex: Knex): Promise<void> {
 
 		table.string('discord_id', 20).notNullable().unique();
 		table.string('roblox_id', 20).notNullable().unique();
-
 		table.foreign('roblox_id')
 			.references('roblox_id')
 			.inTable('personnel')
@@ -15,8 +14,8 @@ export async function up(knex: Knex): Promise<void> {
 
 		table.string('roblox_username', 22).notNullable().unique();
 
-		table.timestamp('started_timestamp').defaultTo(knex.fn.now());
-		table.index('started_timestamp', 'idx_activemshifts_started_timestamp');
+		table.timestamp('started_at').defaultTo(knex.fn.now());
+		table.index('started_at', 'idx_activemshifts_started_at');
 	});
 }
 

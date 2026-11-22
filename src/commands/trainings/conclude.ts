@@ -33,7 +33,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	await bot.knex<Training>('trainings')
 		.del()
-		.where('trainingId', training.training_id);
+		.where('training_id', training.training_id);
 
 	if (annsMessage) await bot.sendContainer(annsMessage, bot.createContainerPayload({
 		color: 'Grey',

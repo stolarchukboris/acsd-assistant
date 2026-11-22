@@ -8,6 +8,7 @@ export async function up(knex: Knex): Promise<void> {
 			.inTable('personnel')
 			.onDelete('CASCADE')
 			.onUpdate('CASCADE');
+
 		table.smallint('amount').notNullable();
 	});
 }

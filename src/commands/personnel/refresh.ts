@@ -14,7 +14,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const personnel = await bot.knex<Personnel>('personnel').select('*');
 	const errors: string[] = [];
 	const deletionLogs: string[] = [];
-	const updates: (Omit<Personnel, 'reg_approved_by' | 'entry_created' | 'entry_updated' | 'to_be_deleted_at'> & { old_rank: string })[] = [];
+	const updates: (Omit<Personnel, 'reg_approved_by' | 'created_at' | 'updated_at' | 'to_be_deleted_at'> & { old_rank: string })[] = [];
 
 	await bot.sendContainer(interaction, bot.createContainerPayload({
 		color: 'Grey',

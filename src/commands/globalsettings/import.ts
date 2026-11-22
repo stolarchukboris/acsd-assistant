@@ -46,7 +46,9 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 		await trx<BotSetting>('bot_settings').insert(verifiedData.data);
 	});
 
-	for (const setting of data) bot.botSettings.set(setting.setting_name, setting);
+	bot.botSettings.clear();
+
+	verifiedData.data.forEach(setting => bot.botSettings.set(setting.setting_name, setting));
 
 	await bot.sendContainer(interaction, 'success', 'Successfully imported the bot settings.');
 }

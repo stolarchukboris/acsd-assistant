@@ -44,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	const shifts = await bot.knex<LoggedShift>('logged_shifts')
 		.select('*')
 		.where('roblox_id', stats.roblox_id)
-		.orderBy('ended_timestamp', 'desc');
+		.orderBy('ended_at', 'desc');
 	const totalTime = shifts.map(shift => shift.len_minutes).reduce((a, b) => a + b, 0);
 	const credits = await bot.knex<Credits>('credits')
 		.select('*')
@@ -56,12 +56,12 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	if (bot.highRanks.includes(cmdUser.acsd_rank) || stats === cmdUser) {
 		punishments = await bot.knex<Punishment>('punishments')
 			.select('*')
-			.where('targetRbxId', stats.roblox_id)
-			.orderBy('createdAt', 'desc');
+			.where('target_rbx_id', stats.roblox_id)
+			.orderBy('created_at', 'desc');
 
 		if (punishments.length > 0) for (const punishment of punishments) desc = desc.concat(
 			`**__${punishment.punishment_type === 'warn' ? 'Warning' : 'Strike'}__ ${punishment.punishment_id}:**
-- **Issued**: <t:${Math.floor(Date.parse(punishment.created_at) / 1000)}>
+- **Issued**: <t:${Math.floor(punishment.created_at.getTime() / 1000)}>
 - **Reason**: ${punishment.reason}\n\n`
 		);
 	}
@@ -76,7 +76,7 @@ Depending on your rank, some information may not be available to you.`,
 		fields: [
 			{ name: 'Linked Discord:', value: `<@${stats.discord_id}>` },
 			{ name: 'Linked Roblox:', value: `[${stats.roblox_username}](https://www.roblox.com/users/${stats.roblox_id}/profile)` },
-			{ name: 'Register date:', value: `<t:${Math.floor(Date.parse(stats.entry_created) / 1000)}>` },
+			{ name: 'Register date:', value: `<t:${Math.floor(stats.created_at.getTime() / 1000)}>` },
 			{ name: 'Total time on-duty:', value: `${totalTime} minutes.` },
 			{ name: 'Total credits:', value: credits?.amount.toString() ?? '0' },
 			{ name: 'Rank:', value: stats.acsd_rank }
@@ -87,8 +87,8 @@ Depending on your rank, some information may not be available to you.`,
 		title: 'Latest shift.',
 		fields: [
 			{ name: 'Shift ID:', value: shifts[0].shift_id },
-			{ name: 'Started:', value: `<t:${shifts[0].started_timestamp}>` },
-			{ name: 'Ended:', value: `<t:${shifts[0].ended_timestamp}>` },
+			{ name: 'Started:', value: `<t:${shifts[0].started_at}>` },
+			{ name: 'Ended:', value: `<t:${shifts[0].ended_at}>` },
 			{ name: 'Length:', value: `${shifts[0].len_minutes} minutes.` }
 		]
 	});

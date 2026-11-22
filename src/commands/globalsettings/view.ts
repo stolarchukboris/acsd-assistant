@@ -36,7 +36,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 			description: `**Name**: \`${setting.setting_name}\` (${setting.setting_desc})
 **Value:** \`${setting.setting_value}\`
 
-**Last updated** by <@${setting.last_updated_by}> <t:${Math.floor(Date.parse(setting.last_updated_at as string) / 1000)}:R>.`
+**Last updated** by <@${setting.updated_by}> <t:${Math.floor(Date.parse(String(setting.updated_at)) / 1000)}:R>.`
 		}]
 	}));
 }

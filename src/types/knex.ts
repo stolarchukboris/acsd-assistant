@@ -1,29 +1,14 @@
 type UUIDv4 = `${string}-${string}-${string}-${string}-${string}`;
 
-export type Training = Readonly<{
-	training_id: UUIDv4;
-	host_discord_id: string;
-	host_roblox_username: string;
-	message_id: string;
-	starting_timestamp: number;
-	is_reminded: boolean;
-	is_started: boolean;
-}>;
-
-export type BotSetting = {
-	readonly setting_name: string;
-	readonly setting_desc: string;
-	setting_value: string;
-	last_updated_at: string | Date;
-	last_updated_by: string;
-};
-
-export type ActiveShift = Readonly<{
-	job_id: UUIDv4;
-	wh_message_id: string;
-	fw_message_id: string;
+export type Personnel = Readonly<{
+	discord_id: string;
 	roblox_id: string;
-	started_timestamp: number;
+	roblox_username: string;
+	acsd_rank: string;
+	reg_approved_by: string;
+	created_at: Date;
+	updated_at: Date;
+	to_be_deleted_at?: Date;
 }>;
 
 export type ActiveMShift = Readonly<{
@@ -31,41 +16,24 @@ export type ActiveMShift = Readonly<{
 	discord_id: string;
 	roblox_id: string;
 	roblox_username: string;
-	started_timestamp: string;
+	started_at: Date;
 }>;
 
-export type PendingShift = Readonly<ActiveShift & {
-	ended_timestamp: number;
-	len_minutes: number;
-}>;
-
-export type LoggedShift = Readonly<{
-	shift_id: UUIDv4;
+export type ActiveShift = Readonly<{
+	job_id: UUIDv4;
+	wh_message_id: string;
+	fw_message_id: string;
 	roblox_id: string;
-	started_timestamp: number;
-	ended_timestamp: number;
-	len_minutes: number;
-	proof: string;
+	started_at: Date;
 }>;
 
-export type Personnel = Readonly<{
-	discord_id: string;
-	roblox_id: string;
-	roblox_username: string;
-	acsd_rank: string;
-	reg_approved_by: string;
-	entry_created: string;
-	entry_updated: string;
-	to_be_deleted_at?: number;
-}>;
-
-export type PendingReg = Readonly<{
-	roblox_id: string;
-	discord_id: string;
-	roblox_username: string;
-	challenge: string;
-	entry_created: number;
-}>;
+export type BotSetting = {
+	readonly setting_name: string;
+	readonly setting_desc: string;
+	setting_value: string;
+	updated_at: Date;
+	updated_by: string;
+};
 
 export type Credits = Readonly<{
 	roblox_id: string;
@@ -79,7 +47,29 @@ export type CreditTransaction = Readonly<{
 	balance_before: number;
 	balance_after: number;
 	reason: string;
-	created_at: string;
+	created_at: Date;
+}>;
+
+export type LoggedShift = Readonly<{
+	shift_id: UUIDv4;
+	roblox_id: string;
+	started_at: Date;
+	ended_at: Date;
+	len_minutes: number;
+	proof: string;
+}>;
+
+export type PendingReg = Readonly<{
+	roblox_id: string;
+	discord_id: string;
+	roblox_username: string;
+	challenge: string;
+	created_at: Date;
+}>;
+
+export type PendingShiftlog = Readonly<ActiveShift & {
+	ended_at: Date;
+	len_minutes: number;
 }>;
 
 export type Punishment = Readonly<{
@@ -88,5 +78,15 @@ export type Punishment = Readonly<{
 	target_rbx_id: string;
 	punishment_type: 'warn' | 'strike';
 	reason: string;
-	created_at: string;
+	created_at: Date;
+}>;
+
+export type Training = Readonly<{
+	training_id: UUIDv4;
+	host_discord_id: string;
+	host_roblox_username: string;
+	message_id: string;
+	starting_at: Date;
+	is_reminded: boolean;
+	is_started: boolean;
 }>;

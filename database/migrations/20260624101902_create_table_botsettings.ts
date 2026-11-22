@@ -6,20 +6,21 @@ export async function up(knex: Knex): Promise<void> {
 		table.text('setting_desc').notNullable();
 		table.string('setting_value', 20).notNullable().unique();
 
-		table.timestamp('entry_updated').defaultTo(knex.fn.now());
-		table.string('last_updated_by', 20).notNullable();
+		table.timestamp('updated_at').defaultTo(knex.fn.now());
+
+		table.string('updated_by', 20).notNullable();
 	});
 
 	await knex.raw(`
-		CREATE TRIGGER update_bot_settings_last_updated
+		CREATE TRIGGER update_bot_settings_updated_at
 		BEFORE UPDATE ON bot_settings
 		FOR EACH ROW
-		EXECUTE PROCEDURE update_entry_updated_column();
+		EXECUTE PROCEDURE update_updated_at_column();
 	`);
 }
 
 export async function down(knex: Knex): Promise<void> {
-	await knex.raw('DROP TRIGGER IF EXISTS update_bot_settings_last_updated ON bot_settings');
+	await knex.raw('DROP TRIGGER IF EXISTS update_bot_settings_updated_at ON bot_settings');
 
 	await knex.schema.dropTableIfExists('bot_settings');
 }

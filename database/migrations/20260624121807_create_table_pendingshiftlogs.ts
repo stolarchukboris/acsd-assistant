@@ -3,6 +3,7 @@ import type { Knex } from "knex";
 export async function up(knex: Knex): Promise<void> {
 	await knex.schema.createTable('pending_shiftlogs', table => {
 		table.uuid('job_id').notNullable();
+
 		table.string('wh_message_id', 20).primary();
 		table.string('fw_message_id', 20).notNullable().unique();
 		table.string('roblox_id', 20).notNullable();
@@ -11,8 +12,10 @@ export async function up(knex: Knex): Promise<void> {
 			.inTable('personnel')
 			.onDelete('CASCADE')
 			.onUpdate('CASCADE');
-		table.bigInteger('started_timestamp').notNullable();
-		table.bigInteger('ended_timestamp').notNullable();
+
+		table.timestamp('started_at').notNullable();
+		table.timestamp('ended_at').notNullable();
+
 		table.smallint('len_minutes').notNullable();
 	});
 }

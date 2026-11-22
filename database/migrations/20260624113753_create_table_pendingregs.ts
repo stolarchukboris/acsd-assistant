@@ -6,8 +6,9 @@ export async function up(knex: Knex): Promise<void> {
 		table.string('discord_id', 20).notNullable().unique();
 		table.string('roblox_username', 22).notNullable().unique();
 		table.string('challenge', 100).notNullable().unique();
-		table.bigInteger('entry_created').notNullable();
-		table.index('entry_created', 'idx_pendingregs_entry_created');
+
+		table.timestamp('created_at').defaultTo(knex.fn.now());
+		table.index('created_at', 'idx_pendingregs_created_at');
 	});
 }
 

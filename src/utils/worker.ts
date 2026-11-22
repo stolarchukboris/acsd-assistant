@@ -1,24 +1,24 @@
-import { CategoryChannel, ChannelType, Collection, ForumChannel, TextChannel, VoiceChannel } from 'discord.js';
+import { ChannelType, Collection, TextChannel, VoiceChannel } from 'discord.js';
 import bot from '../index.ts';
-import type { PendingReg, ActiveShift, LoggedShift, PendingShift, Personnel, Training, ActiveMShift } from '../types/knex.ts';
+import type { PendingReg, ActiveShift, LoggedShift, PendingShiftlog, Personnel, Training, ActiveMShift } from '../types/knex.ts';
 import { fetchApiPagesGenerator, isAnyErrorResponse } from 'rozod';
 import { getGamesPlaceidServersServertype } from 'rozod/endpoints/gamesv1';
 
 export async function databaseCleanup() {
-	await bot.knex<PendingReg>('pending_regs').del().where('entry_created', '<', unixNow() - 300);
+	await bot.knex<PendingReg>('pending_regs').del().where('created_at', '<', new Date(Date.now() - 300_000));
 
-	await bot.knex<Personnel>('personnel').del().where('to_be_deleted_at', '<', unixNow());
+	await bot.knex<Personnel>('personnel').del().where('to_be_deleted_at', '<', new Date());
 
-	await bot.knex<ActiveShift>('activeShifts').del().where('started_timestamp', '<', unixNow() - 4800);
-	await bot.knex<ActiveMShift>('activeMShifts').del().where('started_timestamp', '<', unixNow() - 4800);
+	await bot.knex<ActiveShift>('active_shifts').del().where('started_at', '<', new Date(Date.now() - 4_800_000));
+	await bot.knex<ActiveMShift>('active_m_shifts').del().where('started_at', '<', new Date(Date.now() - 4_800_000));
 }
 
 export async function managePendingLogs() {
-	const pendingLogs = await bot.knex<PendingShift>('pending_shift_logs').select('*');
+	const pendingLogs = await bot.knex<PendingShiftlog>('pending_shift_logs').select('*');
 
 	if (pendingLogs.length === 0) return;
 
-	const logsGroupedById = new Map<string, PendingShift[]>();
+	const logsGroupedById = new Map<string, PendingShiftlog[]>();
 
 	for (const log of pendingLogs) {
 		const group = logsGroupedById.get(log.roblox_id) ?? [];
@@ -29,8 +29,8 @@ export async function managePendingLogs() {
 	}
 
 	for (const [robloxId, logGroup] of logsGroupedById) {
-		const userLogs = logGroup.sort((a, b) => a.ended_timestamp - b.ended_timestamp);
-		const latestLog = userLogs[userLogs.length - 1];
+		const userLogs = logGroup.sort((a, b) => a.ended_at.getTime() - b.ended_at.getTime());
+		const latestLog = userLogs.at(-1);
 		const associatedActiveShift = await bot.knex<ActiveShift>('active_shifts')
 			.select('*')
 			.where('roblox_id', robloxId)
@@ -38,7 +38,7 @@ export async function managePendingLogs() {
 
 		if (associatedActiveShift) continue;
 
-		if (unixNow() - latestLog!.ended_timestamp < 60) continue;
+		if (Date.now() - latestLog!.ended_at.getTime() < 60_000) continue;
 
 		const totalMinutes = userLogs.map(log => log.len_minutes).reduce((a, b) => a + b, 0);
 		const success = totalMinutes >= 5;
@@ -61,15 +61,15 @@ export async function managePendingLogs() {
 				.insert({
 					shift_id: crypto.randomUUID(),
 					roblox_id: robloxId,
-					started_timestamp: userLogs[0]?.started_timestamp,
-					ended_timestamp: latestLog?.ended_timestamp,
+					started_at: userLogs[0]?.started_at,
+					ended_at: latestLog?.ended_at,
 					len_minutes: totalMinutes,
 					proof: `Job ID: ${latestLog?.job_id}`
 				});
 
-			await trx<PendingShift>('pending_shift_logs')
+			await trx<PendingShiftlog>('pending_shift_logs')
 				.del()
-				.whereIn('whMessageId', userLogs.map(log => log.wh_message_id));
+				.whereIn('wh_message_id', userLogs.map(log => log.wh_message_id));
 		});
 	}
 }
@@ -77,7 +77,7 @@ export async function managePendingLogs() {
 export async function trainingReminder() {
 	const trainingSoon = await bot.knex<Training>('trainings')
 		.select('*')
-		.where('starting_timestamp', '<=', unixNow() + 600)
+		.where('starting_at', '<=', unixNow() + 600)
 		.andWhere('is_reminded', false)
 		.andWhere('is_started', false)
 		.first();
@@ -90,15 +90,15 @@ export async function trainingReminder() {
 		sections: [{
 			title: 'Training reminder.',
 			description: `<@${trainingSoon.host_discord_id}>
-Your training is going to start <t:${trainingSoon.starting_timestamp}:R>. Make sure you are ready to host it.
+Your training is going to start <t:${trainingSoon.starting_at}:R>. Make sure you are ready to host it.
 
 If you are not ready to host the training or if there are insufficient reactions, you can cancel the training with the \`/trainings cancel\` command.`
 		}]
 	}));
 
 	await bot.knex<Training>('trainings')
-		.update('isReminded', true)
-		.where('trainingId', trainingSoon.training_id);
+		.update('is_reminded', true)
+		.where('training_id', trainingSoon.training_id);
 }
 
 export let serverCache: typeof getGamesPlaceidServersServertype.response.data = [];

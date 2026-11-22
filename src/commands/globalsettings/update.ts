@@ -33,18 +33,20 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 	if (oldValue === newValue) return await bot.sendContainer(interaction, 'warning',
 		'The value you have provided is already set. No changes have been made.');
 
-	await bot.knex<BotSetting>('bot_settings')
-		.update({
-			setting_value: newValue,
-			last_updated_by: cmdUser.discord_id
-		})
-		.where('settingName', settingNameForUpdate);
+	await bot.knex.transaction(async trx => {
+		await trx<BotSetting>('bot_settings')
+			.update({
+				setting_value: newValue,
+				updated_by: cmdUser.discord_id
+			})
+			.where('setting_name', settingNameForUpdate);
 
-	bot.botSettings.set(settingNameForUpdate, {
-		...existingSetting,
-		setting_value: newValue,
-		last_updated_by: cmdUser.discord_id,
-		last_updated_at: new Date()
+		bot.botSettings.set(settingNameForUpdate, {
+			...existingSetting,
+			setting_value: newValue,
+			updated_by: cmdUser.discord_id,
+			updated_at: new Date()
+		});
 	});
 
 	await bot.sendContainer(interaction, 'success', {

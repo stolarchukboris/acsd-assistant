@@ -15,11 +15,7 @@ export async function execute(interaction: ChatInputCommandInteraction<'cached'>
 
 	const buffer = Buffer.from(JSON.stringify(settings, null, 2), 'utf-8');
 
-	const containerData = bot.containers.success({
-		sections: [{
-			description: 'Successfully exported the bot settings.'
-		}]
-	});
+	const containerData = bot.containers.success({ sections: [{ description: 'Successfully exported the bot settings.' }] });
 
 	await interaction.editReply({
 		flags: 'IsComponentsV2',
