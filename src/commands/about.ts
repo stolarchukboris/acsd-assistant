@@ -24,7 +24,6 @@ Instance:
     Uptime: ${ms(interaction.client.uptime, { long: true })}
     RAM usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} Megabytes
 
-
 OS:
   - Name: ${os.type()} ${os.release()} ${os.arch()}
     Uptime: ${ms(os.uptime() * 1000, { long: true })}
